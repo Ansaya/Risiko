@@ -16,17 +16,17 @@ public enum Colore {
     /**
      * Restituisce un colore tra quelli disponibili da assegnare a un giocatore
      *
-     * @param restart indica se è necessario resettare il contatore di assegnazione
      * @return Colore dalla sequenza
      * @throws IndexOutOfBoundsException Se si richiedono più di 6 colori
      */
-    public Colore next(boolean restart) throws IndexOutOfBoundsException {
-        if(restart)
-            index = 0;
-
+    public static Colore next() throws IndexOutOfBoundsException {
         if(index >= 6)
             throw new IndexOutOfBoundsException("I colori sono solo 6.");
 
         return Colore.values()[index++];
+    }
+
+    public static void reset() {
+        index = 0;
     }
 }

@@ -3,53 +3,62 @@ package Gioco;
 import java.util.ArrayList;
 
 import static Gioco.Continente.*;
+import static Gioco.Figura.*;
 
 /**
- * Created by fiore on 10/10/2016.
+ * Carte dei territori della mappa mondiale, comprensive di due carte jolly
  */
 public enum Territorio {
-    Alaska (NordAmerica),
-    Alberta (NordAmerica),
-    AmericaCentrale (NordAmerica),
-    StatiUnitiOrientali (NordAmerica),
-    Groenlandia (NordAmerica),
-    TerritoriDelNordOvest (NordAmerica),
-    Ontario (NordAmerica),
-    Quebec (NordAmerica),
-    StatiUnitiOccidentali (NordAmerica),
-    Argentina(SudAmerica),
-    Brasile(SudAmerica),
-    Peru(SudAmerica),
-    Venezuela(SudAmerica),
-    GranBretagna(Europa),
-    Islanda(Europa),
-    EuropaDelNord(Europa),
-    Scandinavia(Europa),
-    EuropaDelSud(Europa),
-    Ukraina(Europa),
-    EuropaOccidentale(Europa),
-    Congo(Africa),
-    AfricaOrientale(Africa),
-    Egitto(Africa),
-    Madagascar(Africa),
-    NordAfrica(Africa),
-    SudAfrica(Africa),
-    Afghanistan(Asia),
-    Cina(Asia),
-    India(Asia),
-    Irkutsk(Asia),
-    Giappone(Asia),
-    Kamchatka(Asia),
-    MedioOriente(Asia),
-    Mongolia(Asia),
-    Siam(Asia),
-    Siberia(Asia),
-    Urali(Asia),
-    Yakutsk(Asia),
-    AustraliaOrientale(Australia),
-    Indonesia(Australia),
-    NuovaGuinea(Australia),
-    AustraliaOccidentale(Australia);
+    // Nord America
+    Alaska (Fanteria, NordAmerica),
+    Alberta (Fanteria, NordAmerica),
+    AmericaCentrale (Cavalleria, NordAmerica),
+    StatiUnitiOrientali (Artiglieria, NordAmerica),
+    Groenlandia (Cavalleria, NordAmerica),
+    TerritoriDelNordOvest (Artiglieria, NordAmerica),
+    Ontario (Cavalleria, NordAmerica),
+    Quebec (Artiglieria, NordAmerica),
+    StatiUnitiOccidentali (Fanteria, NordAmerica),
+    // Sud America
+    Argentina(Fanteria, SudAmerica),
+    Brasile(Artiglieria, SudAmerica),
+    Peru(Cavalleria, SudAmerica),
+    Venezuela(Artiglieria, SudAmerica),
+    // Europa
+    GranBretagna(Cavalleria, Europa),
+    Islanda(Fanteria, Europa),
+    EuropaSettentrionale(Cavalleria, Europa),
+    Scandinavia(Artiglieria, Europa),
+    EuropaMeridionale(Cavalleria, Europa),
+    Ukraina(Artiglieria, Europa),
+    EuropaOccidentale(Cavalleria, Europa),
+    // Africa
+    Congo(Cavalleria, Africa),
+    AfricaOrientale(Artiglieria, Africa),
+    Egitto(Fanteria, Africa),
+    Madagascar(Fanteria, Africa),
+    NordAfrica(Fanteria, Africa),
+    SudAfrica(Artiglieria, Africa),
+    // Asia
+    Afghanistan(Fanteria, Asia),
+    Cina(Cavalleria, Asia),
+    India(Fanteria, Asia),
+    Cita(Fanteria, Asia),
+    Giappone(Fanteria, Asia),
+    Kamchatka(Cavalleria, Asia),
+    MedioOriente(Artiglieria, Asia),
+    Mongolia(Artiglieria, Asia),
+    Siam(Artiglieria, Asia),
+    Siberia(Artiglieria, Asia),
+    Urali(Cavalleria, Asia),
+    Jacuzia(Cavalleria, Asia),
+    // Australia
+    AustraliaOrientale(Fanteria, Australia),
+    Indonesia(Cavalleria, Australia),
+    NuovaGuinea(Cavalleria, Australia),
+    AustraliaOccidentale(Artiglieria, Australia),
+    Jolly1(Jolly, null),
+    Jolly2(Jolly, null);
 
     static {
         // Nord America
@@ -70,35 +79,35 @@ public enum Territorio {
         Venezuela.Init(Brasile, Peru, AmericaCentrale);
 
         // Europa
-        GranBretagna.Init(Islanda, EuropaDelNord, Scandinavia, EuropaOccidentale);
+        GranBretagna.Init(Islanda, EuropaSettentrionale, Scandinavia, EuropaOccidentale);
         Islanda.Init(GranBretagna, Scandinavia, Groenlandia);
-        EuropaDelNord.Init(GranBretagna, Scandinavia, EuropaDelSud, Ukraina, EuropaOccidentale);
-        Scandinavia.Init(GranBretagna, Islanda, EuropaDelNord, Ukraina);
-        EuropaDelSud.Init(EuropaDelNord, Ukraina, EuropaOccidentale, NordAfrica, Egitto, MedioOriente);
-        Ukraina.Init(EuropaDelNord, Scandinavia, EuropaDelSud, Afghanistan, Urali, MedioOriente);
-        EuropaOccidentale.Init(GranBretagna, EuropaDelNord, EuropaDelSud, NordAfrica);
+        EuropaSettentrionale.Init(GranBretagna, Scandinavia, EuropaMeridionale, Ukraina, EuropaOccidentale);
+        Scandinavia.Init(GranBretagna, Islanda, EuropaSettentrionale, Ukraina);
+        EuropaMeridionale.Init(EuropaSettentrionale, Ukraina, EuropaOccidentale, NordAfrica, Egitto, MedioOriente);
+        Ukraina.Init(EuropaSettentrionale, Scandinavia, EuropaMeridionale, Afghanistan, Urali, MedioOriente);
+        EuropaOccidentale.Init(GranBretagna, EuropaSettentrionale, EuropaMeridionale, NordAfrica);
 
         // Afirca
         Congo.Init(AfricaOrientale, NordAfrica, SudAfrica);
         AfricaOrientale.Init(Congo, Egitto, Madagascar, SudAfrica, MedioOriente);
-        Egitto.Init(Congo, AfricaOrientale, NordAfrica, EuropaDelSud, MedioOriente);
+        Egitto.Init(Congo, AfricaOrientale, NordAfrica, EuropaMeridionale, MedioOriente);
         Madagascar.Init(AfricaOrientale, SudAfrica);
-        NordAfrica.Init(Congo, AfricaOrientale, Egitto, EuropaDelSud, EuropaOccidentale, Brasile);
+        NordAfrica.Init(Congo, AfricaOrientale, Egitto, EuropaMeridionale, EuropaOccidentale, Brasile);
         SudAfrica.Init(Congo, AfricaOrientale, Madagascar);
 
         // Asia
         Afghanistan.Init(Cina, India, MedioOriente, Urali, Ukraina);
         Cina.Init(Afghanistan, India, Mongolia, Siam, Siberia, Urali);
         India.Init(Afghanistan, Cina, MedioOriente, Mongolia);
-        Irkutsk.Init(Kamchatka, Mongolia, Siberia, Yakutsk);
+        Cita.Init(Kamchatka, Mongolia, Siberia, Jacuzia);
         Giappone.Init(Kamchatka, Mongolia);
-        Kamchatka.Init(Irkutsk, Giappone, Mongolia, Yakutsk, Alaska);
-        MedioOriente.Init(Afghanistan, India, AfricaOrientale, Egitto, EuropaDelSud, Ukraina);
-        Mongolia.Init(Cina, Irkutsk, Giappone, Kamchatka, Siberia);
+        Kamchatka.Init(Cita, Giappone, Mongolia, Jacuzia, Alaska);
+        MedioOriente.Init(Afghanistan, India, AfricaOrientale, Egitto, EuropaMeridionale, Ukraina);
+        Mongolia.Init(Cina, Cita, Giappone, Kamchatka, Siberia);
         Siam.Init(Cina, India, Indonesia);
-        Siberia.Init(Irkutsk, Mongolia, Urali, Yakutsk);
+        Siberia.Init(Cita, Mongolia, Urali, Jacuzia);
         Urali.Init(Afghanistan, Cina, Siberia, Ukraina);
-        Yakutsk.Init(Irkutsk, Kamchatka, Siberia);
+        Jacuzia.Init(Cita, Kamchatka, Siberia);
 
         // Australia
         AustraliaOrientale.Init(NuovaGuinea, AustraliaOccidentale);
@@ -107,29 +116,125 @@ public enum Territorio {
         AustraliaOccidentale.Init(AustraliaOrientale, Indonesia, NuovaGuinea);
     }
 
-    private Figura figura;
+    /**
+     * Figura corrispondente alla carta del territorio
+     */
+    public final Figura figura;
 
-    public Figura getFigura() { return figura; }
+    /**
+     * Continente di appartenenza del territorio
+     */
+    public final Continente continente;
 
-    private Continente continente;
-
-    public Continente getContinente() { return continente; }
-
+    /**
+     * Lista dei terrtori confinanti
+     */
     private ArrayList<Territorio> confinanti = new ArrayList<>();
+
+    /**
+     * Numero di armate presenti sul territorio
+     */
+    private int armate = 0;
+
+    /**
+     * Restituisce il numero di armate sul territorio
+     * @return Numero di armate
+     */
+    public int getArmate() { return armate; }
+
+    /**
+     * Aggiunge armate al territorio
+     *
+     * @param numero Armate da aggiungere
+     */
+    public void addArmate(int numero) { armate += numero; }
+
+    /**
+     * Rimuove armate dal territorio
+     *
+     * @param numero Armate da rimuovere
+     */
+    public void removeArmate(int numero) {
+        if(armate < numero)
+            armate = 0;
+        else
+            armate -= numero;
+    }
 
     Territorio(Figura Figura, Continente Continente) {
         this.figura = Figura;
         this.continente = Continente;
     }
 
+    /**
+     * Inizializzatore per la lista dei territori confinanti
+     *
+     * @param Territori Lista dei territori confinanti
+     */
     private void Init(Territorio... Territori) {
         int i = 0;
         while (Territori[i] != null)
             confinanti.add(Territori[i++]);
     }
 
+    /**
+     * Verifica se il territorio corrente confina col territorio richiesto
+     *
+     * @param Territorio Torritorio col quale verificare il confine
+     * @return Vero se i due territori confinano, falso altrimenti.
+     */
     public boolean confinaCon(Territorio Territorio) {
         return this.confinanti.contains(Territorio);
+    }
+
+    /**
+     * Controlla se le tre carte passate sono una combinazione valida
+     *
+     * @param Carte Terna di carte
+     * @return Vero se la combinazione è valida, falso altrimenti
+     */
+    public static boolean isCombinazione(Territorio... Carte) {
+        if(Carte.length != 3)
+            return false;
+
+        int fanteria = 0, cavalleria = 0, artiglieria = 0, jolly = 0;
+
+        // Incremento il contatore di figura a seconda delle carte
+        for (Territorio t: Carte
+             ) {
+            switch (t.figura){
+                case Fanteria:
+                    fanteria++;
+                    break;
+                case Cavalleria:
+                    cavalleria++;
+                    break;
+                case Artiglieria:
+                    artiglieria++;
+                    break;
+                case Jolly:
+                    jolly++;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Controllo se riscontro combinazioni valide
+        // Tre carte uguali
+        if(fanteria == 3 || cavalleria == 3 || artiglieria == 3)
+            return true;
+
+        // Tre carte diverse
+        if(fanteria == 1 && cavalleria == 1 && artiglieria == 1)
+            return true;
+
+        // Due carte uguali più jolly
+        if (fanteria == 2 || cavalleria == 2 || artiglieria == 2)
+            if(jolly == 1)
+                return true;
+
+        return false;
     }
 
     @Override
