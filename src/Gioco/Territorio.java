@@ -107,6 +107,9 @@ public enum Territorio {
         AustraliaOccidentale.Init(AustraliaOrientale, Indonesia, NuovaGuinea);
     }
 
+    private Figura figura;
+
+    public Figura getFigura() { return figura; }
 
     private Continente continente;
 
@@ -114,7 +117,8 @@ public enum Territorio {
 
     private ArrayList<Territorio> confinanti = new ArrayList<>();
 
-    Territorio(Continente Continente) {
+    Territorio(Figura Figura, Continente Continente) {
+        this.figura = Figura;
         this.continente = Continente;
     }
 
