@@ -1,9 +1,9 @@
 package Gioco;
 
 /**
- * Lista delle figure trovate sulle carte territorio
+ * List of possible risk cards
  */
-public enum Figura {
+public enum Card {
     Fanteria,
     Cavalleria,
     Artiglieria,

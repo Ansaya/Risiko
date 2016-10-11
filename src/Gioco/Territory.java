@@ -1,14 +1,15 @@
 package Gioco;
 
-import java.util.ArrayList;
+import java.lang.reflect.Array;
+import java.util.*;
 
-import static Gioco.Continente.*;
-import static Gioco.Figura.*;
+import static Gioco.Continent.*;
+import static Gioco.Card.*;
 
 /**
- * Carte dei territori della mappa mondiale, comprensive di due carte jolly
+ * Earth map territories' cards plus the two jolly cards
  */
-public enum Territorio {
+public enum Territory {
     // Nord America
     Alaska (Fanteria, NordAmerica),
     Alberta (Fanteria, NordAmerica),
@@ -117,100 +118,131 @@ public enum Territorio {
     }
 
     /**
-     * Figura corrispondente alla carta del territorio
+     * Territory card
      */
-    public final Figura figura;
+    public final Card card;
 
     /**
-     * Continente di appartenenza del territorio
+     * Binded continent
      */
-    public final Continente continente;
+    public final Continent continent;
 
     /**
-     * Lista dei terrtori confinanti
+     * Adjacent territories
      */
-    private ArrayList<Territorio> confinanti = new ArrayList<>();
+    private ArrayList<Territory> adjacent = new ArrayList<>();
 
     /**
-     * Numero di armate presenti sul territorio
+     * Armies placed on this territory
      */
-    private int armate = 0;
+    private int armies = 0;
 
     /**
-     * Restituisce il numero di armate sul territorio
-     * @return Numero di armate
+     * Number of armies on this territory
+     * @return Number of armies
      */
-    public int getArmate() { return armate; }
+    public int getArmies() { return armies; }
 
     /**
-     * Aggiunge armate al territorio
+     * Add armies to this territory
      *
-     * @param numero Armate da aggiungere
+     * @param toAdd Armies to add
      */
-    public void addArmate(int numero) { armate += numero; }
+    public void addArmies(int toAdd) { armies += toAdd; }
 
     /**
-     * Rimuove armate dal territorio
+     * Remove armies from this territory
      *
-     * @param numero Armate da rimuovere
+     * @param toRemove Armies to remove
      */
-    public void removeArmate(int numero) {
-        if(armate < numero)
-            armate = 0;
+    public void removeArmies(int toRemove) {
+        if(armies < toRemove)
+            armies = 0;
         else
-            armate -= numero;
+            armies -= toRemove;
     }
 
-    Territorio(Figura Figura, Continente Continente) {
-        this.figura = Figura;
-        this.continente = Continente;
+    Territory(Card Card, Continent Continent) {
+        this.card = Card;
+        this.continent = Continent;
     }
 
     /**
-     * Inizializzatore per la lista dei territori confinanti
+     * Initializer to add adjacent territories
      *
-     * @param Territori Lista dei territori confinanti
+     * @param Territories List of adjacent territories
      */
-    private void Init(Territorio... Territori) {
+    private void Init(Territory... Territories) {
         int i = 0;
-        while (Territori[i] != null)
-            confinanti.add(Territori[i++]);
+        while (Territories[i] != null)
+            adjacent.add(Territories[i++]);
+    }
+
+    private static ArrayList<Territory> deck = new ArrayList<>();
+
+    private static int index = 0;
+
+    private static int bonus = 4;
+
+    /**
+     * Reset deck to original size, index and bonus, then shuffles cards inside the deck
+     */
+    public static void deckShuffle() {
+        deck.clear();
+        deck.addAll(Arrays.asList(Territory.values()));
+        index = 0;
+        bonus = 4;
+
+        Collections.shuffle(deck, new Random(System.nanoTime()));
     }
 
     /**
-     * Verifica se il territorio corrente confina col territorio richiesto
+     * Get next card from the deck
      *
-     * @param Territorio Torritorio col quale verificare il confine
-     * @return Vero se i due territori confinano, falso altrimenti.
+     * @return Card from deck
      */
-    public boolean confinaCon(Territorio Territorio) {
-        return this.confinanti.contains(Territorio);
+    public static Territory next() {
+        if(deck.size() == 0)
+            deckShuffle();
+
+        return deck.get(index++);
     }
 
     /**
-     * Controlla se le tre carte passate sono una combinazione valida
+     * Check if this and the passed territory are adjacent
      *
-     * @param Carte Terna di carte
-     * @return Vero se la combinazione è valida, falso altrimenti
+     * @param Territory Territory to check adjoining with
+     * @return True if the two territories are adjacent, false otherwise.
      */
-    public static boolean isCombinazione(Territorio... Carte) {
-        if(Carte.length != 3)
-            return false;
+    public boolean isAdjacent(Territory Territory) {
+        return this.adjacent.contains(Territory);
+    }
 
-        int fanteria = 0, cavalleria = 0, artiglieria = 0, jolly = 0;
+    /**
+     * Check if card combination is valid
+     *
+     * @param use If combination is redeemed push cards to the bottom of current deck
+     * @param Cards Three cards list
+     * @return Number of bonus armies if combination is valid, zero otherwise
+     */
+    public static int isCombinationValid(boolean use, Territory... Cards) {
+        if(Cards.length != 3)
+            return 0;
 
-        // Incremento il contatore di figura a seconda delle carte
-        for (Territorio t: Carte
+        int infantry = 0, cavalry = 0, artillery = 0, jolly = 0;
+
+        // Increment respective counter for each card
+        for (Territory t: Cards
              ) {
-            switch (t.figura){
+            switch (t.card){
                 case Fanteria:
-                    fanteria++;
+                    infantry++;
                     break;
                 case Cavalleria:
-                    cavalleria++;
+                    cavalry++;
                     break;
                 case Artiglieria:
-                    artiglieria++;
+                    artillery++;
                     break;
                 case Jolly:
                     jolly++;
@@ -220,31 +252,35 @@ public enum Territorio {
             }
         }
 
-        // Controllo se riscontro combinazioni valide
-        // Tre carte uguali
-        if(fanteria == 3 || cavalleria == 3 || artiglieria == 3)
-            return true;
+        int armies = 0;
 
-        // Tre carte diverse
-        if(fanteria == 1 && cavalleria == 1 && artiglieria == 1)
-            return true;
+        // Check for valid combinations
+        // Three same cards         Two same cards plus jolly       Three different cards
+        if(infantry == 3 || cavalry == 3 || artillery == 3 || (infantry == 1 && cavalry == 1 && artillery == 1) ||
+                ((infantry == 2 || cavalry == 2 || artillery == 2) && jolly == 1)) {
+            armies = bonus;
 
-        // Due carte uguali più jolly
-        if (fanteria == 2 || cavalleria == 2 || artiglieria == 2)
-            if(jolly == 1)
-                return true;
+            // If player redeems combination
+            if(use) {
+                // Increment bonus armies
+                bonus += 2;
 
-        return false;
+                // Add redeemed cards to the end of the deck
+                deck.addAll(deck.size() - 1, Arrays.asList(Cards));
+            }
+        }
+
+        return armies;
     }
 
     @Override
     public String toString() {
-        String[] parti = this.name().split("(?=[A-Z])");
-        String nome = parti[0];
-        for (int i = parti.length; i > 0 ; i--) {
-            nome += " " + parti;
+        String[] words = this.name().split("(?=[A-Z])");
+        String name = words[0];
+        for (int i = 1; i < words.length ; i++) {
+            name += " " + words[i];
         }
 
-        return nome;
+        return name;
     }
 }

@@ -4,49 +4,74 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 /**
- * Created by fiore on 10/10/2016.
+ * Main controller to manage matches and user lobby
  */
-public class GameController {
+public class GameController implements Runnable {
 
-    private static GameController _istanza = new GameController();
+    private static GameController _instance = new GameController();
 
-    public static GameController getInstance() { return _istanza; }
+    public static GameController getInstance() { return _instance; }
 
     /**
-     * Lista delle partite in corso
+     * Currently playing matches' list
      */
-    private ArrayList<Partita> partite = new ArrayList<>();
+    private ArrayList<Match> matches = new ArrayList<>();
 
     /**
-     * Restituisce la lista delle partite attualmente in corso
+     * List of currently opened matches
      *
-     * @return Lista di partite
+     * @return Matches' list
      */
-    public ArrayList<Partita> getPartite() { return partite; }
+    public ArrayList<Match> getMatches() { return matches; }
 
     /**
-     * Restituisce la partita con l'id richiesto
+     * Return requested match
      *
-     * @param IdPartita Id della partita richiesta
-     * @return Partita con l'id cercato
+     * @param MatchId Match's id
+     * @return Match with corresponding id. Null if id isn't found
      */
-    public Partita getPartita(int IdPartita) {
-        for (Partita p: partite
+    public Match getMatch(int MatchId) {
+        for (Match p: matches
              ) {
-            if(p.getId() == IdPartita)
+            if(p.getId() == MatchId)
                 return p;
         }
 
         return null;
     }
 
-    private ArrayList<Utente> lobby = new ArrayList<>();
+    /**
+     * Users waiting to play
+     */
+    private ArrayList<User> lobby = new ArrayList<>();
+
+    private Thread _thread = null;
 
     public GameController() {
 
     }
 
-    public void addUtente(Socket Connessione) {
-        lobby.add(new Utente(Connessione));
+    /**
+     * Add a new user to the lobby
+     *
+     * @param Connection Connection relative to the user
+     */
+    public void addUser(Socket Connection) {
+
+        lobby.add(new User(Connection));
+    }
+
+    /**
+     * Starts a new match with passed users
+     *
+     * @param Users User to add to new match
+     */
+    public void newMatch(User... Users) {
+        matches.add(new Match(Users));
+    }
+
+    @Override
+    public void run() {
+
     }
 }

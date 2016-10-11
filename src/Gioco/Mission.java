@@ -3,12 +3,12 @@ package Gioco;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static Gioco.Continente.*;
+import static Gioco.Continent.*;
 
 /**
  * Lista di obiettivi relativi alla mappa mondiale
  */
-public enum Obiettivo {
+public enum Mission {
     EuropaAustraliaContinente(""),
     EuropaSudAmericaContinente(""),
     NordAmericaAfrica(""),
@@ -24,13 +24,13 @@ public enum Obiettivo {
     DistruggiArmataNERO(""),
     DistruggiArmataROSA("");
 
-    private static Obiettivo[] correnti = Obiettivo.values();
+    private static Mission[] correnti = Mission.values();
 
     private String descrizione;
 
     public String getDescrizione() { return descrizione; }
 
-    Obiettivo(String Descrizione) {
+    Mission(String Descrizione) {
         this.descrizione = Descrizione;
     }
 
@@ -38,14 +38,14 @@ public enum Obiettivo {
     /**
      * Restituisce un obiettivo da assegnare a un giocatore per la partita
      *
-     * @return Obiettivo dalla lista
+     * @return Mission dalla lista
      */
-    public Obiettivo next() {
+    public Mission next() {
         Random r = new Random();
         int index = r.nextInt(9);
         if(correnti[index] != null) {
             correnti[index] = null;
-            return Obiettivo.values()[index];
+            return Mission.values()[index];
         }
 
         return next();
@@ -55,28 +55,28 @@ public enum Obiettivo {
      * Reimposta la distribuzione degli obiettivi
      */
     public void restart() {
-        correnti = Obiettivo.values();
+        correnti = Mission.values();
     }
 
     /**
      * Controlla se il giocatore ha raggiunto l'obiettivo assegnato per la vittoria
      *
-     * @param Giocatore Giocatore per il quale controllare l'obiettivo
+     * @param Player Player per il quale controllare l'obiettivo
      * @return Vero se l'obiettiov è completato, falso altrimenti
      */
-    public boolean Completato(Giocatore Giocatore) {
+    public boolean Completato(Player Player) {
         String obiettivo = this.name();
 
         // Se l'obiettivo è distruggere un'armate cerco tra i giocatori se esiste ancora il colore
         // I problemi di armata distrutta da un altro giocatore o colore uguale a quello del giocatere sono già gestiti da game controller e scontro
         if(obiettivo.contains("DistruggiArmata")){
-            Colore colore = Colore.valueOf(obiettivo.substring(15));
-            Partita partita = GameController.getInstance().getPartita(Giocatore.getIdPartita());
-            ArrayList<Giocatore> giocatori = partita.getGiocatori();
+            Color color = Color.valueOf(obiettivo.substring(15));
+            Match match = GameController.getInstance().getPartita(Player.getIdPartita());
+            ArrayList<Player> giocatori = match.getGiocatori();
 
-            for (Giocatore g: giocatori
+            for (Player g: giocatori
                  ) {
-                if(g.getColore() == colore)
+                if(g.getColor() == color)
                     return false;
             }
 
@@ -88,7 +88,7 @@ public enum Obiettivo {
             int numero = Integer.valueOf(obiettivo.substring(9, 10));
 
             // Acquisisco i territori del giocatore
-            ArrayList<Territorio> territori = Giocatore.getTerritori();
+            ArrayList<Territory> territori = Player.getTerritori();
 
             if(numero == 24)
                 return territori.size() >= 24;
@@ -97,7 +97,7 @@ public enum Obiettivo {
                 return false;
 
             // Se il numero è 18 devo avere due armate per ogni territorio
-            for (Territorio t: territori
+            for (Territory t: territori
                  ) {
                 if(t.getArmate() < 2)
                     return false;
@@ -105,7 +105,7 @@ public enum Obiettivo {
             return true;
         }
 
-        ArrayList<Continente> controllati = Continente.continentiControllati(Giocatore.getTerritori());
+        ArrayList<Continent> controllati = Continent.continentiControllati(Player.getTerritori());
         if (controllati.size() > 1)
             switch (this) {
                 case NordAmericaAfrica:

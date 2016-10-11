@@ -2,12 +2,12 @@ package Gioco;
 
 import java.util.ArrayList;
 
-import static Gioco.Territorio.*;
+import static Gioco.Territory.*;
 
 /**
- * Lista dei contineti della mappa mondiale
+ * Continents' list from earth map
  */
-public enum Continente {
+public enum Continent {
     NordAmerica(Alaska, Alberta, AmericaCentrale, StatiUnitiOccidentali, Groenlandia, TerritoriDelNordOvest, Ontario, Quebec, StatiUnitiOrientali),
     SudAmerica(Argentina, Brasile, Peru, Venezuela),
     Europa(GranBretagna, Islanda, EuropaSettentrionale, Scandinavia, EuropaMeridionale, Ukraina, EuropaOccidentale),
@@ -16,32 +16,32 @@ public enum Continente {
     Australia(AustraliaOrientale, Indonesia, NuovaGuinea, AustraliaOccidentale);
 
     /**
-     * Territori appartenenti al continente
+     * Continent's territories
      */
-    private ArrayList<Territorio> territori = new ArrayList<>();
+    private ArrayList<Territory> territories = new ArrayList<>();
 
-    Continente(Territorio... Territori) {
-        for (Territorio t: Territori
+    Continent(Territory... Territories) {
+        for (Territory t: Territories
              ) {
-            this.territori.add(t);
+            this.territories.add(t);
         }
     }
 
     /**
-     * Controlla se i territori passati comprendono interi continenti per assegnare armate bonus al giocatore
+     * Check if passed territories list contains complete continent to assign bonus armies
      *
-     * @param Territori Territori del giocatore
-     * @return int Numero di armate bonus disponibili
+     * @param Territories Player's territories
+     * @return int Bonus armies to be assigned
      */
-    public static int armateBonus(ArrayList<Territorio> Territori) {
+    public static int bonusArmies(ArrayList<Territory> Territories) {
 
-        // Lista dei continenti completi presenti nell'array territori
-        ArrayList<Continente> controllati = continentiControllati(Territori);
+        // Complete continents' list in the Territories array
+        ArrayList<Continent> dominated = dominatedContinents(Territories);
 
         int bonus = 0;
 
-        // Se sono presenti tutti i territori di un continente assegno le armate bonus
-        for (Continente c: controllati
+        // If complete continents are present, assign bonus armies
+        for (Continent c: dominated
              ) {
             switch (c){
                 case NordAmerica:
@@ -67,24 +67,22 @@ public enum Continente {
             }
         }
 
-
-
         return bonus;
     }
 
     /**
-     * Controlla se nei territori passati sono presenti interi continenti
+     * Check if passed territories list contains complete continents
      *
-     * @param Territori Territori del giocatore
-     * @return Lista dei continenti completi presenti nella lista
+     * @param Territories Player's territories
+     * @return List of complete continents
      */
-    public static ArrayList<Continente> continentiControllati(ArrayList<Territorio> Territori) {
+    public static ArrayList<Continent> dominatedContinents(ArrayList<Territory> Territories) {
         int nordAmerica = 0, sudAmerica = 0, europa = 0, africa = 0, asia = 0, australia = 0;
 
-        // Incremento il contatore corrispondente alla nazione di ogni territorio
-        for (Territorio t:Territori
+        // Increment continent counter for each territory in the array
+        for (Territory t:Territories
                 ) {
-            switch (t.continente){
+            switch (t.continent){
                 case NordAmerica:
                     nordAmerica++;
                     break;
@@ -108,33 +106,33 @@ public enum Continente {
             }
         }
 
-        ArrayList<Continente> controllati = new ArrayList<>();
+        ArrayList<Continent> dominated = new ArrayList<>();
 
-        // Se sono presenti tutti i territori di un continente assegno le armate bonus
+        // If all territories are present add continent to the output array
         if(nordAmerica == 9)
-            controllati.add(NordAmerica);
+            dominated.add(NordAmerica);
         if (sudAmerica == 4)
-            controllati.add(SudAmerica);
+            dominated.add(SudAmerica);
         if (europa == 7)
-            controllati.add(Europa);
+            dominated.add(Europa);
         if (africa == 6)
-            controllati.add(Africa);
+            dominated.add(Africa);
         if (asia == 12)
-            controllati.add(Asia);
+            dominated.add(Asia);
         if (australia == 4)
-            controllati.add(Australia);
+            dominated.add(Australia);
 
-        return controllati;
+        return dominated;
     }
 
     @Override
     public String toString() {
-        String[] parti = this.name().split("(?=[A-Z])");
-        String nome = parti[0];
-        for (int i = parti.length; i > 0 ; i--) {
-            nome += " " + parti;
+        String[] words = this.name().split("(?=[A-Z])");
+        String name = words[0];
+        for (int i = 1; i < words.length ; i++) {
+            name += " " + words[i];
         }
 
-        return nome;
+        return name;
     }
 }
