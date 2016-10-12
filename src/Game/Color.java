@@ -1,7 +1,7 @@
-package Gioco;
+package Game;
 
 /**
- * Created by fiore on 10/10/2016.
+ * Armies color list
  */
 public enum Color {
     ROSSO,
@@ -14,14 +14,14 @@ public enum Color {
     private static int index = 0;
 
     /**
-     * Restituisce un colore tra quelli disponibili da assegnare a un giocatore
+     * Get a color to assign to a player
      *
-     * @return Color dalla sequenza
-     * @throws IndexOutOfBoundsException Se si richiedono più di 6 colori
+     * @return Color from sequence
+     * @throws IndexOutOfBoundsException If more than six colors are requested
      */
     public static Color next() throws IndexOutOfBoundsException {
         if(index >= 6)
-            throw new IndexOutOfBoundsException("I colori sono solo 6.");
+            throw new IndexOutOfBoundsException("Only six colors here.");
 
         return Color.values()[index++];
     }

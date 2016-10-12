@@ -1,10 +1,9 @@
-package Gioco;
+package Game;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
-import static Gioco.Continent.*;
-import static Gioco.Card.*;
+import static Game.Continent.*;
+import static Game.Card.*;
 
 /**
  * Earth map territories' cards plus the two jolly cards

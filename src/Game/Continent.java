@@ -1,8 +1,8 @@
-package Gioco;
+package Game;
 
 import java.util.ArrayList;
 
-import static Gioco.Territory.*;
+import static Game.Territory.*;
 
 /**
  * Continents' list from earth map

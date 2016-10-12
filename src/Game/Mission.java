@@ -1,9 +1,9 @@
-package Gioco;
+package Game;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-import static Gioco.Continent.*;
+import static Game.Continent.*;
 
 /**
  * Lista di obiettivi relativi alla mappa mondiale

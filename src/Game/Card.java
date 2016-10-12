@@ -1,4 +1,4 @@
-package Gioco;
+package Game;
 
 /**
  * List of possible risk cards
