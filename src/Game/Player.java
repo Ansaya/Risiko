@@ -27,7 +27,7 @@ public class Player {
      * User name chosen from the user
      * @return User name
      */
-    public String getName() { return user.getNome(); }
+    public String getName() { return user.getName(); }
 
     private Color color;
 
@@ -42,7 +42,7 @@ public class Player {
      * List of dominated user's territories
      * @return Territories' list
      */
-    public ArrayList<Territory> getTerritori() { return (ArrayList<Territory>)territories.clone(); }
+    public ArrayList<Territory> getTerritories() { return (ArrayList<Territory>)territories.clone(); }
 
     /**
      * Player's mission

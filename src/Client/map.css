@@ -1,0 +1,59 @@
+.mapContainer {
+    -fx-background-color: aquamarine;
+    /*-fx-padding: -100px, 0, 0, -100px;*/
+    -fx-scale-shape: false;
+}
+
+.territory {
+    -fx-stroke: black;
+    -fx-stroke-width: 1px;
+}
+
+.northAmerica {
+    -fx-fill: yellow;
+}
+
+.northAmerica:hover {
+    -fx-fill: #d5d500;
+}
+
+.southAmerica {
+    -fx-fill: brown;
+}
+
+.southAmerica:hover {
+    -fx-fill: #852a2a;
+}
+
+.europe {
+    -fx-fill: cornflowerblue;
+}
+
+.europe:hover {
+    -fx-fill: #627ed5;
+}
+
+.africa {
+    -fx-fill: darkgoldenrod;
+}
+
+.africa:hover {
+    -fx-fill: #a7770b;
+}
+
+.asia {
+    -fx-fill: darkolivegreen;
+}
+
+.asia:hover {
+    -fx-fill: #445b2d;
+}
+
+.australia {
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.15), 2, 0.6, 0, 0);
+    -fx-fill: blueviolet;
+}
+
+.australia:hover {
+    -fx-fill: #631b9c;
+}

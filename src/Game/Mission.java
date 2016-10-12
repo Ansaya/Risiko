@@ -1,12 +1,14 @@
 package Game;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 
 import static Game.Continent.*;
 
 /**
- * Lista di obiettivi relativi alla mappa mondiale
+ * List of missions for earth map
  */
 public enum Mission {
     EuropaAustraliaContinente(""),
@@ -24,57 +26,63 @@ public enum Mission {
     DistruggiArmataNERO(""),
     DistruggiArmataROSA("");
 
-    private static Mission[] correnti = Mission.values();
+    private static ArrayList<Mission> deck = new ArrayList<>(Arrays.asList(Mission.values()));
 
-    private String descrizione;
+    private String description;
 
-    public String getDescrizione() { return descrizione; }
+    public String getDescription() { return description; }
 
-    Mission(String Descrizione) {
-        this.descrizione = Descrizione;
+    Mission(String Description) {
+        this.description = Description;
     }
 
 
     /**
-     * Restituisce un obiettivo da assegnare a un giocatore per la partita
+     * Get a mission to be assigned to a player
      *
-     * @return Mission dalla lista
+     * @return Mission from deck.
      */
     public Mission next() {
-        Random r = new Random();
-        int index = r.nextInt(9);
-        if(correnti[index] != null) {
-            correnti[index] = null;
-            return Mission.values()[index];
-        }
 
-        return next();
+        if (deck.size() < 0)
+            reset();
+
+        Mission raised = deck.get(0);
+        deck.remove(0);
+
+        return raised;
     }
 
     /**
-     * Reimposta la distribuzione degli obiettivi
+     * Reset and shuffle missions' deck
      */
-    public void restart() {
-        correnti = Mission.values();
+    public void reset() {
+        deck = new ArrayList<>(Arrays.asList(Mission.values()));
+
+        Collections.shuffle(deck, new Random(System.nanoTime()));
     }
 
     /**
-     * Controlla se il giocatore ha raggiunto l'obiettivo assegnato per la vittoria
+     * Check if player has completed his mission
      *
-     * @param Player Player per il quale controllare l'obiettivo
-     * @return Vero se l'obiettiov è completato, falso altrimenti
+     * @param Player Player to check mission for
+     * @return True if mission is accomplished, false otherwise.
      */
-    public boolean Completato(Player Player) {
-        String obiettivo = this.name();
+    public boolean Completed(Player Player) {
+        String mission = this.name();
 
-        // Se l'obiettivo è distruggere un'armate cerco tra i giocatori se esiste ancora il colore
-        // I problemi di armata distrutta da un altro giocatore o colore uguale a quello del giocatere sono già gestiti da game controller e scontro
-        if(obiettivo.contains("DistruggiArmata")){
-            Color color = Color.valueOf(obiettivo.substring(15));
-            Match match = GameController.getInstance().getPartita(Player.getIdPartita());
-            ArrayList<Player> giocatori = match.getGiocatori();
+        // If mission is to destroy all armies of one color search inside match's players if color is still present
+        // Armies already been destroyed problem is managed from battle class and armies color same as current player is handled in setup phase
+        if(mission.contains("DistruggiArmata")){
+            // Get armies' color
+            Color color = Color.valueOf(mission.substring(15));
 
-            for (Player g: giocatori
+            // Get all players from the match
+            Match match = GameController.getInstance().getMatch(Player.getMathcId());
+            ArrayList<Player> players = match.getPlayers();
+
+            // Check on all players (Check is performed on current player too, but it won't affect result)
+            for (Player g: players
                  ) {
                 if(g.getColor() == color)
                     return false;
@@ -83,45 +91,46 @@ public enum Mission {
             return true;
         }
 
-        if(obiettivo.contains("Territori")){
-            // Rilevo il numero di territori
-            int numero = Integer.valueOf(obiettivo.substring(9, 10));
+        if(mission.contains("Territori")){
+            // Get territories number
+            int numero = Integer.valueOf(mission.substring(9, 10));
 
-            // Acquisisco i territori del giocatore
-            ArrayList<Territory> territori = Player.getTerritori();
+            // Get player's territories
+            ArrayList<Territory> territories = Player.getTerritories();
 
             if(numero == 24)
-                return territori.size() >= 24;
+                return territories.size() >= 24;
 
-            if(territori.size() < 18)
+            if(territories.size() < 18)
                 return false;
 
-            // Se il numero è 18 devo avere due armate per ogni territorio
-            for (Territory t: territori
+            // If mission is 18 territories, player need to place at least two armies on each
+            for (Territory t: territories
                  ) {
-                if(t.getArmate() < 2)
+                if(t.getArmies() < 2)
                     return false;
             }
             return true;
         }
 
-        ArrayList<Continent> controllati = Continent.continentiControllati(Player.getTerritori());
-        if (controllati.size() > 1)
+        // Check for common missions
+        ArrayList<Continent> dominated = Continent.dominatedContinents(Player.getTerritories());
+        if (dominated.size() > 1)
             switch (this) {
                 case NordAmericaAfrica:
-                    if(controllati.contains(NordAmerica) &&controllati.contains(Africa))
+                    if(dominated.contains(NordAmerica) &&dominated.contains(Africa))
                             return true;
                     break;
                 case NordAmericaAustralia:
-                    if(controllati.contains(NordAmerica) && controllati.contains(Australia))
+                    if(dominated.contains(NordAmerica) && dominated.contains(Australia))
                         return true;
                     break;
                 case AsiaAfrica:
-                    if (controllati.contains(Asia) && controllati.contains(Africa))
+                    if (dominated.contains(Asia) && dominated.contains(Africa))
                         return true;
                     break;
                 case AsiaSudAmerica:
-                    if (controllati.contains(Asia) && controllati.contains(SudAmerica))
+                    if (dominated.contains(Asia) && dominated.contains(SudAmerica))
                         return true;
                     break;
                 default:
@@ -130,14 +139,14 @@ public enum Mission {
         else
             return false;
 
-        if (controllati.size() > 2)
+        if (dominated.size() > 2)
             switch (this) {
                 case EuropaAustraliaContinente:
-                    if(controllati.contains(Europa) && controllati.contains(Australia))
+                    if(dominated.contains(Europa) && dominated.contains(Australia))
                         return true;
                     break;
                 case EuropaSudAmericaContinente:
-                    if (controllati.contains(Europa) && controllati.contains(SudAmerica))
+                    if (dominated.contains(Europa) && dominated.contains(SudAmerica))
                         return true;
                     break;
                 default:
