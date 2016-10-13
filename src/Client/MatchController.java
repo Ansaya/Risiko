@@ -8,13 +8,17 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
+import javafx.scene.transform.Scale;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
@@ -31,48 +35,56 @@ public class MatchController implements Initializable {
     public AnchorPane worldMap;
 
     @FXML
-    public Text testo;
+    public Pane mapPane;
+
+    @FXML
+    public Label label;
+
+    private ArrayList<Node> territories = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        testo.textProperty().bind(worldMap.widthProperty().asString().concat(" X ").concat(worldMap.heightProperty()));
 
+        worldMap.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
+            double containerRatio = (double) newValue / worldMap.getHeight();
 
-        worldMap.getChildren().forEach((c) -> {
-            /*
-            if((c instanceof Group)){
-                worldMap.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-                    double containerRatio = (double) newValue / worldMap.getHeight();
-                    c.prefWidth((double) newValue);
-                    if(containerRatio < mapRatio)
-                        AnchorPane.setLeftAnchor(c, (double)newValue * 20.0f / 72.5f);
-                });
-                worldMap.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-                    double containerRatio = (double) newValue / worldMap.getHeight();
-                    c.prefHeight((double)newValue);
-                    if(containerRatio > mapRatio)
-                        AnchorPane.setTopAnchor(c, (double)newValue * 20.0f / 48.0f );
-                });
-            }*/
+            if(containerRatio < mapRatio){
+                Scale newScale = new Scale();
+                double scaleValue = (double) newValue / 725.0f;
+                newScale.setPivotX(0);
+                newScale.setPivotY(0);
+                newScale.setX(scaleValue);
+                newScale.setY(scaleValue);
 
-            worldMap.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-                double containerRatio = (double) newValue / worldMap.getHeight();
+                mapPane.getTransforms().clear();
+                mapPane.getTransforms().add(newScale);
 
-                if(containerRatio < mapRatio) {
-                    c.setScaleX((double) newValue / 725.0f);
-                    c.setScaleY(c.getScaleX());
-                }
-            });
+                AnchorPane.setLeftAnchor(mapPane, -180.0f * scaleValue);
+                AnchorPane.setTopAnchor(mapPane, -130.0f * scaleValue);
+            }
 
-            worldMap.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-                double containerRatio = worldMap.getWidth() / (double)newValue;
+        });
+        worldMap.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
+            double containerRatio = (double) newValue / worldMap.getHeight();
 
-                if(containerRatio > mapRatio) {
-                    c.setScaleY((double) newValue / 480.0f);
-                    c.setScaleX(c.getScaleY());
-                }
-            });
+            if(containerRatio > mapRatio) {
+                Scale newScale = new Scale();
+                double scaleValue = (double) newValue / 480.0f;
+                newScale.setPivotX(0);
+                newScale.setPivotY(0);
+                newScale.setX(scaleValue);
+                newScale.setY(scaleValue);
 
+                mapPane.getTransforms().clear();
+                mapPane.getTransforms().add(newScale);
+
+                AnchorPane.setLeftAnchor(mapPane, -180.0f * scaleValue);
+                AnchorPane.setTopAnchor(mapPane, -130.0f * scaleValue);
+            }
+        });
+
+        mapPane.getChildren().forEach((c) -> {
+            territories.add(c);
             c.addEventHandler(MouseEvent.MOUSE_PRESSED, new TerritoryClick());
         });
     }
@@ -80,9 +92,14 @@ public class MatchController implements Initializable {
     private class TerritoryClick implements EventHandler<Event> {
 
         public void handle(Event evt) {
-            SVGPath sender = (SVGPath) evt.getTarget();
+            Node sender = (Node) evt.getTarget();
+
+            territories.forEach((t) -> t.getStyleClass().remove("selected"));
+
+            sender.getStyleClass().add("selected");
 
             System.out.println(sender.getId());
+            System.out.println(sender.getStyleClass());
         }
     }
 }
