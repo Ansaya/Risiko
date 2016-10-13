@@ -26,40 +26,12 @@ public enum Mission {
     DistruggiArmataNERO(""),
     DistruggiArmataROSA("");
 
-    private static ArrayList<Mission> deck = new ArrayList<>(Arrays.asList(Mission.values()));
-
     private String description;
 
     public String getDescription() { return description; }
 
     Mission(String Description) {
         this.description = Description;
-    }
-
-
-    /**
-     * Get a mission to be assigned to a player
-     *
-     * @return Mission from deck.
-     */
-    public Mission next() {
-
-        if (deck.size() < 0)
-            reset();
-
-        Mission raised = deck.get(0);
-        deck.remove(0);
-
-        return raised;
-    }
-
-    /**
-     * Reset and shuffle missions' deck
-     */
-    public void reset() {
-        deck = new ArrayList<>(Arrays.asList(Mission.values()));
-
-        Collections.shuffle(deck, new Random(System.nanoTime()));
     }
 
     /**

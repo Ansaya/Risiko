@@ -1,7 +1,6 @@
 package Server;
 
-import Game.ConnectionHandler;
-import Game.GameController;
+import Game.*;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

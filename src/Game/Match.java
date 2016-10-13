@@ -32,6 +32,11 @@ public class Match implements Runnable {
     public ArrayList<Player> getPlayers() { return players; }
 
     /**
+     * Game map
+     */
+    private Map gameMap = new Map();
+
+    /**
      * Match's thread
      */
     private Thread _instance;
@@ -60,6 +65,13 @@ public class Match implements Runnable {
 
     @Override
     public void run() {
+
+    }
+
+    /**
+     * Takes care of initial armies distribution and territories choosing turns
+     */
+    private void Setup() {
 
     }
 }
