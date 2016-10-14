@@ -9,9 +9,11 @@ public class User implements Runnable {
 
     private int id;
 
+    public int getId() { return this.id; }
+
     private String name;
 
-    public String getName() { return name;}
+    public String getName() { return this.name;}
 
     private Socket connection;
 
@@ -24,7 +26,7 @@ public class User implements Runnable {
         this.connection = Connection;
 
         this._instance = new Thread(this);
-        _instance.start();
+        this._instance.start();
     }
 
     @Override

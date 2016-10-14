@@ -1,4 +1,4 @@
-package Game;
+package Game.Map;
 
 /**
  * Represents a deck of cards

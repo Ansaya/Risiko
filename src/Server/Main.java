@@ -1,6 +1,7 @@
 package Server;
 
 import Game.*;
+import Game.Connection.ConnectionHandler;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -20,9 +21,11 @@ public class Main extends Application {
 
     public static void main(String[] args) {
 
-        GameController gc = GameController.getInstance();
-        ConnectionHandler ch = new ConnectionHandler(5757);
-        ch.Listen();
+        //GameController gc = GameController.getInstance();
+        //ConnectionHandler ch = new ConnectionHandler(5757);
+        //ch.Listen();
+
+
 
         launch(args);
     }

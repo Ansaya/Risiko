@@ -1,8 +1,8 @@
-package Game;
+package Game.Map;
 
 import java.util.ArrayList;
 
-import static Game.Territories.*;
+import static Game.Map.Territories.*;
 
 /**
  * Continents' list from earth map
@@ -21,7 +21,7 @@ public enum Continent {
     private ArrayList<Territories> territories = new ArrayList<>();
 
     Continent(Territories... Territories) {
-        for (Game.Territories t: Territories
+        for (Game.Map.Territories t: Territories
              ) {
             this.territories.add(t);
         }
@@ -80,7 +80,7 @@ public enum Continent {
         int nordAmerica = 0, sudAmerica = 0, europa = 0, africa = 0, asia = 0, australia = 0;
 
         // Increment continent counter for each territory in the array
-        for (Game.Territory t: Territories
+        for (Territory t: Territories
                 ) {
             switch (t.getTerritory().continent){
                 case NordAmerica:

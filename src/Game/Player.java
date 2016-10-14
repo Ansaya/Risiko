@@ -1,5 +1,8 @@
 package Game;
 
+import Game.Map.Mission;
+import Game.Map.Territory;
+
 import java.util.ArrayList;
 
 /**
@@ -7,28 +10,30 @@ import java.util.ArrayList;
  */
 public class Player {
 
+    public int getId() { return user.getId(); }
+
     /**
-     * Player id given from match object
+     * Id of match the player is inside
      */
-    private int id;
-
-    public int getId() { return id; }
-
     private int matchId;
 
     public int getMathcId() { return matchId; }
 
     /**
-     * User binded to this player
+     * User bounded to this player
      */
     private User user;
 
     /**
      * User name chosen from the user
+     *
      * @return User name
      */
     public String getName() { return user.getName(); }
 
+    /**
+     * Color assigned for the match
+     */
     private Color color;
 
     public Color getColor() { return color; }
@@ -38,10 +43,6 @@ public class Player {
      */
     private ArrayList<Territory> territories = new ArrayList<>();
 
-    /**
-     * List of dominated user's territories
-     * @return Territories' list
-     */
     public ArrayList<Territory> getTerritories() { return (ArrayList<Territory>)territories.clone(); }
 
     /**
@@ -49,27 +50,9 @@ public class Player {
      */
     private Mission mission;
 
-    /**
-     * Get player's mission
-     * @return Player's mission
-     */
     public Mission getMission() { return mission; }
 
-    /**
-     * Player's armies still to be placed
-     */
-    private int armies = 0;
-
-    /**
-     * Armies still to be placed on the map
-     * @return Number of armies
-     */
-    public int getArmies() { return armies; }
-
-    private static int counter = 0;
-
     public Player(User User, Color Color, int MatchId) {
-        this.id = counter++;
         this.matchId = MatchId;
         this.user = User;
         this.color = Color;

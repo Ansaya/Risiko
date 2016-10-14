@@ -1,11 +1,10 @@
-package Game;
+package Game.Map;
+
+import Game.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Random;
 
-import static Game.Continent.*;
+import static Game.Map.Continent.*;
 
 /**
  * List of missions for earth map

@@ -1,4 +1,6 @@
-package Game;
+package Game.Connection;
+
+import Game.GameController;
 
 import java.io.IOException;
 import java.net.ServerSocket;

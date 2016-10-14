@@ -1,4 +1,4 @@
-package Game;
+package Game.Map;
 
 /**
  * List of possible risk cards

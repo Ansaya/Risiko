@@ -16,6 +16,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
+import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,19 +27,23 @@ import java.util.ResourceBundle;
  */
 public class MatchController implements Initializable {
 
+    private Stage window;
+
+    public void setStage(Stage Stage) { this.window = Stage; }
+
     private double mapRatio = 725.0f / 480.0f;
 
     @FXML
-    public AnchorPane page;
+    protected AnchorPane page;
 
     @FXML
-    public AnchorPane worldMap;
+    protected AnchorPane worldMap;
 
     @FXML
-    public Pane mapPane;
+    protected Pane mapPane;
 
     @FXML
-    public Label label;
+    protected Label label;
 
     private ArrayList<Node> territories = new ArrayList<>();
 

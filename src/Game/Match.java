@@ -1,5 +1,7 @@
 package Game;
 
+import Game.Map.Map;
+
 import java.util.ArrayList;
 
 /**

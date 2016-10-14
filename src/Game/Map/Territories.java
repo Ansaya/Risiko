@@ -1,9 +1,9 @@
-package Game;
+package Game.Map;
 
 import java.util.*;
 
-import static Game.Continent.*;
-import static Game.Card.*;
+import static Game.Map.Continent.*;
+import static Game.Map.Card.*;
 
 /**
  * Earth map territories' cards plus the two jolly cards
@@ -142,7 +142,7 @@ public enum Territories {
      * @param Territories List of adjacent territories
      */
     private void Init(Territories... Territories) {
-        for (Game.Territories t: Territories
+        for (Game.Map.Territories t: Territories
              ) {
             adjacent.add(t);
         }
