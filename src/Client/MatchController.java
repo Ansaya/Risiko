@@ -70,7 +70,7 @@ public class MatchController implements Initializable {
 
         });
         worldMap.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-            double containerRatio = (double) newValue / worldMap.getHeight();
+            double containerRatio = worldMap.getWidth() / (double) newValue;
 
             if(containerRatio > mapRatio) {
                 Scale newScale = new Scale();

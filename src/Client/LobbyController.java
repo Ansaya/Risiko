@@ -48,7 +48,7 @@ public class LobbyController implements Initializable {
             newMatch.setStage(window);
 
             window.setTitle("Risiko - Match");
-            window.setScene(new Scene(root));
+            window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
             window.show();
         }
     }

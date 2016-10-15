@@ -17,11 +17,8 @@ public class Main extends Application {
         login.setStage(primaryStage);
 
         primaryStage.setTitle("Risiko - Login");
-        primaryStage.setMinHeight(600);
-        primaryStage.setMinWidth(800);
-        primaryStage.setMaxHeight(1080);
-        primaryStage.setMaxWidth(1920);
-        primaryStage.setScene(new Scene(root, 800, 600));
+        primaryStage.setScene(new Scene(root, 250, 300));
+        primaryStage.setResizable(false);
         primaryStage.show();
     }
 

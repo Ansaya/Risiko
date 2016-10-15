@@ -51,7 +51,12 @@ public class LoginController implements Initializable {
             lobby.setStage(window);
 
             window.setTitle("Risiko - Lobby");
-            window.setScene(new Scene(root));
+            window.setScene(new Scene(root, 1366, 768));
+            window.setX(window.getX() - 538);
+            window.setY(window.getY() - 125);
+            window.setMinWidth(1067);
+            window.setMinHeight(600);
+            window.setResizable(true);
             window.show();
         }
     }
