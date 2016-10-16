@@ -1,12 +1,14 @@
 package Game;
 
+import Game.Connection.MessageType;
+
 import java.net.Socket;
 import java.util.ArrayList;
 
 /**
  * Main controller to manage matches and user lobby
  */
-public class GameController implements Runnable {
+public class GameController extends MessageReceiver implements Runnable {
 
     private static GameController _instance = new GameController();
 
@@ -43,7 +45,7 @@ public class GameController implements Runnable {
     /**
      * Users waiting to play
      */
-    private ArrayList<User> lobby = new ArrayList<>();
+    private ArrayList<Player> lobby = new ArrayList<>();
 
     private Thread _thread = null;
 
@@ -56,22 +58,28 @@ public class GameController implements Runnable {
      *
      * @param Connection Connection relative to the user
      */
-    public void addUser(Socket Connection) {
+    public void addPlayer(Socket Connection) {
 
-        lobby.add(new User(Connection));
+        lobby.add(new Player(Connection));
     }
 
     /**
      * Starts a new match with passed users
      *
-     * @param Users User to add to new match
+     * @param Players Players to add to new match
      */
-    public void newMatch(User... Users) {
-        matches.add(new Match(Users));
+    public void newMatch(Player... Players) {
+        matches.add(new Match(Players));
     }
+
+    /**
+     * Removes ended match from list
+     *
+     * @param MatchId Match to remove
+     */
+    protected void endMatch(int MatchId) { matches.remove(getMatch(MatchId)); }
 
     @Override
     public void run() {
-
     }
 }

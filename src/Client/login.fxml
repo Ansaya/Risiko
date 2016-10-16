@@ -19,7 +19,7 @@
                <Insets bottom="10.0" />
             </VBox.margin>
          </Label>
-         <JFXTextField alignment="BASELINE_CENTER" minWidth="196.0" prefWidth="196.0" promptText="Write your username here" unFocusColor="#7aed0e">
+         <JFXTextField fx:id="usernameField" alignment="BASELINE_CENTER" minWidth="196.0" prefWidth="196.0" promptText="Write your username here" unFocusColor="#7aed0e">
             <font>
                <Font name="Trebuchet MS" size="14.0" />
             </font>

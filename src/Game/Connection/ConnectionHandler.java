@@ -13,9 +13,7 @@ import java.util.ArrayList;
 public class ConnectionHandler implements Runnable {
     private ServerSocket server;
 
-    private Thread _instance = null;
-
-    private ArrayList<Socket> connections = new ArrayList<>();
+    private Thread _instance;
 
     public ConnectionHandler(int port) {
         try {
@@ -45,8 +43,7 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("Waiting for users...");
                 Socket newConn = server.accept();
                 System.out.println("New user connected.");
-                connections.add(newConn);
-                GameController.getInstance().addUser(newConn);
+                GameController.getInstance().addPlayer(newConn);
                 System.out.println("User passed to game controller.");
             } catch (IOException e) {
                 e.printStackTrace();

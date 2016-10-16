@@ -39,8 +39,8 @@ public enum Mission {
      * @param Player Player to check mission for
      * @return True if mission is accomplished, false otherwise.
      */
-    public boolean Completed(Player Player) {
-        String mission = this.name();
+    public static boolean Completed(Player Player) {
+        String mission = Player.getMission().name();
 
         // If mission is to destroy all armies of one color search inside match's players if color is still present
         // Armies already been destroyed problem is managed from battle class and armies color same as current player is handled in setup phase
@@ -87,7 +87,7 @@ public enum Mission {
         // Check for common missions
         ArrayList<Continent> dominated = Continent.dominatedContinents(Player.getTerritories());
         if (dominated.size() > 1)
-            switch (this) {
+            switch (Player.getMission()) {
                 case NordAmericaAfrica:
                     if(dominated.contains(NordAmerica) &&dominated.contains(Africa))
                             return true;
@@ -111,7 +111,7 @@ public enum Mission {
             return false;
 
         if (dominated.size() > 2)
-            switch (this) {
+            switch (Player.getMission()) {
                 case EuropaAustraliaContinente:
                     if(dominated.contains(Europa) && dominated.contains(Australia))
                         return true;

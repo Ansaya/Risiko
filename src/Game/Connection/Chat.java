@@ -1,6 +1,6 @@
 package Game.Connection;
 
-import Game.User;
+import Game.Player;
 
 /**
  * Chat message packet
@@ -20,7 +20,7 @@ public class Chat {
         this.message = Message;
     }
 
-    public Chat(User Sender, String Message) {
+    public Chat(Player Sender, String Message) {
         this(Sender.getName(), Message);
     }
 }

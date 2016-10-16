@@ -1,35 +1,51 @@
 package Game;
 
+import Game.Connection.MessageDispatcher;
+import Game.Connection.MessageType;
+import Game.Map.Card;
 import Game.Map.Mission;
 import Game.Map.Territory;
+import com.google.gson.Gson;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 
 /**
  * Player relative to a match
  */
-public class Player {
+public class Player extends SocketHandler implements Runnable {
 
-    public int getId() { return user.getId(); }
+    /**
+     * Player's unique id
+     */
+    private int id;
+
+    public int getId() { return this.id; }
+
+    /**
+     * Username choose from
+     */
+    private String name;
+
+    public String getName() { return this.name;}
 
     /**
      * Id of match the player is inside
      */
-    private int matchId;
+    private int matchId = 0;
 
-    public int getMathcId() { return matchId; }
-
-    /**
-     * User bounded to this player
-     */
-    private User user;
+    public int getMathcId() { return this.matchId; }
 
     /**
-     * User name chosen from the user
-     *
-     * @return User name
+     * Current player's state. True if playing, false if attending the match.
      */
-    public String getName() { return user.getName(); }
+    private boolean state = false;
+
+    public boolean getState() { return this.state; }
 
     /**
      * Color assigned for the match
@@ -43,7 +59,7 @@ public class Player {
      */
     private ArrayList<Territory> territories = new ArrayList<>();
 
-    public ArrayList<Territory> getTerritories() { return (ArrayList<Territory>)territories.clone(); }
+    public ArrayList<Territory> getTerritories() { return territories; }
 
     /**
      * Player's mission
@@ -52,9 +68,106 @@ public class Player {
 
     public Mission getMission() { return mission; }
 
-    public Player(User User, Color Color, int MatchId) {
+    /**
+     * Incoming messages handler
+     */
+    private Thread _instance;
+
+    private static int counter = 0;
+
+    public Player(Socket Connection) {
+        super(Connection);
+
+        this.id = counter++;
+
+        this.listen = true;
+        this._instance = new Thread(this);
+        this._instance.start();
+    }
+
+    @Override
+    public void run() {
+        String incoming = "";
+
+        // First message contains username only
+        try {
+            incoming = receive.readLine();
+
+            // Set username
+            this.name = incoming;
+
+            // Send connection accepted confirmation
+            send.println("OK");
+        } catch (IOException e) {
+            System.out.println("Exception for player " + this.id);
+            e.printStackTrace();
+            return;
+        }
+
+        // Handle all incoming messages
+        while (listen) {
+            try {
+                while ((incoming = receive.readLine()) != null) {
+
+                    // If message isn't empty route it to message dispatcher
+                    if(incoming != "")
+                        MessageDispatcher.getInstance().setIncoming(this.matchId + "-" + this.id + "-" + incoming);
+                }
+            }catch (Exception e){}
+        }
+
+        receive = null;
+        send = null;
+        connection = null;
+    }
+
+    /**
+     * Gently close connection with the client
+     */
+    protected void closeConnection() {
+        send.println("End");
+
+        try {
+            this.listen = false;
+            this.connection.close();
+            this._instance.join();
+        } catch (Exception e) {}
+    }
+
+    /**
+     * Setup player to participate a match
+     * @param Color Player color in the match
+     * @param MatchId Match this player is participating
+     */
+    protected void initMatch(Color Color, int MatchId) {
         this.matchId = MatchId;
-        this.user = User;
         this.color = Color;
+
+        // Player is actively playing
+        this.state = true;
+    }
+
+    /**
+     * Send a message to the client
+     *
+     * @param Type Type of message
+     * @param MessageObj Object of specified type
+     */
+    protected void SendMessage(MessageType Type, Object MessageObj) {
+        Gson serialize = new Gson();
+
+        // Build packet string as MessageType-SerializedObject
+        String packet = Type.toString() + "-" + serialize.toJson(MessageObj);
+
+        send.println(packet);
+    }
+
+    /**
+     * Send passed string directly
+     *
+     * @param packet String to send to the client
+     */
+    protected void RouteMessage(String packet) {
+        send.println(packet);
     }
 }

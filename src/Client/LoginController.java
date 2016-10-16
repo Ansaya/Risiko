@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.SVGPath;
@@ -31,6 +32,9 @@ public class LoginController implements Initializable {
     @FXML
     protected Button loginBtn;
 
+    @FXML
+    protected TextField usernameField;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         loginBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new LoginClick());
@@ -39,6 +43,12 @@ public class LoginController implements Initializable {
     private class LoginClick implements EventHandler<Event> {
 
         public void handle(Event evt) {
+            ServerTalk st = ServerTalk.getInstance();
+            st.InitConnection(usernameField.getText());
+            ToLobby();
+        }
+
+        private void ToLobby() {
             FXMLLoader loader = new FXMLLoader();
             Parent root = null;
             try {
