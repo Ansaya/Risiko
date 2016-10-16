@@ -1,7 +1,9 @@
 package Server;
 
 import Game.Connection.Chat;
+import Game.Connection.ConnectionHandler;
 import Game.Connection.MessageType;
+import Game.GameController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -22,28 +24,16 @@ public class Main extends Application {
 
     public static void main(String[] args) {
 
-        //GameController gc = GameController.getInstance();
-        //ConnectionHandler ch = new ConnectionHandler(5757);
-        //ch.Listen();
-
-        Chat message = new Chat("Ansaya", "Test message");
-        System.out.println(message.getSender());
-        System.out.println(message.getMessage());
-
-        Gson gson = new Gson();
-        String json = gson.toJson(message);
-        String toSend = MessageType.Chat.toString() + "-2-28-" + json;
-        System.out.println(json);
-
-        String[] parts = toSend.split("[-]");
-        System.out.println("Message type: " + parts[0]);
-        System.out.println("User id: " + parts[1]);
-        System.out.println("Match id: " + parts[2]);
-
-        Chat recevied = gson.fromJson(parts[3], Chat.class);
-        System.out.println("Sender: " + recevied.getSender());
-        System.out.println("Message: " + recevied.getMessage());
+        GameController gameController = GameController.getInstance();
+        ConnectionHandler ch = new ConnectionHandler(5757);
+        ch.Listen();
 
         launch(args);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        // Stop game controller and connection handler
+        super.stop();
     }
 }

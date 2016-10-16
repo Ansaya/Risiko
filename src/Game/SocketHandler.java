@@ -17,7 +17,7 @@ public abstract class SocketHandler {
 
     protected PrintWriter send;
 
-    protected boolean listen;
+    protected volatile boolean listen;
 
     /**
      * Initializes receiver and sender for passed socket
@@ -29,7 +29,7 @@ public abstract class SocketHandler {
 
         try {
             this.receive = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
-            this.send = new PrintWriter(this.connection.getOutputStream());
+            this.send = new PrintWriter(this.connection.getOutputStream(), true);
         } catch (IOException e) {
             e.printStackTrace();
         }

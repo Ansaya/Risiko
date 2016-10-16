@@ -1,5 +1,7 @@
 package Client;
 
+import Game.Connection.Chat;
+import Game.Connection.MessageType;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -8,6 +10,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -27,12 +31,35 @@ public class LobbyController implements Initializable {
     @FXML
     protected Button matchBtn;
 
+    private ServerTalk server;
+
+    @FXML
+    protected TextArea chatTextArea;
+
+    @FXML
+    protected TextField chatMessage;
+
+    @FXML
+    protected Button chatSendBtn;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new CreateMatch());
+
+        this.server = ServerTalk.getInstance();
+        this.server.updateHere(chatTextArea);
+
+        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new OpenMatch());
+
+        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText()));
+                chatMessage.clear();
+            }
+        });
     }
 
-    private class CreateMatch implements EventHandler<Event> {
+    private class OpenMatch implements EventHandler<Event> {
 
         public void handle(Event evt) {
             FXMLLoader loader = new FXMLLoader();

@@ -5,7 +5,6 @@ import Game.Connection.MessageType;
 import Game.Map.Map;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Match object to manage game turns in a dedicated thread
@@ -83,24 +82,24 @@ public class Match extends MessageReceiver implements Runnable {
         while (playing) {
 
             try {
-                // Waits for new message and stores it when it comes
-                this.incomingJson.wait();
-                int playerId = this.incomingPlayerId;
-                MessageType type = this.incomingType;
-                String json = this.incomingJson;
+                // Waits for new message if queue is empty
+                if(this.queue.isEmpty())
+                    waitIncoming();
+
+                Message message = this.queue.get(0);
 
                 // Select correct route for received message
-                switch (type) {
+                switch (message.Type) {
                     case Turn:
                         // If a player notified end of his turn, go ahead with next player
-                        if(json == "GoAhead") {
+                        if(message.Json.equals("GoAhead")) {
                             this.current = new Turn(this, nextPlaying(this.current.getPlaying()));
                         }
 
-                        if(json == "Winner"){
-                            String winner = json.split("[-]")[0];
+                        if(message.Json.equals("Winner")){
+                            String winner = message.Json.split("[-]")[0];
                             players.forEach((p) -> {
-                                if(p.getName() == winner)
+                                if(p.getName().equals(winner))
                                     p.SendMessage(MessageType.GameState, new GameState(StateType.Winner, null));
                                 else
                                     p.SendMessage(MessageType.GameState, new GameState(StateType.Looser, winner));
@@ -112,11 +111,11 @@ public class Match extends MessageReceiver implements Runnable {
                         break;
                     case Chat:
                         // Reroute message back to all players as MessageType-JsonSerializedMessage
-                        this.players.forEach((p) -> p.RouteMessage(type + "-" + json));
+                        this.players.forEach((p) -> p.RouteMessage(message.Type + "-" + message.Json));
                         break;
                     default:
                         // Any other message is routed to current turn to handle game progress
-                        this.current.setIncoming(playerId, type, json);
+                        this.current.setIncoming(message);
                         break;
                 }
 
@@ -136,12 +135,12 @@ public class Match extends MessageReceiver implements Runnable {
     public Player nextPlaying(Player lastPlaying) {
         int current = this.players.indexOf(lastPlaying);
         for(int i = current; i < players.size(); i++) {
-            if(this.players.get(i).getState() == true)
+            if(this.players.get(i).isPlaying())
                 return this.players.get(i);
         }
 
         for (int i = 0; i < current; i++){
-            if(this.players.get(i).getState() == true)
+            if(this.players.get(i).isPlaying())
                 return this.players.get(i);
         }
 

@@ -47,10 +47,11 @@ public class GameController extends MessageReceiver implements Runnable {
      */
     private ArrayList<Player> lobby = new ArrayList<>();
 
-    private Thread _thread = null;
+    private Thread _threadInstance;
 
-    public GameController() {
-
+    private GameController() {
+        this._threadInstance = new Thread(this);
+        this._threadInstance.start();
     }
 
     /**
@@ -81,5 +82,29 @@ public class GameController extends MessageReceiver implements Runnable {
 
     @Override
     public void run() {
+        while (true) {
+
+            try {
+                // If queue is empty wait for notification of new packet
+                if(this.queue.isEmpty())
+                    waitIncoming();
+
+                System.out.println("GameController: message received");
+
+                Message packet = this.queue.get(0);
+
+                // If its a chat message forward to all players in lobby
+                if(packet.Type == MessageType.Chat) {
+                    this.lobby.forEach((p) -> p.RouteMessage(packet.Type + "-" + packet.Json));
+                    System.out.println("GameController: Chat routed");
+                }
+
+                // Remove packet from queue
+                this.queue.remove(0);
+
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

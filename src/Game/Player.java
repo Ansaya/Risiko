@@ -2,15 +2,11 @@ package Game;
 
 import Game.Connection.MessageDispatcher;
 import Game.Connection.MessageType;
-import Game.Map.Card;
 import Game.Map.Mission;
 import Game.Map.Territory;
 import com.google.gson.Gson;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -41,11 +37,11 @@ public class Player extends SocketHandler implements Runnable {
     public int getMathcId() { return this.matchId; }
 
     /**
-     * Current player's state. True if playing, false if attending the match.
+     * Current player's isPlaying. True if playing, false if attending the match.
      */
-    private boolean state = false;
+    private boolean isPlaying = false;
 
-    public boolean getState() { return this.state; }
+    public boolean isPlaying() { return this.isPlaying; }
 
     /**
      * Color assigned for the match
@@ -110,7 +106,7 @@ public class Player extends SocketHandler implements Runnable {
                 while ((incoming = receive.readLine()) != null) {
 
                     // If message isn't empty route it to message dispatcher
-                    if(incoming != "")
+                    if(!incoming.equals(""))
                         MessageDispatcher.getInstance().setIncoming(this.matchId + "-" + this.id + "-" + incoming);
                 }
             }catch (Exception e){}
@@ -144,7 +140,7 @@ public class Player extends SocketHandler implements Runnable {
         this.color = Color;
 
         // Player is actively playing
-        this.state = true;
+        this.isPlaying = true;
     }
 
     /**

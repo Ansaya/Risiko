@@ -43,8 +43,7 @@ public class LoginController implements Initializable {
     private class LoginClick implements EventHandler<Event> {
 
         public void handle(Event evt) {
-            ServerTalk st = ServerTalk.getInstance();
-            st.InitConnection(usernameField.getText());
+            ServerTalk.getInstance().InitConnection(usernameField.getText());
             ToLobby();
         }
 
