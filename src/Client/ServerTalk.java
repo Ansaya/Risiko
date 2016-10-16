@@ -69,13 +69,28 @@ public class ServerTalk implements Runnable {
     /**
      * Stops current connection with the server
      */
-    public void StopConnection() {
+    public void StopConnection(boolean exit) {
         this.listen = false;
 
+        // Send close connection notification to server
+        send.println("End");
+
+        // Stop thread
         try {
             this.connection.close();
             this._threadInstance.join();
         } catch (Exception e) {}
+
+        // If finalizing exit
+        if(exit)
+            return;
+
+        // Else reset object for new connection attempt
+        _instance = new ServerTalk();
+
+        Main.toLogin.run();
+
+        // Notify user
     }
 
     @Override
@@ -110,21 +125,16 @@ public class ServerTalk implements Runnable {
 
             }catch (IOException e) {}
         }
-
-        // Dispose all at the end of communication
-        try {
-            this.send = null;
-            this.receive = null;
-
-            this.connection.close();
-            this.connection = null;
-        }catch (IOException e) {}
     }
 
+    /**
+     * Handle incoming messages to update UI and notify user for events
+     *
+     * @param Packet Received packet
+     */
     private void MessageHandler(String Packet) {
         if(Packet.equals("End")){
-            this.StopConnection();
-            // Notify user
+            Platform.runLater(() -> StopConnection(false));
             return;
         }
 
@@ -155,6 +165,11 @@ public class ServerTalk implements Runnable {
      * @param MessageObj Object of specified type
      */
     public void SendMessage(MessageType Type, Object MessageObj) {
+        if(connection.isClosed()) {
+            Platform.runLater(() -> StopConnection(false));
+            return;
+        }
+
         Gson serialize = new Gson();
 
         // Build packet string as MessageType-SerializedObject

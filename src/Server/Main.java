@@ -24,16 +24,16 @@ public class Main extends Application {
 
     public static void main(String[] args) {
 
-        GameController gameController = GameController.getInstance();
-        ConnectionHandler ch = new ConnectionHandler(5757);
-        ch.Listen();
+        GameController.getInstance().init();
+        ConnectionHandler.getInstance().Listen(5757);
 
         launch(args);
     }
 
     @Override
     public void stop() throws Exception {
-        // Stop game controller and connection handler
+        GameController.getInstance().terminate();
+        ConnectionHandler.getInstance().terminate();
         super.stop();
     }
 }

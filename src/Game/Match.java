@@ -74,6 +74,30 @@ public class Match extends MessageReceiver implements Runnable {
         // Instance initial turn
     }
 
+    /**
+     * Release player from current match
+     *
+     * @param PlayerId Id of player to release
+     */
+    public void releasePlayer(int PlayerId) {
+        for (Player p: players) {
+            if(p.getId() != PlayerId)
+                continue;
+
+            if(p.isPlaying()){
+                // Manage match interdiction
+
+                p.exitMatch();
+            }
+
+            GameController.getInstance().returnPlayer(p);
+
+            players.remove(p);
+
+            return;
+        }
+    }
+
     @Override
     public void run() {
 
@@ -112,6 +136,10 @@ public class Match extends MessageReceiver implements Runnable {
                     case Chat:
                         // Reroute message back to all players as MessageType-JsonSerializedMessage
                         this.players.forEach((p) -> p.RouteMessage(message.Type + "-" + message.Json));
+                        break;
+                    case GameState:
+                        if(message.Json.equals(StateType.Abandoned.toString()))
+                            releasePlayer(message.PlayerId);
                         break;
                     default:
                         // Any other message is routed to current turn to handle game progress

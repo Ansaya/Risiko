@@ -1,10 +1,12 @@
 package Game;
 
+import Game.Connection.GameState;
 import Game.Connection.MessageDispatcher;
 import Game.Connection.MessageType;
 import Game.Map.Mission;
 import Game.Map.Territory;
 import com.google.gson.Gson;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -105,6 +107,12 @@ public class Player extends SocketHandler implements Runnable {
             try {
                 while ((incoming = receive.readLine()) != null) {
 
+                    // Connection closing requested from client
+                    if(incoming.equals("End")){
+                        Platform.runLater(() -> closeConnection());
+                        return;
+                    }
+
                     // If message isn't empty route it to message dispatcher
                     if(!incoming.equals(""))
                         MessageDispatcher.getInstance().setIncoming(this.matchId + "-" + this.id + "-" + incoming);
@@ -123,6 +131,11 @@ public class Player extends SocketHandler implements Runnable {
     protected void closeConnection() {
         send.println("End");
 
+        if(matchId != 0)
+            GameController.getInstance().getMatch(matchId).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+        else
+            GameController.getInstance().setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+
         try {
             this.listen = false;
             this.connection.close();
@@ -132,6 +145,7 @@ public class Player extends SocketHandler implements Runnable {
 
     /**
      * Setup player to participate a match
+     *
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
@@ -141,6 +155,17 @@ public class Player extends SocketHandler implements Runnable {
 
         // Player is actively playing
         this.isPlaying = true;
+    }
+
+    /**
+     * Reset match fields and bring player back to lobby
+     */
+    protected void exitMatch() {
+        matchId = 0;
+        isPlaying = false;
+        color = null;
+        territories = new ArrayList<>();
+        mission = null;
     }
 
     /**

@@ -1,5 +1,6 @@
 package Client;
 
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -37,36 +38,16 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        loginBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new LoginClick());
+        loginBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (evt) -> ToLobby());
+        usernameField.setOnAction((evt) -> ToLobby());
     }
 
-    private class LoginClick implements EventHandler<Event> {
+    /**
+     * Connect to the server and show lobby screen
+     */
+    private void ToLobby() {
+        ServerTalk.getInstance().InitConnection(usernameField.getText());
 
-        public void handle(Event evt) {
-            ServerTalk.getInstance().InitConnection(usernameField.getText());
-            ToLobby();
-        }
-
-        private void ToLobby() {
-            FXMLLoader loader = new FXMLLoader();
-            Parent root = null;
-            try {
-                root = (Parent) loader.load(getClass().getResource("lobby.fxml").openStream());
-            }catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            LobbyController lobby = loader.getController();
-            lobby.setStage(window);
-
-            window.setTitle("Risiko - Lobby");
-            window.setScene(new Scene(root, 1366, 768));
-            window.setX(window.getX() - 538);
-            window.setY(window.getY() - 125);
-            window.setMinWidth(1067);
-            window.setMinHeight(600);
-            window.setResizable(true);
-            window.show();
-        }
+        Main.toLobby.run();
     }
 }

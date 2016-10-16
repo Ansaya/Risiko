@@ -1,9 +1,12 @@
 package Game;
 
+import Game.Connection.Chat;
 import Game.Connection.MessageType;
+import com.google.gson.Gson;
 
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Main controller to manage matches and user lobby
@@ -49,9 +52,34 @@ public class GameController extends MessageReceiver implements Runnable {
 
     private Thread _threadInstance;
 
-    private GameController() {
+    private GameController() {}
+
+    /**
+     * Starts game controller
+     */
+    public void init() {
         this._threadInstance = new Thread(this);
         this._threadInstance.start();
+    }
+
+    /**
+     * Terminate all matches and join game controller thread
+     */
+    public void terminate() {
+        Chat end = new Chat("Admin", "Server is shutting down");
+        Message endMessage = new Message(-1, MessageType.Chat, (new Gson()).toJson(end));
+
+        setIncoming(endMessage);
+
+        for (Match m: matches) {
+            m.setIncoming(endMessage);
+            m.getPlayers().forEach((p) -> p.closeConnection());
+        }
+
+        try {
+            this._threadInstance.interrupt();
+            this._threadInstance.join();
+        } catch (Exception e) {}
     }
 
     /**
@@ -65,12 +93,37 @@ public class GameController extends MessageReceiver implements Runnable {
     }
 
     /**
+     * User gets back from match to lobby
+     *
+     * @param Player User to set back to lobby
+     */
+    public void returnPlayer(Player Player) {
+        lobby.add(Player);
+    }
+
+    /**
+     * User is disconnecting from game
+     *
+     * @param PlayerId Player to remove from lobby
+     */
+    public void releasePlayer(int PlayerId) {
+        for (Player p: lobby) {
+            if(p.getId() == PlayerId) {
+                lobby.remove(p);
+                return;
+            }
+        }
+    }
+
+    /**
      * Starts a new match with passed users
      *
      * @param Players Players to add to new match
      */
     public void newMatch(Player... Players) {
         matches.add(new Match(Players));
+
+        lobby.removeAll(Arrays.asList(Players));
     }
 
     /**
@@ -92,6 +145,10 @@ public class GameController extends MessageReceiver implements Runnable {
                 System.out.println("GameController: message received");
 
                 Message packet = this.queue.get(0);
+
+                // If player is disconnecting remove it from lobby
+                if(packet.Type == MessageType.GameState && packet.Json.equals(StateType.Abandoned.toString()))
+                    releasePlayer(packet.PlayerId);
 
                 // If its a chat message forward to all players in lobby
                 if(packet.Type == MessageType.Chat) {

@@ -11,29 +11,42 @@ import java.util.ArrayList;
  * Incoming connections handler
  */
 public class ConnectionHandler implements Runnable {
+
+    private static ConnectionHandler _instance = new ConnectionHandler();
+
+    public static ConnectionHandler getInstance() { return _instance; }
+
     private ServerSocket server;
 
-    private Thread _instance;
+    private Thread _threadInstance;
 
-    public ConnectionHandler(int port) {
+    private ConnectionHandler() {}
+
+    public void Listen(int Port) {
+        if(_threadInstance != null){
+            try {
+                server.close();
+                _threadInstance.join();
+                _threadInstance = null;
+            } catch (Exception e) {}
+        }
+
         try {
-            this.server = new ServerSocket(port);
+            this.server = new ServerSocket(Port);
         }
         catch (IOException e){
             System.out.println("Cannot connect");
         }
+
+        _threadInstance = new Thread(this);
+        _threadInstance.start();
     }
 
-    public void Listen() {
-        if(_instance != null){
-            try {
-                server.close();
-                _instance.join();
-                _instance = null;
-            } catch (Exception e) {}
-        }
-        _instance = new Thread(this);
-        _instance.start();
+    public void terminate() {
+        try {
+            server.close();
+            _threadInstance.join();
+        } catch (Exception e) {}
     }
 
     @Override

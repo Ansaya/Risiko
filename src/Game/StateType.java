@@ -6,5 +6,6 @@ package Game;
 public enum StateType {
     Winner,     // If the player has completed the mission
     Defeated,   // If the player is defeated by another player
-    Looser;     // If another player wins the game
+    Looser,     // If another player wins the game
+    Abandoned;  // If player decides to abandon match
 }

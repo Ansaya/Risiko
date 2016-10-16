@@ -2,6 +2,7 @@ package Client;
 
 import Game.Connection.Chat;
 import Game.Connection.MessageType;
+import com.jfoenix.controls.JFXBadge;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -16,6 +17,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.lang.invoke.LambdaConversionException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -42,41 +44,24 @@ public class LobbyController implements Initializable {
     @FXML
     protected Button chatSendBtn;
 
+    @FXML
+    protected JFXBadge chatBadge;
+    /**
+     * Lambda for chat message sending
+     */
+    private EventHandler sendMessage = (evt) -> {
+        server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText()));
+        chatMessage.clear();
+    };
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
         this.server = ServerTalk.getInstance();
         this.server.updateHere(chatTextArea);
 
-        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new OpenMatch());
-
-        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText()));
-                chatMessage.clear();
-            }
-        });
-    }
-
-    private class OpenMatch implements EventHandler<Event> {
-
-        public void handle(Event evt) {
-            FXMLLoader loader = new FXMLLoader();
-            Parent root = null;
-            try {
-                root = (Parent) loader.load(getClass().getResource("match.fxml").openStream());
-                root.getStylesheets().add(Main.class.getResource("map.css").toExternalForm());
-            }catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            MatchController newMatch = loader.getController();
-            newMatch.setStage(window);
-
-            window.setTitle("Risiko - Match");
-            window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
-            window.show();
-        }
+        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, Main.openMatch);
+        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
+        chatMessage.setOnAction(sendMessage);
     }
 }

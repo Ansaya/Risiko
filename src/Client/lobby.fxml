@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXBadge?>
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXListView?>
 <?import com.jfoenix.controls.JFXTextArea?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import javafx.scene.control.Button?>
@@ -12,6 +14,7 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="page" prefHeight="768.0" prefWidth="1366.0" style="-fx-background-color: red" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.LobbyController">
+   <JFXListView layoutX="170.0" layoutY="147.0" prefHeight="768.0" prefWidth="1366.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
     <Button fx:id="matchBtn">Match</Button>
    <TitledPane layoutX="882.0" layoutY="353.0" maxWidth="-Infinity" prefWidth="250.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="50.0">
@@ -35,5 +38,8 @@
             </children>
          </VBox>
       </content>
+      <graphic>
+         <JFXBadge fx:id="chatBadge" alignment="TOP_RIGHT" prefHeight="19.0" prefWidth="28.0" text="bh" />
+      </graphic>
    </TitledPane>
 </AnchorPane>
