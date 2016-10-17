@@ -19,6 +19,7 @@ public class Main extends Application {
         try {
             root = (Parent) loader.load(Main.class.getResource("match.fxml").openStream());
             root.getStylesheets().add(Main.class.getResource("map.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -36,6 +37,7 @@ public class Main extends Application {
         Parent root = null;
         try {
             root = (Parent) loader.load(Main.class.getResource("lobby.fxml").openStream());
+            root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }

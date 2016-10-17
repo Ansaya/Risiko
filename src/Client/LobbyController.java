@@ -3,21 +3,16 @@ package Client;
 import Game.Connection.Chat;
 import Game.Connection.MessageType;
 import com.jfoenix.controls.JFXBadge;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.io.IOException;
-import java.lang.invoke.LambdaConversionException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -36,7 +31,10 @@ public class LobbyController implements Initializable {
     private ServerTalk server;
 
     @FXML
-    protected TextArea chatTextArea;
+    protected ScrollPane chatSP;
+
+    @FXML
+    protected VBox chatContainer;
 
     @FXML
     protected TextField chatMessage;
@@ -46,10 +44,14 @@ public class LobbyController implements Initializable {
 
     @FXML
     protected JFXBadge chatBadge;
+
     /**
      * Lambda for chat message sending
      */
     private EventHandler sendMessage = (evt) -> {
+        if(chatMessage.getText().equals(""))
+            return;
+
         server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText()));
         chatMessage.clear();
     };
@@ -58,7 +60,7 @@ public class LobbyController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         this.server = ServerTalk.getInstance();
-        this.server.updateHere(chatTextArea);
+        this.server.updateHere(chatSP, chatContainer);
 
         matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, Main.openMatch);
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);

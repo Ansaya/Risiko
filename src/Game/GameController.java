@@ -1,6 +1,7 @@
 package Game;
 
 import Game.Connection.Chat;
+import Game.Connection.Lobby;
 import Game.Connection.MessageType;
 import com.google.gson.Gson;
 
@@ -89,7 +90,15 @@ public class GameController extends MessageReceiver implements Runnable {
      */
     public void addPlayer(Socket Connection) {
 
-        lobby.add(new Player(Connection));
+        Player newP = new Player(Connection);
+
+        lobby.add(newP);
+
+        // Notify all players for new player
+        lobby.forEach((p) -> p.SendMessage(MessageType.Lobby, new Lobby(newP, null)));
+
+        // Notify new player for all players
+        newP.SendMessage(MessageType.Lobby, new Lobby(lobby, null));
     }
 
     /**
@@ -98,7 +107,14 @@ public class GameController extends MessageReceiver implements Runnable {
      * @param Player User to set back to lobby
      */
     public void returnPlayer(Player Player) {
+
         lobby.add(Player);
+
+        // Notify all players for new player
+        lobby.forEach((p) -> p.SendMessage(MessageType.Lobby, new Lobby(Player, null)));
+
+        // Notify new player for all players
+        Player.SendMessage(MessageType.Lobby, new Lobby(lobby, null));
     }
 
     /**
@@ -110,6 +126,9 @@ public class GameController extends MessageReceiver implements Runnable {
         for (Player p: lobby) {
             if(p.getId() == PlayerId) {
                 lobby.remove(p);
+
+                // Notify all players of leaving player
+                lobby.forEach((l) -> l.SendMessage(MessageType.Lobby, new Lobby(null, p)));
                 return;
             }
         }

@@ -4,7 +4,15 @@ import Game.Connection.Chat;
 import Game.Connection.MessageType;
 import com.google.gson.Gson;
 import javafx.application.Platform;
-import javafx.scene.control.TextArea;
+import javafx.geometry.Pos;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
+import javafx.scene.control.LabelBuilder;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
+import javafx.util.Builder;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,24 +28,63 @@ public class ServerTalk implements Runnable {
 
     public static ServerTalk getInstance() { return _instance; }
 
+    /**
+     * Username of this client
+     */
     private String username;
 
     public String getUsername() { return this.username; }
 
     private volatile boolean listen;
 
+    /**
+     * Connection to the server
+     */
     private Socket connection;
 
+    /**
+     * Incoming strem
+     */
     private BufferedReader receive;
 
+    /**
+     * Outgoing stream
+     */
     private PrintWriter send;
 
-    private TextArea chat;
+    /**
+     * Username associated with last chat message received
+     */
+    private String lastSender = "";
+
+    /**
+     * ScrollPane containing chatContainer VBox
+     */
+    private ScrollPane chatScrollable;
+
+    /**
+     * Container of chat entries
+     */
+    private VBox chatContainer;
+
+    /**
+     * Builder for new chat entries
+     */
+    private Builder<Label> chatEntryBuilder;
 
     private Thread _threadInstance;
 
     private ServerTalk() {
-        
+
+        // Setup builder for chat entries
+        this.chatEntryBuilder = () -> {
+            Label chatEntry = new Label();
+            chatEntry.prefWidth(228.0f);
+            chatEntry.getStyleClass().add("chat");
+            chatEntry.setWrapText(true);
+
+            return chatEntry;
+        };
     }
 
     /**
@@ -62,8 +109,16 @@ public class ServerTalk implements Runnable {
         this._threadInstance.start();
     }
 
-    public void updateHere(javafx.scene.control.TextArea ToUpdate) {
-        this.chat = ToUpdate;
+    /**
+     * Set where to add incoming chats
+     *
+     * @param Scrollable Scrollable parent of chat container
+     * @param ToUpdate Chat container to add new chats into
+     */
+    public void updateHere(ScrollPane Scrollable, VBox ToUpdate) {
+
+        this.chatScrollable = Scrollable;
+        this.chatContainer = ToUpdate;
     }
 
     /**
@@ -146,10 +201,32 @@ public class ServerTalk implements Runnable {
         switch (type) {
             case Chat:
                 // Get chat object
-                Chat message = deserialize.fromJson(info[1], Chat.class);
+                Chat chat = deserialize.fromJson(info[1], Chat.class);
+                Label sender = chatEntryBuilder.build();
+                Label message = chatEntryBuilder.build();
 
-                // Update chat text area from ui thread
-                Platform.runLater(() -> this.chat.appendText(message.getSender() + ": " + message.getMessage() + "\r\n"));
+                sender.setText(chat.getSender());
+                message.setText(chat.getMessage());
+
+                // If message is from this client display it on opposite side of chat view
+                if(chat.getSender().equals(this.username)){
+                    sender.setAlignment(Pos.TOP_RIGHT);
+                    message.setAlignment(Pos.TOP_RIGHT);
+                }
+
+                // Update chat from ui thread
+                Platform.runLater(() -> {
+                    // If message is from same sender as before, avoid to write sender again
+                    if(!this.lastSender.equals(chat.getSender()))
+                        this.chatContainer.getChildren().add(sender);
+
+                    this.chatContainer.getChildren().add(message);
+
+                    // Scroll container to end
+                    this.chatScrollable.setVvalue(1.0f);
+
+                    this.lastSender = chat.getSender();
+                });
                 break;
             case MapUpdate:
                 break;

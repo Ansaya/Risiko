@@ -5,6 +5,7 @@ package Game.Connection;
  */
 public enum MessageType {
     Chat,
+    Lobby,
     Turn,
     Attack,
     Defense,
