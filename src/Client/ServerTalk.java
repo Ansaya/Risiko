@@ -159,11 +159,15 @@ public class ServerTalk implements Runnable {
     /**
      * Stops current connection with the server
      */
-    public void StopConnection(boolean exit) {
+    public void StopConnection(boolean fromClient) {
+        if(!listen)
+            return;
+
         this.listen = false;
 
         // Send close connection notification to server
-        send.println("End");
+        if(fromClient)
+            send.println("End");
 
         // Stop thread
         try {
@@ -172,7 +176,7 @@ public class ServerTalk implements Runnable {
         } catch (Exception e) {}
 
         // If finalizing exit
-        if(exit)
+        if(fromClient)
             return;
 
         // Else reset object for new connection attempt

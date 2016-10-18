@@ -14,11 +14,16 @@ public class MessageDispatcher implements Runnable {
         return _instance;
     }
 
+    private boolean listen = false;
+
     private ArrayList<String> packetsQueue = new ArrayList<>();
 
     private Thread _threadInstance;
 
-    private MessageDispatcher() {
+    private MessageDispatcher() {}
+
+    public void init() {
+        listen = true;
         this._threadInstance = new Thread(this);
         this._threadInstance.start();
     }
@@ -38,7 +43,11 @@ public class MessageDispatcher implements Runnable {
     /**
      * Shutdown message dispatcher (cannot set it up again)
      */
-    public void Terminate() {
+    public void terminate() {
+        if(!listen)
+            return;
+
+        listen = false;
         try {
             this._threadInstance.interrupt();
             this._threadInstance.join();
@@ -48,7 +57,7 @@ public class MessageDispatcher implements Runnable {
 
     @Override
     public void run() {
-        while (true){
+        while (listen){
             try {
                 // If queue is empty wait for new packet before proceeding
                 if(this.packetsQueue.isEmpty()) {

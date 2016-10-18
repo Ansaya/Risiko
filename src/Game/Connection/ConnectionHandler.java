@@ -16,6 +16,8 @@ public class ConnectionHandler implements Runnable {
 
     public static ConnectionHandler getInstance() { return _instance; }
 
+    private boolean listen = false;
+
     private ServerSocket server;
 
     private Thread _threadInstance;
@@ -24,11 +26,7 @@ public class ConnectionHandler implements Runnable {
 
     public void Listen(int Port) {
         if(_threadInstance != null){
-            try {
-                server.close();
-                _threadInstance.join();
-                _threadInstance = null;
-            } catch (Exception e) {}
+            terminate();
         }
 
         try {
@@ -38,20 +36,23 @@ public class ConnectionHandler implements Runnable {
             System.out.println("Cannot connect");
         }
 
+        listen = true;
         _threadInstance = new Thread(this);
         _threadInstance.start();
     }
 
     public void terminate() {
         try {
+            listen = false;
             server.close();
             _threadInstance.join();
+            _threadInstance = null;
         } catch (Exception e) {}
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (listen) {
             try {
                 System.out.println("Waiting for users...");
                 Socket newConn = server.accept();

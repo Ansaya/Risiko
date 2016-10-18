@@ -109,7 +109,7 @@ public class Player extends SocketHandler implements Runnable {
 
                     // Connection closing requested from client
                     if(incoming.equals("End")){
-                        Platform.runLater(() -> closeConnection());
+                        Platform.runLater(() -> closeConnection(false));
                         return;
                     }
 
@@ -122,24 +122,26 @@ public class Player extends SocketHandler implements Runnable {
 
         receive = null;
         send = null;
-        connection = null;
     }
 
     /**
      * Gently close connection with the client
      */
-    protected void closeConnection() {
+    protected void closeConnection(boolean fromServer) {
         send.println("End");
 
-        if(matchId != 0)
-            GameController.getInstance().getMatch(matchId).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
-        else
-            GameController.getInstance().setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+        if(!fromServer) {
+            if (matchId != 0)
+                GameController.getInstance().getMatch(matchId).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+            else
+                GameController.getInstance().setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+        }
 
         try {
             this.listen = false;
             this.connection.close();
             this._instance.join();
+            this.connection = null;
         } catch (Exception e) {}
     }
 

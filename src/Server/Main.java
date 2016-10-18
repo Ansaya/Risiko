@@ -2,6 +2,7 @@ package Server;
 
 import Game.Connection.Chat;
 import Game.Connection.ConnectionHandler;
+import Game.Connection.MessageDispatcher;
 import Game.Connection.MessageType;
 import Game.GameController;
 import javafx.application.Application;
@@ -25,6 +26,7 @@ public class Main extends Application {
     public static void main(String[] args) {
 
         GameController.getInstance().init();
+        MessageDispatcher.getInstance().init();
         ConnectionHandler.getInstance().Listen(5757);
 
         launch(args);
@@ -32,8 +34,9 @@ public class Main extends Application {
 
     @Override
     public void stop() throws Exception {
-        GameController.getInstance().terminate();
         ConnectionHandler.getInstance().terminate();
+        GameController.getInstance().terminate();
+        MessageDispatcher.getInstance().terminate();
         super.stop();
     }
 }

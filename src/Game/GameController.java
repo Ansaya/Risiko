@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * Main controller to manage matches and user lobby
  */
-public class GameController extends MessageReceiver implements Runnable {
+public class GameController extends MessageReceiver {
 
     private static GameController _instance = new GameController();
 
@@ -51,36 +51,54 @@ public class GameController extends MessageReceiver implements Runnable {
      */
     private ArrayList<Player> lobby = new ArrayList<>();
 
-    private Thread _threadInstance;
+    private GameController() {
+        messageHandlers.put(MessageType.GameState, (message) -> {
+            if(message.Json.equals(StateType.Abandoned.toString()))
+                releasePlayer(message.PlayerId);
+        });
 
-    private GameController() {}
+        messageHandlers.put(MessageType.Chat, (message) -> {
+            this.lobby.forEach((p) -> p.RouteMessage(message.Type + "-" + message.Json));
+            System.out.println("GameController: Chat routed");
+        });
+    }
 
     /**
      * Starts game controller
      */
     public void init() {
-        this._threadInstance = new Thread(this);
-        this._threadInstance.start();
+        // Start message receiver
+        this.startListen();
     }
 
     /**
      * Terminate all matches and join game controller thread
      */
     public void terminate() {
+        // Stop message receiver
+        this.stopListen();
+
         Chat end = new Chat("Admin", "Server is shutting down");
-        Message endMessage = new Message(-1, MessageType.Chat, (new Gson()).toJson(end));
 
-        setIncoming(endMessage);
-
+        // Send end message to matches players and close connection
         for (Match m: matches) {
-            m.setIncoming(endMessage);
-            m.getPlayers().forEach((p) -> p.closeConnection());
+            System.out.println("Terminatind match " + m.getId());
+            m.getPlayers().forEach((p) -> {
+                p.SendMessage(MessageType.Chat, end);
+                p.closeConnection(true);
+            });
         }
 
-        try {
-            this._threadInstance.interrupt();
-            this._threadInstance.join();
-        } catch (Exception e) {}
+        // Send end message and close connection of lobby players
+        System.out.println(lobby.size() + " player in lobby");
+        for (Player p: lobby
+             ) {
+            System.out.println("Releasing player " + p.getName());
+            p.SendMessage(MessageType.Chat, end);
+            p.closeConnection(true);
+        }
+
+        System.out.println("Game controller terminated.");
     }
 
     /**
@@ -151,36 +169,4 @@ public class GameController extends MessageReceiver implements Runnable {
      * @param MatchId Match to remove
      */
     protected void endMatch(int MatchId) { matches.remove(getMatch(MatchId)); }
-
-    @Override
-    public void run() {
-        while (true) {
-
-            try {
-                // If queue is empty wait for notification of new packet
-                if(this.queue.isEmpty())
-                    waitIncoming();
-
-                System.out.println("GameController: message received");
-
-                Message packet = this.queue.get(0);
-
-                // If player is disconnecting remove it from lobby
-                if(packet.Type == MessageType.GameState && packet.Json.equals(StateType.Abandoned.toString()))
-                    releasePlayer(packet.PlayerId);
-
-                // If its a chat message forward to all players in lobby
-                if(packet.Type == MessageType.Chat) {
-                    this.lobby.forEach((p) -> p.RouteMessage(packet.Type + "-" + packet.Json));
-                    System.out.println("GameController: Chat routed");
-                }
-
-                // Remove packet from queue
-                this.queue.remove(0);
-
-            }catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }

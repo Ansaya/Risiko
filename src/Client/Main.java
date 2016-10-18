@@ -46,12 +46,12 @@ public class Main extends Application {
         lobby.setStage(window);
 
         window.setTitle("Risiko - Lobby");
-        window.setScene(new Scene(root, 1366, 768));
-        window.setX(window.getX() - 538);
-        window.setY(window.getY() - 125);
-        window.setMinWidth(1067);
-        window.setMinHeight(600);
         window.setResizable(true);
+        window.setX(window.getX() - 538.0);
+        window.setY(window.getY() - 125.0);
+        window.setMinWidth(1067.0);
+        window.setMinHeight(600.0);
+        window.setScene(new Scene(root, 1366, 768));
         window.show();
     };
 
@@ -68,6 +68,10 @@ public class Main extends Application {
         login.setStage(window);
 
         window.setTitle("Risiko - Login");
+        window.setWidth(250.0);
+        window.setHeight(300.0);
+        window.setMinWidth(250.0);
+        window.setMinHeight(300.0);
         window.setScene(new Scene(root, 250, 300));
         window.setResizable(false);
         window.show();

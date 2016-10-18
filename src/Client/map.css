@@ -4,6 +4,10 @@
     -fx-scale-shape: false;
 }
 
+.prova {
+    -fx-background-color: red;
+}
+
 .territory {
     -fx-stroke: black;
     -fx-stroke-width: 1px;
