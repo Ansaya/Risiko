@@ -5,12 +5,9 @@ import Game.Connection.MessageType;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
-import javafx.scene.control.LabelBuilder;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 import javafx.util.Builder;
 
 import java.io.BufferedReader;
@@ -18,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 /**
  * Handle communication with the server
@@ -52,6 +51,10 @@ public class ServerTalk implements Runnable {
      */
     private PrintWriter send;
 
+    private Gson gson = new Gson();
+
+    private HashMap<MessageType, Consumer<String[]>> packetHandlers = new HashMap<>();
+
     /**
      * Username associated with last chat message received
      */
@@ -75,6 +78,38 @@ public class ServerTalk implements Runnable {
     private Thread _threadInstance;
 
     private ServerTalk() {
+
+        packetHandlers.put(MessageType.Chat, (info) -> {
+            // Get chat object
+            Chat chat = gson.fromJson(info[1], Chat.class);
+            Label sender = chatEntryBuilder.build();
+            Label message = chatEntryBuilder.build();
+
+            sender.setText(chat.getSender());
+            message.setText(chat.getMessage());
+
+            // If message is from this client display it on opposite side of chat view
+            if(chat.getSender().equals(this.username)){
+                sender.setAlignment(Pos.TOP_RIGHT);
+                message.setAlignment(Pos.TOP_RIGHT);
+            }
+
+            // Update chat from ui thread
+            Platform.runLater(() -> {
+                // If message is from same sender as before, avoid to write sender again
+                if(!this.lastSender.equals(chat.getSender()))
+                    this.chatContainer.getChildren().add(sender);
+
+                this.chatContainer.getChildren().add(message);
+
+                // Scroll container to end
+                this.chatScrollable.setVvalue(1.0f);
+
+                this.lastSender = chat.getSender();
+            });
+        });
+
+
 
         // Setup builder for chat entries
         this.chatEntryBuilder = () -> {
@@ -196,43 +231,9 @@ public class ServerTalk implements Runnable {
         String[] info = Packet.split("[-]");
         MessageType type = MessageType.valueOf(info[0]);
 
-        Gson deserialize = new Gson();
 
-        switch (type) {
-            case Chat:
-                // Get chat object
-                Chat chat = deserialize.fromJson(info[1], Chat.class);
-                Label sender = chatEntryBuilder.build();
-                Label message = chatEntryBuilder.build();
-
-                sender.setText(chat.getSender());
-                message.setText(chat.getMessage());
-
-                // If message is from this client display it on opposite side of chat view
-                if(chat.getSender().equals(this.username)){
-                    sender.setAlignment(Pos.TOP_RIGHT);
-                    message.setAlignment(Pos.TOP_RIGHT);
-                }
-
-                // Update chat from ui thread
-                Platform.runLater(() -> {
-                    // If message is from same sender as before, avoid to write sender again
-                    if(!this.lastSender.equals(chat.getSender()))
-                        this.chatContainer.getChildren().add(sender);
-
-                    this.chatContainer.getChildren().add(message);
-
-                    // Scroll container to end
-                    this.chatScrollable.setVvalue(1.0f);
-
-                    this.lastSender = chat.getSender();
-                });
-                break;
-            case MapUpdate:
-                break;
-            default:
-                break;
-        }
+        if(packetHandlers.containsKey(type))
+            packetHandlers.get(type).accept(info);
     }
 
     /**
@@ -247,10 +248,8 @@ public class ServerTalk implements Runnable {
             return;
         }
 
-        Gson serialize = new Gson();
-
         // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "-" + serialize.toJson(MessageObj);
+        String packet = Type.toString() + "-" + gson.toJson(MessageObj);
 
         send.println(packet);
     }
