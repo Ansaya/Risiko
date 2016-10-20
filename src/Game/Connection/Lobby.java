@@ -18,28 +18,17 @@ public class Lobby {
 
     public Lobby(ArrayList<Player> ToAdd, ArrayList<Player> ToRemove) {
         if(ToAdd != null)
-            ToAdd.forEach((p) -> toAdd.add(new User(p.getId(), p.getName())));
+            ToAdd.forEach((p) -> toAdd.add(new User(p)));
 
         if(ToRemove != null)
-            ToRemove.forEach((p) -> toRemove.add(new User(p.getId(), p.getName())));
+            ToRemove.forEach((p) -> toRemove.add(new User(p)));
     }
 
     public Lobby(Player ToAdd, Player ToRemove) {
         if(ToAdd != null)
-            toAdd.add(new User(ToAdd.getId(), ToAdd.getName()));
+            toAdd.add(new User(ToAdd));
 
         if(ToRemove != null)
-            toRemove.add(new User(ToRemove.getId(), ToRemove.getName()));
-    }
-
-    public class User {
-        public int UserId;
-
-        public String Username;
-
-        public User(int UserId, String Username) {
-            this.UserId = UserId;
-            this.Username = Username;
-        }
+            toRemove.add(new User(ToRemove));
     }
 }

@@ -46,7 +46,12 @@ public class LoginController implements Initializable {
      * Connect to the server and show lobby screen
      */
     private void ToLobby() {
-        ServerTalk.getInstance().InitConnection(usernameField.getText());
+        try {
+            ServerTalk.getInstance().InitConnection(usernameField.getText());
+        } catch (Exception e) {
+            // Notify user for error
+            return;
+        }
 
         Main.toLobby.run();
     }

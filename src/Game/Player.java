@@ -8,6 +8,7 @@ import Game.Map.Territory;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 
+import javax.jws.soap.SOAPBinding;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -55,14 +56,14 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Dominated territories
      */
-    private ArrayList<Territory> territories = new ArrayList<>();
+    transient private ArrayList<Territory> territories = new ArrayList<>();
 
     public ArrayList<Territory> getTerritories() { return territories; }
 
     /**
      * Player's mission
      */
-    private Mission mission;
+    transient private Mission mission;
 
     public Mission getMission() { return mission; }
 
@@ -71,13 +72,11 @@ public class Player extends SocketHandler implements Runnable {
      */
     private Thread _instance;
 
-    private static int counter = 0;
-
-    public Player(Socket Connection) {
+    public Player(int Id, String Username, Socket Connection) {
         super(Connection);
 
-        this.id = counter++;
-
+        this.id = Id;
+        this.name = Username;
         this.listen = true;
         this._instance = new Thread(this);
         this._instance.start();
@@ -86,21 +85,6 @@ public class Player extends SocketHandler implements Runnable {
     @Override
     public void run() {
         String incoming = "";
-
-        // First message contains username only
-        try {
-            incoming = receive.readLine();
-
-            // Set username
-            this.name = incoming;
-
-            // Send connection accepted confirmation
-            send.println("OK");
-        } catch (IOException e) {
-            System.out.println("Exception for player " + this.id);
-            e.printStackTrace();
-            return;
-        }
 
         // Handle all incoming messages
         while (listen) {
@@ -177,12 +161,19 @@ public class Player extends SocketHandler implements Runnable {
      * @param MessageObj Object of specified type
      */
     protected void SendMessage(MessageType Type, Object MessageObj) {
+        if(!connection.isConnected()) {
+            closeConnection(false);
+            System.out.println("Player " + name + " got connection error.");
+        }
+
         Gson serialize = new Gson();
 
         // Build packet string as MessageType-SerializedObject
         String packet = Type.toString() + "-" + serialize.toJson(MessageObj);
 
         send.println(packet);
+
+        System.out.println("Message sent to " + this.name + ": " + packet);
     }
 
     /**
@@ -191,6 +182,13 @@ public class Player extends SocketHandler implements Runnable {
      * @param packet String to send to the client
      */
     protected void RouteMessage(String packet) {
+        if(!connection.isConnected()) {
+            closeConnection(false);
+            System.out.println("Player " + name + " got connection error.");
+        }
+
         send.println(packet);
+
+        System.out.println("Message routed to " + this.name + ": " + packet);
     }
 }

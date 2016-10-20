@@ -37,6 +37,7 @@ public class Main extends Application {
         ConnectionHandler.getInstance().terminate();
         GameController.getInstance().terminate();
         MessageDispatcher.getInstance().terminate();
+        System.out.println("Shutdown completed");
         super.stop();
     }
 }

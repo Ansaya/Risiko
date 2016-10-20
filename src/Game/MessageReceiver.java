@@ -64,9 +64,7 @@ public abstract class MessageReceiver implements Runnable {
             synchronized (queue) {
                 this.queue.wait();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
     }
 
     @Override
@@ -88,9 +86,7 @@ public abstract class MessageReceiver implements Runnable {
                 // Remove packet from queue
                 this.queue.remove(0);
 
-            }catch (Exception e) {
-                e.printStackTrace();
-            }
+            }catch (Exception e) {}
         }
     }
 

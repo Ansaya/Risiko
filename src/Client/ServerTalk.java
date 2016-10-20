@@ -1,9 +1,13 @@
 package Client;
 
+import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
+import Game.Connection.Lobby;
 import Game.Connection.MessageType;
+import Game.Connection.User;
 import com.google.gson.Gson;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -15,7 +19,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 /**
@@ -26,6 +32,10 @@ public class ServerTalk implements Runnable {
     private static ServerTalk _instance = new ServerTalk();
 
     public static ServerTalk getInstance() { return _instance; }
+
+    private int id;
+
+    public int getId() { return this.id; }
 
     /**
      * Username of this client
@@ -75,10 +85,37 @@ public class ServerTalk implements Runnable {
      */
     private Builder<Label> chatEntryBuilder;
 
+    /**
+     * Set where to add incoming chats
+     *
+     * @param Scrollable Scrollable parent of chat container
+     * @param ToUpdate Chat container to add new chats into
+     */
+    public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
+
+        this.chatScrollable = Scrollable;
+        this.chatContainer = ToUpdate;
+    }
+
+    /**
+     * List of users in lobby
+     */
+    private ObservableList<ObservableUser> lobbyUsers;
+
+    /**
+     * Set where to add lobby users
+     *
+     * @param ToUpdate Observable list linked to UI
+     */
+    public void setLobbyUpdate(ObservableList<ObservableUser> ToUpdate) {
+        this.lobbyUsers = ToUpdate;
+    }
+
     private Thread _threadInstance;
 
     private ServerTalk() {
 
+        // Handler for incoming chat messages
         packetHandlers.put(MessageType.Chat, (info) -> {
             // Get chat object
             Chat chat = gson.fromJson(info[1], Chat.class);
@@ -109,6 +146,28 @@ public class ServerTalk implements Runnable {
             });
         });
 
+        // Handler for users in lobby
+        packetHandlers.put(MessageType.Lobby, (info) -> {
+            System.out.println("Lobby message: " + info[1]);
+            Lobby users = gson.fromJson(info[1], Lobby.class);
+
+            // Cast to observable user
+            ArrayList<ObservableUser> toAdd = new ArrayList<>();
+            users.getToAdd().forEach((u) -> toAdd.add(new ObservableUser(u)));
+            System.out.println(toAdd.size() + " players to add.");
+
+            ArrayList<ObservableUser> toRemove = new ArrayList<>();
+            users.getToRemove().forEach((u) -> toRemove.add(new ObservableUser(u)));
+            System.out.println(toRemove.size() + " to remove.");
+
+            // Update users in lobby
+            Platform.runLater(() -> {
+                lobbyUsers.removeAll(toRemove);
+                lobbyUsers.addAll(toAdd);
+                System.out.println("Lobby updated");
+            });
+
+        });
 
 
         // Setup builder for chat entries
@@ -127,7 +186,7 @@ public class ServerTalk implements Runnable {
      *
      * @param Username Username choose from user
      */
-    public void InitConnection(String Username) {
+    public void InitConnection(String Username) throws Exception {
         this.username = Username;
 
         try {
@@ -140,20 +199,25 @@ public class ServerTalk implements Runnable {
             return;
         }
 
+        // Try connecting to server
+        String incoming = "";
+
+        // Send username to the server
+        this.send.println(this.username);
+
+        incoming = receive.readLine();
+        System.out.println("Server responded: " + incoming);
+
+        // If server doesn't respond notify the user
+        if(!incoming.startsWith("OK"))
+            throw new Exception("Wrong response from server.");
+
+        this.id = Integer.valueOf(incoming.split("[-]")[1]);
+        System.out.println("Got id " + id + " from server.");
+
+        // If connection is successfully established start listening
         this._threadInstance = new Thread(this);
         this._threadInstance.start();
-    }
-
-    /**
-     * Set where to add incoming chats
-     *
-     * @param Scrollable Scrollable parent of chat container
-     * @param ToUpdate Chat container to add new chats into
-     */
-    public void updateHere(ScrollPane Scrollable, VBox ToUpdate) {
-
-        this.chatScrollable = Scrollable;
-        this.chatContainer = ToUpdate;
     }
 
     /**
@@ -191,53 +255,30 @@ public class ServerTalk implements Runnable {
     public void run() {
 
         // Incoming message buffer
-        String incoming = "";
-
-        // Send username to the server
-        this.send.println(this.username);
-
-        try {
-            incoming = receive.readLine();
-
-            // If server doesn't respond notify the user
-            if(!incoming.equals("OK")){
-                // Call user interface and print connection error
-                return;
-            }
-        }catch(IOException e) {
-            e.printStackTrace();
-            return;
-        }
+        String Packet = "";
 
         // Listen to the server until necessary
         while (listen) {
 
             try {
-                while ((incoming = receive.readLine()) != null){
-                    MessageHandler(incoming);
+                while ((Packet = receive.readLine()) != null){
+                    if(Packet.equals("End")){
+                        Platform.runLater(() -> StopConnection(false));
+                        return;
+                    }
+
+                    System.out.println("Received: " + Packet);
+
+                    String[] info = Packet.split("[-]");
+                    MessageType type = MessageType.valueOf(info[0]);
+
+
+                    if(packetHandlers.containsKey(type))
+                        packetHandlers.get(type).accept(info);
                 }
 
             }catch (IOException e) {}
         }
-    }
-
-    /**
-     * Handle incoming messages to update UI and notify user for events
-     *
-     * @param Packet Received packet
-     */
-    private void MessageHandler(String Packet) {
-        if(Packet.equals("End")){
-            Platform.runLater(() -> StopConnection(false));
-            return;
-        }
-
-        String[] info = Packet.split("[-]");
-        MessageType type = MessageType.valueOf(info[0]);
-
-
-        if(packetHandlers.containsKey(type))
-            packetHandlers.get(type).accept(info);
     }
 
     /**
@@ -256,6 +297,7 @@ public class ServerTalk implements Runnable {
         String packet = Type.toString() + "-" + gson.toJson(MessageObj);
 
         send.println(packet);
+        System.out.println("Sent to server: " + packet);
     }
 
     /**
@@ -264,6 +306,12 @@ public class ServerTalk implements Runnable {
      * @param packet String to send to the client
      */
     public void RouteMessage(String packet) {
+        if(connection.isClosed()) {
+            Platform.runLater(() -> StopConnection(false));
+            return;
+        }
+
         send.println(packet);
+        System.out.println("Sent to server: " + packet);
     }
 }

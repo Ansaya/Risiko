@@ -53,6 +53,8 @@ public class MessageDispatcher implements Runnable {
             this._threadInstance.join();
             this._threadInstance = null;
         }catch (Exception e) {}
+
+        System.out.println("Message dispatcher: Terminated.");
     }
 
     @Override
@@ -61,13 +63,13 @@ public class MessageDispatcher implements Runnable {
             try {
                 // If queue is empty wait for new packet before proceeding
                 if(this.packetsQueue.isEmpty()) {
-                    System.out.println("MessageDispatcher: waiting...");
+                    System.out.println("MessageDispatcher: Waiting for packets...");
                     synchronized (packetsQueue) {
                         this.packetsQueue.wait();
                     }
                 }
 
-                System.out.println("Packet: " + packetsQueue.get(0));
+                System.out.println("MessageDispatcher: " + packetsQueue.get(0));
 
                 // Deserialize packet received as MatchId-PlayerId-MessageType-JsonSerializedObject
                 String[] infos = packetsQueue.get(0).split("[-]");
@@ -79,12 +81,12 @@ public class MessageDispatcher implements Runnable {
                 // If match's id is zero the player is in the lobby
                 if(matchId == 0) {
                     GameController.getInstance().setIncoming(playerId, type, infos[3]);
-                    System.out.println("Sent to GC");
+                    System.out.println("MessageDispatcher: Packet sent to game controller");
                 }
                 else {
                     // Route message to correct match event dispatcher
                     GameController.getInstance().getMatch(matchId).setIncoming(playerId, type, infos[3]);
-                    System.out.println("Sent to match " + matchId);
+                    System.out.println("MessageDispatcher: Packet sent to match " + matchId);
                 }
 
                 // Remove packet from queue
