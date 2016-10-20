@@ -11,8 +11,10 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.VBox;
 import javafx.util.Builder;
+import sun.reflect.generics.tree.Tree;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -100,14 +102,14 @@ public class ServerTalk implements Runnable {
     /**
      * List of users in lobby
      */
-    private ObservableList<ObservableUser> lobbyUsers;
+    private ObservableList<TreeItem<ObservableUser>> lobbyUsers;
 
     /**
      * Set where to add lobby users
      *
      * @param ToUpdate Observable list linked to UI
      */
-    public void setLobbyUpdate(ObservableList<ObservableUser> ToUpdate) {
+    public void setLobbyUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
         this.lobbyUsers = ToUpdate;
     }
 
@@ -151,19 +153,19 @@ public class ServerTalk implements Runnable {
             System.out.println("Lobby message: " + info[1]);
             Lobby users = gson.fromJson(info[1], Lobby.class);
 
-            // Cast to observable user
-            ArrayList<ObservableUser> toAdd = new ArrayList<>();
-            users.getToAdd().forEach((u) -> toAdd.add(new ObservableUser(u)));
-            System.out.println(toAdd.size() + " players to add.");
-
-            ArrayList<ObservableUser> toRemove = new ArrayList<>();
-            users.getToRemove().forEach((u) -> toRemove.add(new ObservableUser(u)));
-            System.out.println(toRemove.size() + " to remove.");
-
             // Update users in lobby
             Platform.runLater(() -> {
-                lobbyUsers.removeAll(toRemove);
-                lobbyUsers.addAll(toAdd);
+                lobbyUsers.removeIf((t) -> {
+                    for (User u: users.getToRemove()
+                            ) {
+                        return t.getValue().UserId.getValue().equals(String.valueOf(u.getUserId()));
+                    }
+
+                    return false;
+                });
+
+                users.getToAdd().forEach((u) -> lobbyUsers.add(new TreeItem<>(new ObservableUser(u))));
+
                 System.out.println("Lobby updated");
             });
 
@@ -195,8 +197,7 @@ public class ServerTalk implements Runnable {
             this.send = new PrintWriter(connection.getOutputStream(), true);
             this.listen = true;
         } catch (IOException e) {
-            System.out.println("Cannot connect with the server");
-            return;
+            throw new Exception("Cannot connect with the server");
         }
 
         // Try connecting to server

@@ -45,8 +45,6 @@ public class LobbyController implements Initializable {
     @FXML
     protected JFXTreeTableView<ObservableUser> lobbyTable;
 
-    private ObservableList<ObservableUser> lobby = FXCollections.observableArrayList();
-
     /* Chat fields */
     @FXML
     protected ScrollPane chatSP;
@@ -67,10 +65,9 @@ public class LobbyController implements Initializable {
      * Lambda for chat message sending
      */
     private EventHandler sendMessage = (evt) -> {
-        if(chatMessage.getText().equals(""))
-            return;
+        if(!chatMessage.getText().trim().equals(""))
+            server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText().trim()));
 
-        server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText()));
         chatMessage.clear();
     };
 
@@ -96,16 +93,11 @@ public class LobbyController implements Initializable {
             return param.getValue().getValue().Username;
         });
 
-        final TreeItem<ObservableUser> rootItem = new RecursiveTreeItem<>(lobby, RecursiveTreeObject::getChildren);
-        lobbyTable.refresh();
+        final TreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         lobbyTable.getColumns().setAll(idColumn, usernameColumn);
         lobbyTable.setRoot(rootItem);
         lobbyTable.setShowRoot(false);
 
-        lobby.addListener((ListChangeListener.Change<? extends ObservableUser> c) -> {
-                lobbyTable.refresh();
-            System.out.println("Refresh");
-            });
-        this.server.setLobbyUpdate(lobby);
+        this.server.setLobbyUpdate(rootItem.getChildren());
     }
 }
