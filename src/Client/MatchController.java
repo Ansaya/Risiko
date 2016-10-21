@@ -5,6 +5,10 @@ import Game.Connection.MessageType;
 import Game.Map.Territories;
 import Game.Match;
 import com.jfoenix.controls.JFXBadge;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXNodesList;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyValue;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
@@ -148,9 +152,34 @@ public class MatchController implements Initializable {
         public void handle(Event evt) {
             Node sender = (Node) evt.getTarget();
 
+            JFXButton attack1 = new JFXButton("1");
+            attack1.setButtonType(JFXButton.ButtonType.RAISED);
+            attack1.getStyleClass().add("animated-option-button");
+
+            JFXButton attack2 = new JFXButton("2");
+            attack2.setButtonType(JFXButton.ButtonType.RAISED);
+            attack2.getStyleClass().add("animated-option-button");
+
+            JFXButton attack3 = new JFXButton("3");
+            attack3.setButtonType(JFXButton.ButtonType.RAISED);
+            attack3.getStyleClass().add("animated-option-button");
+
+            JFXNodesList nodesList = new JFXNodesList();
+            nodesList.setSpacing(10);
+            nodesList.addAnimatedNode(attack1, (expanded)-> new ArrayList<KeyValue>(){{ add(new KeyValue(label.rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
+            nodesList.addAnimatedNode(attack2);
+            nodesList.addAnimatedNode(attack3);
+            nodesList.setRotate(270);
+            nodesList.setLayoutX(sender.getBoundsInParent().getMinX());
+            nodesList.setLayoutY(sender.getBoundsInParent().getMinY());
+
+            System.out.println("X" + sender.getBoundsInParent().getMinX() + "\nY" + sender.getBoundsInParent().getMinY());
+
             territories.forEach((t) -> t.getStyleClass().remove("selected"));
 
             sender.getStyleClass().add("selected");
+
+            mapPane.getChildren().add(nodesList);
 
             System.out.println(sender.getId());
             System.out.println(sender.getStyleClass());
