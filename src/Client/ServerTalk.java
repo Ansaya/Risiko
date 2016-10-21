@@ -158,7 +158,7 @@ public class ServerTalk implements Runnable {
                 lobbyUsers.removeIf((t) -> {
                     for (User u: users.getToRemove()
                             ) {
-                        return t.getValue().UserId.getValue().equals(String.valueOf(u.getUserId()));
+                        return t.getValue().UserId.get() == u.getUserId();
                     }
 
                     return false;

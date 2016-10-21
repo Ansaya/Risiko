@@ -11,9 +11,20 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Label?>
 
 <AnchorPane fx:id="page" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.LobbyController">
-   <JFXTreeTableView fx:id="lobbyTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="150.0" AnchorPane.topAnchor="0.0" />
+   <HBox AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="0.0" prefHeight="50.0" maxHeight="-Infinity">
+      <Label styleClass="title-label">Lobby</Label>
+      <Label styleClass="title-label" fx:id="lobbyCount"></Label>
+      <StackPane HBox.hgrow="ALWAYS">
+         <StackPane StackPane.alignment="CENTER_RIGHT" maxWidth="200">
+            <JFXTextField fx:id="searchField" promptText="Search..." ></JFXTextField>
+         </StackPane>
+      </StackPane>
+   </HBox>
+   <JFXTreeTableView fx:id="lobbyTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="300.0" AnchorPane.topAnchor="50.0" />
 
    <Button fx:id="matchBtn" AnchorPane.rightAnchor="40" AnchorPane.topAnchor="20">Match</Button>
    <TitledPane alignment="TOP_LEFT" contentDisplay="RIGHT" maxWidth="-Infinity" pickOnBounds="false" prefWidth="250.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="50.0">
