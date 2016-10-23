@@ -8,12 +8,12 @@ import static Game.Map.Territories.*;
  * Continents' list from earth map
  */
 public enum Continent {
-    NordAmerica(Alaska, Alberta, AmericaCentrale, StatiUnitiOccidentali, Groenlandia, TerritoriDelNordOvest, Ontario, Quebec, StatiUnitiOrientali),
-    SudAmerica(Argentina, Brasile, Peru, Venezuela),
-    Europa(GranBretagna, Islanda, EuropaSettentrionale, Scandinavia, EuropaMeridionale, Ukraina, EuropaOccidentale),
-    Africa(Congo, AfricaOrientale, Egitto, Madagascar, NordAfrica, SudAfrica),
-    Asia(Afghanistan, Cina, India, Cita, Giappone, Kamchatka, MedioOriente, Mongolia, Siam, Siberia, Urali, Jacuzia),
-    Australia(AustraliaOrientale, Indonesia, NuovaGuinea, AustraliaOccidentale);
+    NorthAmerica(Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates),
+    SouthAmerica(Argentina, Brazil, Peru, Venezuela),
+    Europe(GreatBritain, Iceland, NorthernEurope, Scandinavia, SouthernEurope, Ukraine, WesternEurope),
+    Africa(Congo, EastAfrica, Egypt, Madagascar, NorthAfrica, SouthAfrica),
+    Asia(Afghanistan, China, India, Irkutsk, Japan, Kamchatka, MiddleEast, Mongolia, Siam, Siberia, Ural, Yakutsk),
+    Australia(EasternAustralia, Indonesia, NewGuinea, WesternAustralia);
 
     /**
      * Continent's territories
@@ -44,13 +44,13 @@ public enum Continent {
         for (Continent c: dominated
              ) {
             switch (c){
-                case NordAmerica:
+                case NorthAmerica:
                     bonus += 5;
                     break;
-                case SudAmerica:
+                case SouthAmerica:
                     bonus += 2;
                     break;
-                case Europa:
+                case Europe:
                     bonus += 5;
                     break;
                 case Africa:
@@ -83,13 +83,13 @@ public enum Continent {
         for (Territory t: Territories
                 ) {
             switch (t.getTerritory().continent){
-                case NordAmerica:
+                case NorthAmerica:
                     nordAmerica++;
                     break;
-                case SudAmerica:
+                case SouthAmerica:
                     sudAmerica++;
                     break;
-                case Europa:
+                case Europe:
                     europa++;
                     break;
                 case Africa:
@@ -110,11 +110,11 @@ public enum Continent {
 
         // If all territories are present add continent to the output array
         if(nordAmerica == 9)
-            dominated.add(NordAmerica);
+            dominated.add(NorthAmerica);
         if (sudAmerica == 4)
-            dominated.add(SudAmerica);
+            dominated.add(SouthAmerica);
         if (europa == 7)
-            dominated.add(Europa);
+            dominated.add(Europe);
         if (africa == 6)
             dominated.add(Africa);
         if (asia == 12)

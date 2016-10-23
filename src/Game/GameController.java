@@ -1,13 +1,11 @@
 package Game;
 
-import Game.Connection.Chat;
-import Game.Connection.Lobby;
-import Game.Connection.MessageType;
+import Game.Connection.*;
 import com.google.gson.Gson;
 
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Main controller to manage matches and user lobby
@@ -49,16 +47,31 @@ public class GameController extends MessageReceiver {
     /**
      * Users waiting to play
      */
-    private ArrayList<Player> lobby = new ArrayList<>();
+    private HashMap<Integer, Player> lobby = new HashMap<>();
 
     private GameController() {
+        // Handler for leaving players
         messageHandlers.put(MessageType.GameState, (message) -> {
             if(message.Json.equals(StateType.Abandoned.toString()))
                 releasePlayer(message.PlayerId);
         });
 
+        // Handler for incoming chat messages routing
         messageHandlers.put(MessageType.Chat, (message) -> {
-            this.lobby.forEach((p) -> p.RouteMessage(message.Type + "-" + message.Json));
+            this.lobby.forEach((id, p) -> p.RouteMessage(message.Type + "-" + message.Json));
+        });
+
+        // Handler for new match initialization request
+        messageHandlers.put(MessageType.Match, (message) -> {
+            Game.Connection.Match requested = (new Gson()).fromJson(message.Json, Game.Connection.Match.class);
+
+            ArrayList<Player> toAdd = new ArrayList<>();
+            requested.getPlayers().forEach((u) -> {
+                toAdd.add(lobby.get(u.getUserId()));
+                lobby.remove(u.getUserId());
+            });
+
+            matches.add(new Match(toAdd));
         });
     }
 
@@ -80,12 +93,12 @@ public class GameController extends MessageReceiver {
         this.stopListen();
         System.out.println("Game controller not listening.");
 
-        Chat end = new Chat("Admin", "Server is shutting down");
+        Chat end = new Chat(new User(-1, "Admin", Color.ROSSO), "Server is shutting down.");
 
         // Send end message to matches players and close connection
         for (Match m: matches) {
             System.out.println("Terminating match " + m.getId());
-            m.getPlayers().forEach((p) -> {
+            m.getPlayers().forEach((id, p) -> {
                 p.SendMessage(MessageType.Chat, end);
                 p.closeConnection(true);
             });
@@ -93,12 +106,11 @@ public class GameController extends MessageReceiver {
 
         // Send end message and close connection of lobby players
         System.out.println(lobby.size() + " player in lobby");
-        for (Player p: lobby
-             ) {
+        lobby.forEach((id, p) -> {
             System.out.println("Releasing player " + p.getName());
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
-        }
+        });
 
         System.out.println("Game controller terminated.");
     }
@@ -113,12 +125,12 @@ public class GameController extends MessageReceiver {
         Player newP = new Player(Id, Username, Connection);
 
         // Notify all players for new player
-        lobby.forEach((p) -> p.SendMessage(MessageType.Lobby, new Lobby(newP, null)));
+        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby(newP, null)));
 
-        lobby.add(newP);
+        lobby.put(Id, new Player(Id, Username, Connection));
 
         // Notify new player for all players
-        newP.SendMessage(MessageType.Lobby, new Lobby(lobby, null));
+        lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby(new ArrayList<>(lobby.values()), null));
 
         System.out.println("Game controller: New player in lobby.");
     }
@@ -133,12 +145,12 @@ public class GameController extends MessageReceiver {
         System.out.println("Game controller: Player " + Player.getName() + " got back from match.");
 
         // Notify all players for new player
-        lobby.forEach((p) -> p.SendMessage(MessageType.Lobby, new Lobby(Player, null)));
+        lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby(Player, null)));
 
-        lobby.add(Player);
+        lobby.put(Player.getId(), Player);
 
         // Notify new player for all players
-        Player.SendMessage(MessageType.Lobby, new Lobby(lobby, null));
+        Player.SendMessage(MessageType.Lobby, new Lobby(new ArrayList<>(lobby.values()), null));
     }
 
     /**
@@ -147,27 +159,9 @@ public class GameController extends MessageReceiver {
      * @param PlayerId Player to remove from lobby
      */
     public void releasePlayer(int PlayerId) {
-        for (Player p: lobby) {
-            if(p.getId() == PlayerId) {
-                lobby.remove(p);
-                System.out.println("Game controller: User " + p.getName() + " disconnected.");
-
-                // Notify all players of leaving player
-                lobby.forEach((l) -> l.SendMessage(MessageType.Lobby, new Lobby(null, p)));
-                return;
-            }
-        }
-    }
-
-    /**
-     * Starts a new match with passed users
-     *
-     * @param Players Players to add to new match
-     */
-    public void newMatch(Player... Players) {
-        matches.add(new Match(Players));
-
-        lobby.removeAll(Arrays.asList(Players));
+        Player leaving = lobby.get(PlayerId);
+        lobby.remove(PlayerId);
+        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby(null, leaving)));
     }
 
     /**

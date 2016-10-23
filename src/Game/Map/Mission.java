@@ -2,7 +2,7 @@ package Game.Map;
 
 import Game.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import static Game.Map.Continent.*;
 
@@ -50,12 +50,12 @@ public enum Mission {
 
             // Get all players from the match
             Match match = GameController.getInstance().getMatch(Player.getMathcId());
-            ArrayList<Player> players = match.getPlayers();
+            Collection<Player> players = match.getPlayers().values();
 
             // Check on all players (Check is performed on current player too, but it won't affect result)
             for (Player g: players
                  ) {
-                if(g.getColor() == color)
+                if(g.isPlaying() && g.getColor() == color)
                     return false;
             }
 
@@ -89,11 +89,11 @@ public enum Mission {
         if (dominated.size() > 1)
             switch (Player.getMission()) {
                 case NordAmericaAfrica:
-                    if(dominated.contains(NordAmerica) &&dominated.contains(Africa))
+                    if(dominated.contains(NorthAmerica) &&dominated.contains(Africa))
                             return true;
                     break;
                 case NordAmericaAustralia:
-                    if(dominated.contains(NordAmerica) && dominated.contains(Australia))
+                    if(dominated.contains(NorthAmerica) && dominated.contains(Australia))
                         return true;
                     break;
                 case AsiaAfrica:
@@ -101,7 +101,7 @@ public enum Mission {
                         return true;
                     break;
                 case AsiaSudAmerica:
-                    if (dominated.contains(Asia) && dominated.contains(SudAmerica))
+                    if (dominated.contains(Asia) && dominated.contains(SouthAmerica))
                         return true;
                     break;
                 default:
@@ -113,11 +113,11 @@ public enum Mission {
         if (dominated.size() > 2)
             switch (Player.getMission()) {
                 case EuropaAustraliaContinente:
-                    if(dominated.contains(Europa) && dominated.contains(Australia))
+                    if(dominated.contains(Europe) && dominated.contains(Australia))
                         return true;
                     break;
                 case EuropaSudAmericaContinente:
-                    if (dominated.contains(Europa) && dominated.contains(SudAmerica))
+                    if (dominated.contains(Europe) && dominated.contains(SouthAmerica))
                         return true;
                     break;
                 default:

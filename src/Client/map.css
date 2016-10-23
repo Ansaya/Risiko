@@ -58,10 +58,41 @@
 }
 
 .australia {
-    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.15), 2, 0.6, 0, 0);
     -fx-fill: blueviolet;
 }
 
 .australia:hover {
     -fx-fill: #631b9c;
+}
+
+/* Armies selector */
+.animated-option-button-atk {
+    -fx-background-color:rgb(203,104,96);
+}
+
+.animated-option-button-def {
+    -fx-background-color:#43609C;
+}
+
+.animated-option-button-move {
+    -fx-background-color:#44B449;
+}
+
+.animated-option-button-* {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-font-family: Trebuchet MS;
+    -fx-pref-width:50px;
+    -fx-background-radius:15px;
+    -fx-pref-height:35px;
+    -fx-text-fill:white;
+    -fx-border-color:WHITE;
+    -fx-border-radius: 15px;
+    -fx-border-width: 2px;
+}
+
+.animated-option-button-selector {
+    -fx-pref-width:35px !important;
+    -fx-background-radius:35px !important;
+    -fx-border-radius: 35px !important;
 }

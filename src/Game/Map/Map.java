@@ -1,15 +1,15 @@
 package Game.Map;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Represent the complete earth map
  */
 public class Map {
 
-    private ArrayList<Territory> territories = new ArrayList<>();
+    private HashMap<Territories, Territory> territories = new HashMap<>();
 
-    public ArrayList<Territory> getTerritories() { return territories; }
+    public HashMap<Territories, Territory> getTerritories() { return territories; }
 
     public Map() {
         for (Territories t: Territories.values()
@@ -17,7 +17,7 @@ public class Map {
             if(t == Territories.Jolly1 || t == Territories.Jolly2)
                 continue;
 
-            territories.add(new Territory(t));
+            territories.put(t, new Territory(t));
         }
     }
 }

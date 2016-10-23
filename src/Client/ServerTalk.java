@@ -1,10 +1,10 @@
 package Client;
 
+import Client.Observables.ObservableTerritory;
 import Client.Observables.ObservableUser;
-import Game.Connection.Chat;
-import Game.Connection.Lobby;
-import Game.Connection.MessageType;
-import Game.Connection.User;
+import Game.Color;
+import Game.Connection.*;
+import Game.Map.Territories;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -35,16 +35,9 @@ public class ServerTalk implements Runnable {
 
     public static ServerTalk getInstance() { return _instance; }
 
-    private int id;
+    private User user;
 
-    public int getId() { return this.id; }
-
-    /**
-     * Username of this client
-     */
-    private String username;
-
-    public String getUsername() { return this.username; }
+    public User getUser() { return this.user; }
 
     private volatile boolean listen;
 
@@ -54,7 +47,7 @@ public class ServerTalk implements Runnable {
     private Socket connection;
 
     /**
-     * Incoming strem
+     * Incoming stream
      */
     private BufferedReader receive;
 
@@ -70,7 +63,7 @@ public class ServerTalk implements Runnable {
     /**
      * Username associated with last chat message received
      */
-    private String lastSender = "";
+    private int lastSenderId = -1;
 
     /**
      * ScrollPane containing chatContainer VBox
@@ -102,16 +95,29 @@ public class ServerTalk implements Runnable {
     /**
      * List of users in lobby
      */
-    private ObservableList<TreeItem<ObservableUser>> lobbyUsers;
+    private ObservableList<TreeItem<ObservableUser>> users;
 
     /**
-     * Set where to add lobby users
+     * Set where to add lobby users when in lobby or match users when playing
      *
      * @param ToUpdate Observable list linked to UI
      */
-    public void setLobbyUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
-        this.lobbyUsers = ToUpdate;
+    public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
+        this.users = ToUpdate;
     }
+
+
+    /**
+     * HashMap of territories
+     */
+    private HashMap<Territories, ObservableTerritory> map;
+
+    /**
+     * Set map connected to UI
+     *
+     * @param Map HashMap of territories in the UI
+     */
+    public void setMapUpdate(HashMap<Territories, ObservableTerritory> Map) { this.map = Map; }
 
     private Thread _threadInstance;
 
@@ -124,19 +130,24 @@ public class ServerTalk implements Runnable {
             Label sender = chatEntryBuilder.build();
             Label message = chatEntryBuilder.build();
 
-            sender.setText(chat.getSender());
+            sender.setText(chat.getSender().getUsername());
             message.setText(chat.getMessage());
 
             // If message is from this client display it on opposite side of chat view
-            if(chat.getSender().equals(this.username)){
+            if(chat.getSender().getUserId() == this.user.getUserId()){
                 sender.setAlignment(Pos.TOP_RIGHT);
                 message.setAlignment(Pos.TOP_RIGHT);
+            }
+
+            if(chat.getSender().getColor() != null) {
+                sender.setStyle("-fx-text-fill: " + chat.getSender().getColor().toString().toLowerCase());
+                message.setStyle("-fx-text-fill: " + chat.getSender().getColor().toString().toLowerCase());
             }
 
             // Update chat from ui thread
             Platform.runLater(() -> {
                 // If message is from same sender as before, avoid to write sender again
-                if(!this.lastSender.equals(chat.getSender()))
+                if(this.lastSenderId != chat.getSender().getUserId())
                     this.chatContainer.getChildren().add(sender);
 
                 this.chatContainer.getChildren().add(message);
@@ -144,19 +155,19 @@ public class ServerTalk implements Runnable {
                 // Scroll container to end
                 this.chatScrollable.setVvalue(1.0f);
 
-                this.lastSender = chat.getSender();
+                this.lastSenderId = chat.getSender().getUserId();
             });
         });
 
         // Handler for users in lobby
         packetHandlers.put(MessageType.Lobby, (info) -> {
             System.out.println("Lobby message: " + info[1]);
-            Lobby users = gson.fromJson(info[1], Lobby.class);
+            Lobby lobbyUsers = gson.fromJson(info[1], Lobby.class);
 
             // Update users in lobby
             Platform.runLater(() -> {
-                lobbyUsers.removeIf((t) -> {
-                    for (User u: users.getToRemove()
+                users.removeIf((t) -> {
+                    for (User u: lobbyUsers.getToRemove()
                             ) {
                         return t.getValue().UserId.get() == u.getUserId();
                     }
@@ -164,11 +175,64 @@ public class ServerTalk implements Runnable {
                     return false;
                 });
 
-                users.getToAdd().forEach((u) -> lobbyUsers.add(new TreeItem<>(new ObservableUser(u))));
+                lobbyUsers.getToAdd().forEach((u) -> users.add(new TreeItem<>(new ObservableUser(u))));
 
                 System.out.println("Lobby updated");
             });
 
+        });
+
+        // Handler for match initialization
+        packetHandlers.put(MessageType.Match, (info) -> {
+            System.out.println("Match message: " + info[1]);
+            Match match = gson.fromJson(info[1], Match.class);
+
+            for (User u: match.getPlayers()) {
+                if(u.getUserId() == this.user.getUserId())
+                    this.user.setColor(u.getColor());
+
+                this.users.add(new TreeItem<>(new ObservableUser(u)));
+            }
+        });
+
+        // Handler for map updates
+        packetHandlers.put(MessageType.MapUpdate, (info) -> {
+            System.out.println("MapUpdate message: " + info[1]);
+            MapUpdate update = gson.fromJson(info[1], MapUpdate.class);
+
+            /* Update each territory with new information */
+            update.getUpdated().forEach((u) -> {
+                ObservableTerritory t = map.get(u.getTerritory());
+                t.Armies.set(u.getArmies());
+                if(t.getOwner().getUserId() != u.getOwner().getId())
+                    t.setOwner(new User(u.getOwner()));
+            });
+        });
+
+        // Handler for attacked territory
+        packetHandlers.put(MessageType.Attack, (info) -> {
+            System.out.println("Defense message: " + info[1]);
+            Attack attack = gson.fromJson(info[1], Attack.class);
+
+            // Message shown to the user
+            String popupInfo = "Player " + attack.getFrom().getOwner().getName() + " is attacking from " + attack.getFrom().toString() + " with " + attack.getArmies() +
+                    " armies to your " + attack.getTo().toString() + "\r\nChoose how many armies do you want to defend with.";
+
+            Integer defArmies = null;
+
+            // Require to user number of defending armies to be used
+            try {
+                defArmies = (map.get(attack.getTo().getTerritory())).requestDefense(popupInfo);
+            } catch (InterruptedException e) {
+                System.out.println("From defense message handler.");
+                e.printStackTrace();
+            }
+
+            if(defArmies == null)
+                System.out.println("From defense message handler: Null problem");
+
+            // Send response to server
+            SendMessage(MessageType.Defense, new Defense(attack.getFrom(), attack.getTo(), defArmies));
         });
 
 
@@ -189,8 +253,6 @@ public class ServerTalk implements Runnable {
      * @param Username Username choose from user
      */
     public void InitConnection(String Username) throws Exception {
-        this.username = Username;
-
         try {
             this.connection = new Socket("localhost", 5757);
             this.receive = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -204,7 +266,7 @@ public class ServerTalk implements Runnable {
         String incoming = "";
 
         // Send username to the server
-        this.send.println(this.username);
+        this.send.println(Username);
 
         incoming = receive.readLine();
         System.out.println("Server responded: " + incoming);
@@ -213,8 +275,9 @@ public class ServerTalk implements Runnable {
         if(!incoming.startsWith("OK"))
             throw new Exception("Wrong response from server.");
 
-        this.id = Integer.valueOf(incoming.split("[-]")[1]);
-        System.out.println("Got id " + id + " from server.");
+        // Set user for this client
+        this.user = new User(Integer.valueOf(incoming.split("[-]")[1]), Username, null);
+        System.out.println("Got id " + user.getUserId() + " from server.");
 
         // If connection is successfully established start listening
         this._threadInstance = new Thread(this);
@@ -275,7 +338,7 @@ public class ServerTalk implements Runnable {
 
 
                     if(packetHandlers.containsKey(type))
-                        packetHandlers.get(type).accept(info);
+                        new Thread(() -> packetHandlers.get(type).accept(info)).start();
                 }
 
             }catch (IOException e) {}
@@ -297,7 +360,9 @@ public class ServerTalk implements Runnable {
         // Build packet string as MessageType-SerializedObject
         String packet = Type.toString() + "-" + gson.toJson(MessageObj);
 
-        send.println(packet);
+        synchronized (send) {
+            send.println(packet);
+        }
         System.out.println("Sent to server: " + packet);
     }
 
@@ -312,7 +377,9 @@ public class ServerTalk implements Runnable {
             return;
         }
 
-        send.println(packet);
+        synchronized (send) {
+            send.println(packet);
+        }
         System.out.println("Sent to server: " + packet);
     }
 }

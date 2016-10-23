@@ -11,11 +11,11 @@ public class GameState {
 
     public StateType getState() { return this.state; }
 
-    private String winner;
+    private User winner;
 
-    public String getWinner() { return this.winner; }
+    public User getWinner() { return this.winner; }
 
-    public GameState(StateType State, String Winner) {
+    public GameState(StateType State, User Winner) {
         this.state = State;
         this.winner = Winner;
     }

@@ -171,7 +171,9 @@ public class Player extends SocketHandler implements Runnable {
         // Build packet string as MessageType-SerializedObject
         String packet = Type.toString() + "-" + serialize.toJson(MessageObj);
 
-        send.println(packet);
+        synchronized (send) {
+            send.println(packet);
+        }
 
         System.out.println("Message sent to " + this.name + ": " + packet);
     }
@@ -187,7 +189,9 @@ public class Player extends SocketHandler implements Runnable {
             System.out.println("Player " + name + " got connection error.");
         }
 
-        send.println(packet);
+        synchronized (send) {
+            send.println(packet);
+        }
 
         System.out.println("Message routed to " + this.name + ": " + packet);
     }

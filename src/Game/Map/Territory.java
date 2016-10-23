@@ -63,4 +63,9 @@ public class Territory {
         this.armies -= toRemove;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return territory.toString();
+    }
 }

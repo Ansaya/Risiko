@@ -19,4 +19,9 @@ public class MapUpdate {
     public MapUpdate(ArrayList<Territory> Updated) {
         this.updated = Updated;
     }
+
+    public MapUpdate(Territory Updated) {
+        this.updated = new ArrayList<>();
+        updated.add(Updated);
+    }
 }

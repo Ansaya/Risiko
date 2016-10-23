@@ -59,8 +59,8 @@ public class DeckTerritory implements Deck<Territories> {
      * @param Cards Three cards list
      * @return Number of bonus armies if combination is valid, zero otherwise
      */
-    public int isCombinationValid(boolean use, Territories... Cards) {
-        if(Cards.length != 3)
+    public int isCombinationValid(boolean use, ArrayList<Territories> Cards) {
+        if(Cards.size() != 3)
             return 0;
 
         int infantry = 0, cavalry = 0, artillery = 0, jolly = 0;
@@ -69,13 +69,13 @@ public class DeckTerritory implements Deck<Territories> {
         for (Territories t: Cards
                 ) {
             switch (t.card){
-                case Fanteria:
+                case Infantry:
                     infantry++;
                     break;
-                case Cavalleria:
+                case Cavalry:
                     cavalry++;
                     break;
-                case Artiglieria:
+                case Artillery:
                     artillery++;
                     break;
                 case Jolly:
@@ -92,15 +92,15 @@ public class DeckTerritory implements Deck<Territories> {
         // Three same cards         Two same cards plus jolly       Three different cards
         if(infantry == 3 || cavalry == 3 || artillery == 3 || (infantry == 1 && cavalry == 1 && artillery == 1) ||
                 ((infantry == 2 || cavalry == 2 || artillery == 2) && jolly == 1)) {
-            armies = bonus;
+            armies = this.bonus;
 
             // If player redeems combination
             if(use) {
                 // Increment bonus armies
-                bonus += 2;
+                this.bonus += 2;
 
                 // Add redeemed cards to the end of the deck
-                deck.addAll(deck.size() - 1, Arrays.asList(Cards));
+                this.deck.addAll(this.deck.size() - 1, Cards);
             }
         }
 

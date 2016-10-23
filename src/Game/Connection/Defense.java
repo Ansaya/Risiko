@@ -37,7 +37,7 @@ public class Defense {
 
     public void setDefArmies(int DefArmies) { this.defArmies = DefArmies; }
 
-    private Defense(Territory From, Territory To, int Armies) {
+    public Defense(Territory From, Territory To, int Armies) {
         this.from = From;
         this.to = To;
         this.armies = Armies;

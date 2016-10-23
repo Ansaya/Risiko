@@ -70,7 +70,7 @@ public class LobbyController implements Initializable {
      */
     private EventHandler sendMessage = (evt) -> {
         if(!chatMessage.getText().trim().equals(""))
-            server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText().trim()));
+            server.SendMessage(MessageType.Chat, new Chat(server.getUser(), chatMessage.getText().trim()));
 
         chatMessage.clear();
     };
@@ -117,6 +117,6 @@ public class LobbyController implements Initializable {
         });
 
 
-        this.server.setLobbyUpdate(rootItem.getChildren());
+        this.server.setUsersUpdate(rootItem.getChildren());
     }
 }

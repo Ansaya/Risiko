@@ -10,110 +10,110 @@ import static Game.Map.Card.*;
  */
 public enum Territories {
     // Nord America
-    Alaska (Fanteria, NordAmerica),
-    Alberta (Fanteria, NordAmerica),
-    AmericaCentrale (Cavalleria, NordAmerica),
-    StatiUnitiOrientali (Artiglieria, NordAmerica),
-    Groenlandia (Cavalleria, NordAmerica),
-    TerritoriDelNordOvest (Artiglieria, NordAmerica),
-    Ontario (Cavalleria, NordAmerica),
-    Quebec (Artiglieria, NordAmerica),
-    StatiUnitiOccidentali (Fanteria, NordAmerica),
+    Alaska (Infantry, NorthAmerica),
+    Alberta (Infantry, NorthAmerica),
+    CentralAmerica(Cavalry, NorthAmerica),
+    EasternUnitedStates(Artillery, NorthAmerica),
+    Greenland(Cavalry, NorthAmerica),
+    NorthwestTerritory(Artillery, NorthAmerica),
+    Ontario (Cavalry, NorthAmerica),
+    Quebec (Artillery, NorthAmerica),
+    WesternUnitedStates(Infantry, NorthAmerica),
     // Sud America
-    Argentina(Fanteria, SudAmerica),
-    Brasile(Artiglieria, SudAmerica),
-    Peru(Cavalleria, SudAmerica),
-    Venezuela(Artiglieria, SudAmerica),
-    // Europa
-    GranBretagna(Cavalleria, Europa),
-    Islanda(Fanteria, Europa),
-    EuropaSettentrionale(Cavalleria, Europa),
-    Scandinavia(Artiglieria, Europa),
-    EuropaMeridionale(Cavalleria, Europa),
-    Ukraina(Artiglieria, Europa),
-    EuropaOccidentale(Cavalleria, Europa),
+    Argentina(Infantry, SouthAmerica),
+    Brazil(Artillery, SouthAmerica),
+    Peru(Cavalry, SouthAmerica),
+    Venezuela(Artillery, SouthAmerica),
+    // Europe
+    GreatBritain(Cavalry, Europe),
+    Iceland(Infantry, Europe),
+    NorthernEurope(Cavalry, Europe),
+    Scandinavia(Artillery, Europe),
+    SouthernEurope(Cavalry, Europe),
+    Ukraine(Artillery, Europe),
+    WesternEurope(Cavalry, Europe),
     // Africa
-    Congo(Cavalleria, Africa),
-    AfricaOrientale(Artiglieria, Africa),
-    Egitto(Fanteria, Africa),
-    Madagascar(Fanteria, Africa),
-    NordAfrica(Fanteria, Africa),
-    SudAfrica(Artiglieria, Africa),
+    Congo(Cavalry, Africa),
+    EastAfrica(Artillery, Africa),
+    Egypt(Infantry, Africa),
+    Madagascar(Infantry, Africa),
+    NorthAfrica(Infantry, Africa),
+    SouthAfrica(Artillery, Africa),
     // Asia
-    Afghanistan(Fanteria, Asia),
-    Cina(Cavalleria, Asia),
-    India(Fanteria, Asia),
-    Cita(Fanteria, Asia),
-    Giappone(Fanteria, Asia),
-    Kamchatka(Cavalleria, Asia),
-    MedioOriente(Artiglieria, Asia),
-    Mongolia(Artiglieria, Asia),
-    Siam(Artiglieria, Asia),
-    Siberia(Artiglieria, Asia),
-    Urali(Cavalleria, Asia),
-    Jacuzia(Cavalleria, Asia),
+    Afghanistan(Infantry, Asia),
+    China(Cavalry, Asia),
+    India(Infantry, Asia),
+    Irkutsk(Infantry, Asia),
+    Japan(Infantry, Asia),
+    Kamchatka(Cavalry, Asia),
+    MiddleEast(Artillery, Asia),
+    Mongolia(Artillery, Asia),
+    Siam(Artillery, Asia),
+    Siberia(Artillery, Asia),
+    Ural(Cavalry, Asia),
+    Yakutsk(Cavalry, Asia),
     // Australia
-    AustraliaOrientale(Fanteria, Australia),
-    Indonesia(Cavalleria, Australia),
-    NuovaGuinea(Cavalleria, Australia),
-    AustraliaOccidentale(Artiglieria, Australia),
+    EasternAustralia(Infantry, Australia),
+    Indonesia(Cavalry, Australia),
+    NewGuinea(Cavalry, Australia),
+    WesternAustralia(Artillery, Australia),
     Jolly1(Jolly, null),
     Jolly2(Jolly, null);
 
     static {
         // Nord America
-        Alaska.Init(Alberta, TerritoriDelNordOvest, Kamchatka);
-        Alberta.Init(Alaska, StatiUnitiOrientali, TerritoriDelNordOvest, Ontario, StatiUnitiOccidentali);
-        AmericaCentrale.Init(StatiUnitiOrientali, StatiUnitiOccidentali, Venezuela);
-        StatiUnitiOrientali.Init(AmericaCentrale, Ontario, Quebec, StatiUnitiOccidentali);
-        Groenlandia.Init(TerritoriDelNordOvest, Ontario, Quebec, Islanda);
-        TerritoriDelNordOvest.Init(Alaska, Alberta, Ontario, Groenlandia);
-        Ontario.Init(Alberta, StatiUnitiOrientali, Groenlandia, TerritoriDelNordOvest, Quebec, StatiUnitiOccidentali);
-        Quebec.Init(StatiUnitiOrientali, Ontario, TerritoriDelNordOvest, Groenlandia);
-        StatiUnitiOccidentali.Init(Alberta, AmericaCentrale, StatiUnitiOrientali, Ontario);
+        Alaska.Init(Alberta, NorthwestTerritory, Kamchatka);
+        Alberta.Init(Alaska, EasternUnitedStates, NorthwestTerritory, Ontario, WesternUnitedStates);
+        CentralAmerica.Init(EasternUnitedStates, WesternUnitedStates, Venezuela);
+        EasternUnitedStates.Init(CentralAmerica, Ontario, Quebec, WesternUnitedStates);
+        Greenland.Init(NorthwestTerritory, Ontario, Quebec, Iceland);
+        NorthwestTerritory.Init(Alaska, Alberta, Ontario, Greenland);
+        Ontario.Init(Alberta, EasternUnitedStates, Greenland, NorthwestTerritory, Quebec, WesternUnitedStates);
+        Quebec.Init(EasternUnitedStates, Ontario, NorthwestTerritory, Greenland);
+        WesternUnitedStates.Init(Alberta, CentralAmerica, EasternUnitedStates, Ontario);
 
         // Sud America
-        Argentina.Init(Brasile, Peru);
-        Brasile.Init(Argentina, Peru, Venezuela, NordAfrica);
-        Peru.Init(Argentina, Brasile, Venezuela);
-        Venezuela.Init(Brasile, Peru, AmericaCentrale);
+        Argentina.Init(Brazil, Peru);
+        Brazil.Init(Argentina, Peru, Venezuela, NorthAfrica);
+        Peru.Init(Argentina, Brazil, Venezuela);
+        Venezuela.Init(Brazil, Peru, CentralAmerica);
 
-        // Europa
-        GranBretagna.Init(Islanda, EuropaSettentrionale, Scandinavia, EuropaOccidentale);
-        Islanda.Init(GranBretagna, Scandinavia, Groenlandia);
-        EuropaSettentrionale.Init(GranBretagna, Scandinavia, EuropaMeridionale, Ukraina, EuropaOccidentale);
-        Scandinavia.Init(GranBretagna, Islanda, EuropaSettentrionale, Ukraina);
-        EuropaMeridionale.Init(EuropaSettentrionale, Ukraina, EuropaOccidentale, NordAfrica, Egitto, MedioOriente);
-        Ukraina.Init(EuropaSettentrionale, Scandinavia, EuropaMeridionale, Afghanistan, Urali, MedioOriente);
-        EuropaOccidentale.Init(GranBretagna, EuropaSettentrionale, EuropaMeridionale, NordAfrica);
+        // Europe
+        GreatBritain.Init(Iceland, NorthernEurope, Scandinavia, WesternEurope);
+        Iceland.Init(GreatBritain, Scandinavia, Greenland);
+        NorthernEurope.Init(GreatBritain, Scandinavia, SouthernEurope, Ukraine, WesternEurope);
+        Scandinavia.Init(GreatBritain, Iceland, NorthernEurope, Ukraine);
+        SouthernEurope.Init(NorthernEurope, Ukraine, WesternEurope, NorthAfrica, Egypt, MiddleEast);
+        Ukraine.Init(NorthernEurope, Scandinavia, SouthernEurope, Afghanistan, Ural, MiddleEast);
+        WesternEurope.Init(GreatBritain, NorthernEurope, SouthernEurope, NorthAfrica);
 
         // Afirca
-        Congo.Init(AfricaOrientale, NordAfrica, SudAfrica);
-        AfricaOrientale.Init(Congo, Egitto, Madagascar, SudAfrica, MedioOriente);
-        Egitto.Init(Congo, AfricaOrientale, NordAfrica, EuropaMeridionale, MedioOriente);
-        Madagascar.Init(AfricaOrientale, SudAfrica);
-        NordAfrica.Init(Congo, AfricaOrientale, Egitto, EuropaMeridionale, EuropaOccidentale, Brasile);
-        SudAfrica.Init(Congo, AfricaOrientale, Madagascar);
+        Congo.Init(EastAfrica, NorthAfrica, SouthAfrica);
+        EastAfrica.Init(Congo, Egypt, Madagascar, SouthAfrica, MiddleEast);
+        Egypt.Init(Congo, EastAfrica, NorthAfrica, SouthernEurope, MiddleEast);
+        Madagascar.Init(EastAfrica, SouthAfrica);
+        NorthAfrica.Init(Congo, EastAfrica, Egypt, SouthernEurope, WesternEurope, Brazil);
+        SouthAfrica.Init(Congo, EastAfrica, Madagascar);
 
         // Asia
-        Afghanistan.Init(Cina, India, MedioOriente, Urali, Ukraina);
-        Cina.Init(Afghanistan, India, Mongolia, Siam, Siberia, Urali);
-        India.Init(Afghanistan, Cina, MedioOriente, Mongolia);
-        Cita.Init(Kamchatka, Mongolia, Siberia, Jacuzia);
-        Giappone.Init(Kamchatka, Mongolia);
-        Kamchatka.Init(Cita, Giappone, Mongolia, Jacuzia, Alaska);
-        MedioOriente.Init(Afghanistan, India, AfricaOrientale, Egitto, EuropaMeridionale, Ukraina);
-        Mongolia.Init(Cina, Cita, Giappone, Kamchatka, Siberia);
-        Siam.Init(Cina, India, Indonesia);
-        Siberia.Init(Cita, Mongolia, Urali, Jacuzia);
-        Urali.Init(Afghanistan, Cina, Siberia, Ukraina);
-        Jacuzia.Init(Cita, Kamchatka, Siberia);
+        Afghanistan.Init(China, India, MiddleEast, Ural, Ukraine);
+        China.Init(Afghanistan, India, Mongolia, Siam, Siberia, Ural);
+        India.Init(Afghanistan, China, MiddleEast, Mongolia);
+        Irkutsk.Init(Kamchatka, Mongolia, Siberia, Yakutsk);
+        Japan.Init(Kamchatka, Mongolia);
+        Kamchatka.Init(Irkutsk, Japan, Mongolia, Yakutsk, Alaska);
+        MiddleEast.Init(Afghanistan, India, EastAfrica, Egypt, SouthernEurope, Ukraine);
+        Mongolia.Init(China, Irkutsk, Japan, Kamchatka, Siberia);
+        Siam.Init(China, India, Indonesia);
+        Siberia.Init(Irkutsk, Mongolia, Ural, Yakutsk);
+        Ural.Init(Afghanistan, China, Siberia, Ukraine);
+        Yakutsk.Init(Irkutsk, Kamchatka, Siberia);
 
         // Australia
-        AustraliaOrientale.Init(NuovaGuinea, AustraliaOccidentale);
-        Indonesia.Init(NuovaGuinea, AustraliaOccidentale, Siam);
-        NuovaGuinea.Init(AustraliaOrientale, Indonesia, AustraliaOccidentale);
-        AustraliaOccidentale.Init(AustraliaOrientale, Indonesia, NuovaGuinea);
+        EasternAustralia.Init(NewGuinea, WesternAustralia);
+        Indonesia.Init(NewGuinea, WesternAustralia, Siam);
+        NewGuinea.Init(EasternAustralia, Indonesia, WesternAustralia);
+        WesternAustralia.Init(EasternAustralia, Indonesia, NewGuinea);
     }
 
     /**

@@ -11,16 +11,16 @@ public class Chat {
 
     public String getMessage() { return this.message; }
 
-    private String sender;
+    private User sender;
 
-    public String getSender() { return this.sender; }
+    public User getSender() { return this.sender; }
 
-    public  Chat(String Sender, String Message) {
+    public Chat(User Sender, String Message) {
         this.sender = Sender;
         this.message = Message;
     }
 
     public Chat(Player Sender, String Message) {
-        this(Sender.getName(), Message);
+        this(new User(Sender), Message);
     }
 }

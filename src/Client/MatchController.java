@@ -1,26 +1,25 @@
 package Client;
 
+import Client.Observables.ObservableTerritory;
+import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
 import Game.Connection.MessageType;
 import Game.Map.Territories;
 import Game.Match;
-import com.jfoenix.controls.JFXBadge;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXNodesList;
+import com.jfoenix.controls.*;
+import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyValue;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -29,11 +28,13 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
+import javafx.util.Builder;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 /**
  * Match view controller
@@ -69,7 +70,7 @@ public class MatchController implements Initializable {
      */
     private EventHandler sendMessage = (evt) -> {
         if(!chatMessage.getText().trim().equals(""))
-            server.SendMessage(MessageType.Chat, new Chat(server.getUsername(), chatMessage.getText().trim()));
+            server.SendMessage(MessageType.Chat, new Chat(server.getUser(), chatMessage.getText().trim()));
 
         chatMessage.clear();
     };
@@ -82,11 +83,11 @@ public class MatchController implements Initializable {
     protected Pane mapPane;
 
     @FXML
-    protected Label label;
+    protected JFXTreeTableView<ObservableUser> playersList;
 
     private ArrayList<Node> territories = new ArrayList<>();
 
-    private HashMap<Territories, Node> map = new HashMap<>();
+    private HashMap<Territories, ObservableTerritory> map = new HashMap<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -140,49 +141,64 @@ public class MatchController implements Initializable {
             }
         });
 
-        // Get territories and set click event listener
+        /* Map territories setup */
+        ArrayList<Node> svgPaths = new ArrayList<>();
+        ArrayList<Label> labels = new ArrayList<>();
+
         mapPane.getChildren().forEach((c) -> {
-            territories.add(c);
-            c.addEventHandler(MouseEvent.MOUSE_PRESSED, new TerritoryClick());
+            if(c instanceof Label)
+                labels.add((Label) c);
+
+            if(c instanceof SVGPath)
+                svgPaths.add(c);
         });
-    }
 
-    private class TerritoryClick implements EventHandler<Event> {
+        svgPaths.forEach((svg) -> {
+            Label l = null;
 
-        public void handle(Event evt) {
-            Node sender = (Node) evt.getTarget();
+            for (Label lb: labels) {
+                if(lb.getId().equals(svg.getId())) {
+                    l = lb;
+                    break;
+                }
+            }
 
-            JFXButton attack1 = new JFXButton("1");
-            attack1.setButtonType(JFXButton.ButtonType.RAISED);
-            attack1.getStyleClass().add("animated-option-button");
+            map.put(Territories.valueOf(svg.getId()), new ObservableTerritory(svg, l));
+        });
+        ObservableTerritory.setMapPane(mapPane);
+        server.setMapUpdate(map);
 
-            JFXButton attack2 = new JFXButton("2");
-            attack2.setButtonType(JFXButton.ButtonType.RAISED);
-            attack2.getStyleClass().add("animated-option-button");
 
-            JFXButton attack3 = new JFXButton("3");
-            attack3.setButtonType(JFXButton.ButtonType.RAISED);
-            attack3.getStyleClass().add("animated-option-button");
+        /* Players table setup */
+        JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("ID");
+        idColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
+            if(idColumn.validateValue(param)) return param.getValue().getValue().UserId.asObject();
+            else return idColumn.getComputedValue(param);
+        });
 
-            JFXNodesList nodesList = new JFXNodesList();
-            nodesList.setSpacing(10);
-            nodesList.addAnimatedNode(attack1, (expanded)-> new ArrayList<KeyValue>(){{ add(new KeyValue(label.rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
-            nodesList.addAnimatedNode(attack2);
-            nodesList.addAnimatedNode(attack3);
-            nodesList.setRotate(270);
-            nodesList.setLayoutX(sender.getBoundsInParent().getMinX());
-            nodesList.setLayoutY(sender.getBoundsInParent().getMinY());
+        JFXTreeTableColumn<ObservableUser, String> usernameColumn = new JFXTreeTableColumn<>("Username");
+        usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, String> param) -> {
+            if(usernameColumn.validateValue(param)) return param.getValue().getValue().Username;
+            else return usernameColumn.getComputedValue(param);
+        });
 
-            System.out.println("X" + sender.getBoundsInParent().getMinX() + "\nY" + sender.getBoundsInParent().getMinY());
+        JFXTreeTableColumn<ObservableUser, Integer> territoriesColumn = new JFXTreeTableColumn<>("Territories");
+        territoriesColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
+            if(territoriesColumn.validateValue(param)) return param.getValue().getValue().Territories.asObject();
+            else return territoriesColumn.getComputedValue(param);
+        });
 
-            territories.forEach((t) -> t.getStyleClass().remove("selected"));
+        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
+        playersList.getColumns().setAll(idColumn, usernameColumn);
+        playersList.setRoot(rootItem);
+        playersList.setShowRoot(false);
+        server.setUsersUpdate(rootItem.getChildren());
 
-            sender.getStyleClass().add("selected");
+        JFXDialog popup = new JFXDialog();
+        popup.setContent(new Label("Prova"));
+        popup.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, (e) -> mapPane.getChildren().remove(popup));
 
-            mapPane.getChildren().add(nodesList);
-
-            System.out.println(sender.getId());
-            System.out.println(sender.getStyleClass());
-        }
+        mapPane.getChildren().add(popup);
+        //popup.show();
     }
 }

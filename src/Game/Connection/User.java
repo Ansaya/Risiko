@@ -1,5 +1,6 @@
 package Game.Connection;
 
+import Game.Color;
 import Game.Player;
 
 /**
@@ -14,12 +15,19 @@ public class User {
 
     public String getUsername() { return username; }
 
-    public User(int UserId, String Username) {
+    private Color color;
+
+    public Color getColor() { return this.color; }
+
+    public void setColor(Color Color) { this.color = Color; }
+
+    public User(int UserId, String Username, Color Color) {
         this.userId = UserId;
         this.username = Username;
+        this.color = Color;
     }
 
     public User(Player Player) {
-        this(Player.getId(), Player.getName());
+        this(Player.getId(), Player.getName(), Player.getColor());
     }
 }

@@ -15,13 +15,18 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
 
     public StringProperty Username;
 
-    public ObservableUser(int userId, String username) {
+    public StringProperty Color;
+
+    public IntegerProperty Territories;
+
+    public ObservableUser(int userId, String username, String Color) {
         this.UserId = new SimpleIntegerProperty(userId);
         this.Username = new SimpleStringProperty(username);
+        if(Color != null)
+            this.Color = new SimpleStringProperty(Color);
     }
 
     public ObservableUser(User User) {
-
-        this(User.getUserId(), User.getUsername());
+        this(User.getUserId(), User.getUsername(), User.getColor() != null ? User.getColor().toString() : null);
     }
 }
