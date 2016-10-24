@@ -5,45 +5,35 @@ import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
 import Game.Connection.MessageType;
 import Game.Map.Territories;
-import Game.Match;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyValue;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
-import javafx.stage.Stage;
-import javafx.util.Builder;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ResourceBundle;
-import java.util.function.Consumer;
 
 /**
  * Match view controller
  */
 public class MatchController implements Initializable {
 
-    private Stage window;
+    private StackPane parent;
 
-    public void setStage(Stage Stage) { this.window = Stage; }
+    public void setParent(StackPane Parent) { this.parent = Parent; }
 
     private double mapRatio = 725.0f / 480.0f;
 
@@ -91,6 +81,8 @@ public class MatchController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+
 
         /* Chat setup */
         this.server.setChatUpdate(chatSP, chatContainer);

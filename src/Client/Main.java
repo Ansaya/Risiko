@@ -5,6 +5,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ public class Main extends Application {
         }
 
         MatchController newMatch = loader.getController();
-        newMatch.setStage(window);
+        newMatch.setParent((StackPane) root);
 
         window.setTitle("Risiko - Match");
         window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
@@ -43,7 +44,7 @@ public class Main extends Application {
         }
 
         LobbyController lobby = loader.getController();
-        lobby.setStage(window);
+        lobby.setParent((StackPane) root);
 
         window.setTitle("Risiko - Lobby");
         window.setResizable(true);
@@ -65,7 +66,7 @@ public class Main extends Application {
         }
 
         LoginController login = loader.getController();
-        login.setStage(window);
+        login.setParent((StackPane) root);
 
         window.setTitle("Risiko - Login");
         window.setWidth(250.0);

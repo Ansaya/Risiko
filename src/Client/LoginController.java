@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 
@@ -26,9 +27,9 @@ import java.util.ResourceBundle;
  */
 public class LoginController implements Initializable {
 
-    private Stage window;
+    private StackPane parent;
 
-    public void setStage(Stage Stage) { this.window = Stage; }
+    public void setParent(StackPane Parent) { this.parent = Parent; }
 
     @FXML
     protected Button loginBtn;

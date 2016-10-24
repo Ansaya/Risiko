@@ -2,27 +2,19 @@ package Client;
 
 import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
-import Game.Connection.Lobby;
 import Game.Connection.MessageType;
-import Game.Connection.User;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
-
-import javax.jws.soap.SOAPBinding;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -31,9 +23,9 @@ import java.util.ResourceBundle;
  */
 public class LobbyController implements Initializable {
 
-    private Stage window;
+    private StackPane parent;
 
-    public void setStage(Stage Stage) { window = Stage; }
+    public void setParent(StackPane Parent) { this.parent = Parent; }
 
     @FXML
     protected Button matchBtn;
