@@ -82,6 +82,21 @@ public class Player extends SocketHandler implements Runnable {
         this._instance.start();
     }
 
+    /**
+     * Instance an AI static player
+     *
+     * @param MatchId Match where the AI player is needed
+     */
+    public Player(int MatchId) {
+        super(null);
+
+        this.id = -1;
+        this.name = "Computer AI";
+        this.matchId = MatchId;
+        this.isPlaying = true;
+        this.color = Color.values()[2];
+    }
+
     @Override
     public void run() {
         String incoming = "";
@@ -101,7 +116,9 @@ public class Player extends SocketHandler implements Runnable {
                     if(!incoming.equals(""))
                         MessageDispatcher.getInstance().setIncoming(this.matchId + "-" + this.id + "-" + incoming);
                 }
-            }catch (Exception e){}
+            }catch (Exception e){
+                // Handle loss of connection
+            }
         }
 
         receive = null;
@@ -161,11 +178,6 @@ public class Player extends SocketHandler implements Runnable {
      * @param MessageObj Object of specified type
      */
     protected void SendMessage(MessageType Type, Object MessageObj) {
-        if(!connection.isConnected()) {
-            closeConnection(false);
-            System.out.println("Player " + name + " got connection error.");
-        }
-
         Gson serialize = new Gson();
 
         // Build packet string as MessageType-SerializedObject
@@ -184,11 +196,6 @@ public class Player extends SocketHandler implements Runnable {
      * @param packet String to send to the client
      */
     protected void RouteMessage(String packet) {
-        if(!connection.isConnected()) {
-            closeConnection(false);
-            System.out.println("Player " + name + " got connection error.");
-        }
-
         synchronized (send) {
             send.println(packet);
         }

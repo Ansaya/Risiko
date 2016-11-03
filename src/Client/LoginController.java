@@ -1,24 +1,11 @@
 package Client;
 
-import javafx.event.ActionEvent;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.SVGPath;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -50,10 +37,10 @@ public class LoginController implements Initializable {
         try {
             ServerTalk.getInstance().InitConnection(usernameField.getText());
         } catch (Exception e) {
-            // Notify user for error
+            Main.getDialog("Connection error", e.getMessage(), "Close").show(parent);
             return;
         }
 
-        Main.toLobby.run();
+        Main.toLobby();
     }
 }

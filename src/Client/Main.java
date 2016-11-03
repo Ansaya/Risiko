@@ -1,10 +1,15 @@
 package Client;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialog;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -14,7 +19,7 @@ public class Main extends Application {
 
     private static Stage window;
 
-    public static EventHandler openMatch = (evt) -> {
+    public static void toMatch() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -33,7 +38,7 @@ public class Main extends Application {
         window.show();
     };
 
-    public static Runnable toLobby = () -> {
+    public static void toLobby() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -56,7 +61,7 @@ public class Main extends Application {
         window.show();
     };
 
-    public static Runnable toLogin = () -> {
+    public static void toLogin() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -78,11 +83,29 @@ public class Main extends Application {
         window.show();
     };
 
+    public static JFXDialog getDialog(String Heading, String Body, String BtnText) {
+        JFXDialog dialog = new JFXDialog();
+
+        JFXDialogLayout layout = new JFXDialogLayout();
+        layout.setHeading(new Label(Heading));
+        layout.setBody(new Label(Body));
+        if(BtnText != null){
+            JFXButton btn = new JFXButton(BtnText);
+            btn.setButtonType(JFXButton.ButtonType.RAISED);
+            btn.setStyle("-fx-background-color: #44B449");
+            btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> dialog.close());
+            layout.setActions(btn);
+        }
+        dialog.setContent(layout);
+
+        return dialog;
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         this.window = primaryStage;
 
-        Main.toLogin.run();
+        toLogin();
     }
 
 

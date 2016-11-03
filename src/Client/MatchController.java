@@ -79,10 +79,12 @@ public class MatchController implements Initializable {
 
     private HashMap<Territories, ObservableTerritory> map = new HashMap<>();
 
+    /* Game */
+    @FXML
+    protected JFXButton endTurnBtn;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-
 
         /* Chat setup */
         this.server.setChatUpdate(chatSP, chatContainer);
@@ -138,19 +140,22 @@ public class MatchController implements Initializable {
         ArrayList<Label> labels = new ArrayList<>();
 
         mapPane.getChildren().forEach((c) -> {
-            if(c instanceof Label)
+            if(c instanceof Label) {
                 labels.add((Label) c);
+            }
 
-            if(c instanceof SVGPath)
+            if(c instanceof SVGPath) {
                 svgPaths.add(c);
+            }
         });
 
         svgPaths.forEach((svg) -> {
             Label l = null;
 
             for (Label lb: labels) {
-                if(lb.getId().equals(svg.getId())) {
+                if(lb.getId().contains(svg.getId())) {
                     l = lb;
+                    labels.remove(lb);
                     break;
                 }
             }
@@ -181,16 +186,15 @@ public class MatchController implements Initializable {
         });
 
         final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
-        playersList.getColumns().setAll(idColumn, usernameColumn);
+        playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(rootItem);
         playersList.setShowRoot(false);
         server.setUsersUpdate(rootItem.getChildren());
 
-        JFXDialog popup = new JFXDialog();
-        popup.setContent(new Label("Prova"));
-        popup.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, (e) -> mapPane.getChildren().remove(popup));
+        endTurnBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
+            JFXDialog popup = Main.getDialog("Heading text", "Tua mamma troia", "Avanti");
+            popup.show(parent);
+        });
 
-        mapPane.getChildren().add(popup);
-        //popup.show();
     }
 }

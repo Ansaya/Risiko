@@ -103,7 +103,11 @@ public class ServerTalk implements Runnable {
      * @param ToUpdate Observable list linked to UI
      */
     public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
+
         this.users = ToUpdate;
+        synchronized (users) {
+            users.notify();
+        }
     }
 
 
@@ -187,12 +191,25 @@ public class ServerTalk implements Runnable {
             System.out.println("Match message: " + info[1]);
             Match match = gson.fromJson(info[1], Match.class);
 
-            for (User u: match.getPlayers()) {
-                if(u.getUserId() == this.user.getUserId())
-                    this.user.setColor(u.getColor());
+            // Launch match screen
+            Platform.runLater(() -> Main.toMatch());
 
-                this.users.add(new TreeItem<>(new ObservableUser(u)));
-            }
+            // Wait for screen to load and new user list reference to be set
+            try {
+                synchronized (users) {
+                    users.wait();
+                }
+            } catch (InterruptedException e) {}
+
+            // Load users in player's list
+            Platform.runLater(() -> {
+                for (User u: match.getPlayers()) {
+                    if(u.getUserId() == this.user.getUserId())
+                        this.user.setColor(u.getColor());
+
+                    this.users.add(new TreeItem<>(new ObservableUser(u)));
+                }
+            });
         });
 
         // Handler for map updates
@@ -200,13 +217,16 @@ public class ServerTalk implements Runnable {
             System.out.println("MapUpdate message: " + info[1]);
             MapUpdate update = gson.fromJson(info[1], MapUpdate.class);
 
-            /* Update each territory with new information */
-            update.getUpdated().forEach((u) -> {
-                ObservableTerritory t = map.get(u.getTerritory());
-                t.Armies.set(u.getArmies());
-                if(t.getOwner().getUserId() != u.getOwner().getId())
-                    t.setOwner(new User(u.getOwner()));
+            Platform.runLater(() -> {
+                 /* Update each territory with new information */
+                update.getUpdated().forEach((u) -> {
+                    ObservableTerritory t = map.get(u.getTerritory());
+                    t.Armies.set(u.getArmies());
+                    if(t.getOwner().getUserId() != u.getOwner().getId())
+                        t.setOwner(new User(u.getOwner()));
+                });
             });
+
         });
 
         // Handler for attacked territory
@@ -222,7 +242,7 @@ public class ServerTalk implements Runnable {
 
             // Require to user number of defending armies to be used
             try {
-                defArmies = (map.get(attack.getTo().getTerritory())).requestDefense(popupInfo);
+                defArmies = map.get(attack.getTo().getTerritory()).requestDefense(popupInfo);
             } catch (InterruptedException e) {
                 System.out.println("From defense message handler.");
                 e.printStackTrace();
@@ -310,7 +330,7 @@ public class ServerTalk implements Runnable {
         // Else reset object for new connection attempt
         _instance = new ServerTalk();
 
-        Main.toLogin.run();
+        Main.toLogin();
 
         // Notify user
     }
@@ -346,7 +366,7 @@ public class ServerTalk implements Runnable {
     }
 
     /**
-     * Send a message to the client
+     * Send a message to the server
      *
      * @param Type Type of message
      * @param MessageObj Object of specified type
@@ -371,7 +391,7 @@ public class ServerTalk implements Runnable {
      *
      * @param packet String to send to the client
      */
-    public void RouteMessage(String packet) {
+    private void RouteMessage(String packet) {
         if(connection.isClosed()) {
             Platform.runLater(() -> StopConnection(false));
             return;

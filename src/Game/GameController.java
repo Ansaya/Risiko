@@ -64,13 +64,15 @@ public class GameController extends MessageReceiver {
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
             Game.Connection.Match requested = (new Gson()).fromJson(message.Json, Game.Connection.Match.class);
+            System.out.println("Game controller: New match request from " + message.PlayerId);
 
             ArrayList<Player> toAdd = new ArrayList<>();
             requested.getPlayers().forEach((u) -> {
                 toAdd.add(lobby.get(u.getUserId()));
-                lobby.remove(u.getUserId());
+                releasePlayer(u.getUserId());
             });
 
+            System.out.println("Game controller: Launch new match with " + toAdd.size() + " players.");
             matches.add(new Match(toAdd));
         });
     }

@@ -84,8 +84,8 @@ public class ObservableTerritory {
 
         this.currentNode = new JFXNodesList();
         currentNode.addAnimatedNode(btn);
-        currentNode.setLayoutX(getCenterX(svgTerritory));
-        currentNode.setLayoutY(getCenterY(svgTerritory));
+        currentNode.setLayoutX(getCenterX(label));
+        currentNode.setLayoutY(getCenterY(label));
 
         Platform.runLater(() -> mapPane.getChildren().add(currentNode));
     }
@@ -138,8 +138,8 @@ public class ObservableTerritory {
         nodesList.addAnimatedNode(nodeButton("1", "def", false));
         nodesList.addAnimatedNode(nodeButton("2", "def", false));
 
-        nodesList.setLayoutX(getCenterX(svgTerritory));
-        nodesList.setLayoutY(getCenterY(svgTerritory));
+        nodesList.setLayoutX(getCenterX(label));
+        nodesList.setLayoutY(getCenterY(label));
 
         if(nodesList.getLayoutX() < 200.0)
             nodesList.setRotate(270);
@@ -176,24 +176,22 @@ public class ObservableTerritory {
     }
 
     /**
-     * Get X center coordinates of given node in respect to his parent
+     * Get X center coordinates of given label in respect to his parent
      *
-     * @param Node Node to get position of
+     * @param Label Label to get position of
      * @return X center position in respect of parent of given node
      */
-    private double getCenterX(Node Node) {
-        // Coordinates are corrected to compensate animated-option-button-* css class width
-        return  Node.getBoundsInParent().getMinX() + ((Node.getBoundsInParent().getMaxX() - Node.getBoundsInParent().getMinX()) / 2) - 25.0;
+    private double getCenterX(Label Label) {
+        return Label.getBoundsInParent().getMinX() + (Label.getPrefWidth() / 2) - 17.5;
     }
 
     /**
-     * Get Y center coordinates of given node in respect to his parent
+     * Get Y center coordinates of given label in respect to his parent
      *
-     * @param Node Node to get position of
+     * @param Label Label to get position of
      * @return Y center position in respect of parent of given node
      */
-    private double getCenterY(Node Node) {
-        // Coordinates are corrected to compensate animated-option-button-* css class height
-        return  Node.getBoundsInParent().getMinY() + ((Node.getBoundsInParent().getMaxY() - Node.getBoundsInParent().getMinY()) / 2) - 17.5;
+    private double getCenterY(Label Label) {
+        return Label.getBoundsInParent().getMinY() + (Label.getPrefHeight() / 2) - 17.5;
     }
 }

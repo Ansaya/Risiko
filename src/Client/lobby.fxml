@@ -4,30 +4,36 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
-<?import javafx.scene.control.Button?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.control.Label?>
 
 <StackPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.LobbyController">
     <AnchorPane>
-       <HBox AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="0.0" prefHeight="50.0" maxHeight="-Infinity">
-          <Label styleClass="title-label">Lobby</Label>
-          <Label styleClass="title-label" fx:id="lobbyCount"></Label>
+       <HBox maxHeight="-Infinity" prefHeight="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+          <Label prefHeight="50.0" styleClass="title-label">Lobby</Label>
+          <Label fx:id="lobbyCount" prefHeight="50.0" styleClass="title-label" />
           <StackPane HBox.hgrow="ALWAYS">
-             <StackPane StackPane.alignment="CENTER_RIGHT" maxWidth="200">
-                <JFXTextField fx:id="searchField" promptText="Search..." ></JFXTextField>
+             <StackPane maxWidth="200" StackPane.alignment="CENTER_RIGHT">
+                <JFXTextField fx:id="searchField" promptText="Search..." />
              </StackPane>
           </StackPane>
+         <JFXButton fx:id="deselectAllBtn" buttonType="RAISED" defaultButton="true" prefHeight="25.0" text="Deselect All">
+            <font>
+               <Font name="Trebuchet MS" size="12.0" />
+            </font>
+            <HBox.margin>
+               <Insets top="12.5" />
+            </HBox.margin>
+         </JFXButton>
        </HBox>
        <JFXTreeTableView fx:id="lobbyTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="300.0" AnchorPane.topAnchor="50.0" />
-
-       <Button fx:id="matchBtn" AnchorPane.rightAnchor="40" AnchorPane.topAnchor="20">Match</Button>
        <TitledPane alignment="TOP_LEFT" contentDisplay="RIGHT" maxWidth="-Infinity" pickOnBounds="false" prefWidth="250.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="50.0">
           <content>
              <VBox prefHeight="200.0" prefWidth="100.0">
@@ -56,5 +62,10 @@
              <Font name="Trebuchet MS" size="12.0" />
           </font>
        </TitledPane>
+      <JFXButton fx:id="matchBtn" buttonType="RAISED" layoutX="1191.0" layoutY="50.0" prefHeight="35.0" prefWidth="120.0" style="-fx-background-color: yellow;" text="Create Match" AnchorPane.rightAnchor="90.0" AnchorPane.topAnchor="50.0">
+         <font>
+            <Font name="Trebuchet MS" size="12.0" />
+         </font>
+      </JFXButton>
     </AnchorPane>
 </StackPane>

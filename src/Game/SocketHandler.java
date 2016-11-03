@@ -25,6 +25,9 @@ public abstract class SocketHandler {
      * @param Connection Connected socket
      */
     public SocketHandler(Socket Connection) {
+        if(Connection == null)
+            return;
+
         this.connection = Connection;
 
         try {

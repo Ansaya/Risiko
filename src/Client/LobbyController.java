@@ -2,11 +2,14 @@ package Client;
 
 import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
+import Game.Connection.Match;
 import Game.Connection.MessageType;
+import Game.Connection.User;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,6 +19,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
@@ -40,6 +44,9 @@ public class LobbyController implements Initializable {
 
     @FXML
     protected JFXTextField searchField;
+
+    @FXML
+    protected JFXButton deselectAllBtn;
 
     /* Chat fields */
     @FXML
@@ -77,7 +84,25 @@ public class LobbyController implements Initializable {
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
         chatMessage.setOnAction(sendMessage);
 
-        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, Main.openMatch);
+        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
+            // Get selected users
+            ObservableList<TreeItem<ObservableUser>> selected = lobbyTable.getSelectionModel().getSelectedItems();
+
+            // Check if users number is correct to begin a match
+            if(selected.size() < 1 || selected.size() >= 6) {
+                Main.getDialog("Match creation", "Cannot create a match with " + (selected.size() + 1) + " users.", "Close").show(parent);
+            }
+
+            // Populate user list for the match
+            ArrayList<User> players = new ArrayList<>();
+            selected.forEach((t) -> players.add(new User(t.getValue().UserId.get(), t.getValue().Username.get(), null)));
+            players.add(server.getUser());
+
+            // Send match request to the server
+            server.SendMessage(MessageType.Match, new Match(players));
+
+            // ServerTalk will open match view when match confirmation is received from the server
+        });
 
         /* Lobby view setup */
         JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("User ID");
@@ -102,7 +127,6 @@ public class LobbyController implements Initializable {
         rootItem.getChildren().addListener((ListChangeListener.Change<? extends TreeItem<ObservableUser>> c) -> lobbyCount.setText("( " + rootItem.getChildren().size() + " )"));
 
         // Bind search field
-
         searchField.textProperty().addListener((o,oldVal,newVal)-> {
             System.out.println("Search: " + newVal);
             rootItem.setPredicate((u) -> (u.getValue().UserId.get()+"").contains(newVal) || u.getValue().Username.get().contains(newVal));
