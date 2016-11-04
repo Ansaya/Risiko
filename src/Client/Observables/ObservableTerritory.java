@@ -14,6 +14,7 @@ import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.shape.SVGPath;
 
 import java.util.ArrayList;
 
@@ -24,7 +25,7 @@ public class ObservableTerritory {
     /**
      * SVGPath node corresponding to this territory
      */
-    private Node svgTerritory;
+    private SVGPath svgTerritory;
 
     /**
      * Currently displayed node list
@@ -67,7 +68,7 @@ public class ObservableTerritory {
 
     public static void setMapPane(Pane MapPane) { mapPane = MapPane; }
 
-    public ObservableTerritory(Node SVGTerritory, Label Label) {
+    public ObservableTerritory(SVGPath SVGTerritory, Label Label) {
         this.svgTerritory = SVGTerritory;
         this.label = Label;
 

@@ -68,12 +68,12 @@ public class ServerTalk implements Runnable {
     /**
      * ScrollPane containing chatContainer VBox
      */
-    private ScrollPane chatScrollable;
+    private volatile ScrollPane chatScrollable;
 
     /**
      * Container of chat entries
      */
-    private VBox chatContainer;
+    private volatile VBox chatContainer;
 
     /**
      * Builder for new chat entries
@@ -95,7 +95,7 @@ public class ServerTalk implements Runnable {
     /**
      * List of users in lobby
      */
-    private ObservableList<TreeItem<ObservableUser>> users;
+    private volatile ObservableList<TreeItem<ObservableUser>> users;
 
     /**
      * Set where to add lobby users when in lobby or match users when playing
@@ -110,11 +110,10 @@ public class ServerTalk implements Runnable {
         }
     }
 
-
     /**
      * HashMap of territories
      */
-    private HashMap<Territories, ObservableTerritory> map;
+    private volatile HashMap<Territories, ObservableTerritory> map;
 
     /**
      * Set map connected to UI
@@ -179,7 +178,10 @@ public class ServerTalk implements Runnable {
                     return false;
                 });
 
-                lobbyUsers.getToAdd().forEach((u) -> users.add(new TreeItem<>(new ObservableUser(u))));
+                lobbyUsers.getToAdd().forEach((u) -> {
+                    if(u.getUserId() != user.getUserId())
+                        users.add(new TreeItem<>(new ObservableUser(u)));
+                });
 
                 System.out.println("Lobby updated");
             });

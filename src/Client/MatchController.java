@@ -75,8 +75,6 @@ public class MatchController implements Initializable {
     @FXML
     protected JFXTreeTableView<ObservableUser> playersList;
 
-    private ArrayList<Node> territories = new ArrayList<>();
-
     private HashMap<Territories, ObservableTerritory> map = new HashMap<>();
 
     /* Game */
@@ -87,12 +85,11 @@ public class MatchController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         /* Chat setup */
-        this.server.setChatUpdate(chatSP, chatContainer);
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
         chatMessage.setOnAction(sendMessage);
 
         // Set chat updatable fields
-        server.setChatUpdate(chatSP, chatContainer);
+        this.server.setChatUpdate(chatSP, chatContainer);
 
 
         /* Map rescaling */
@@ -136,7 +133,7 @@ public class MatchController implements Initializable {
         });
 
         /* Map territories setup */
-        ArrayList<Node> svgPaths = new ArrayList<>();
+        ArrayList<SVGPath> svgPaths = new ArrayList<>();
         ArrayList<Label> labels = new ArrayList<>();
 
         mapPane.getChildren().forEach((c) -> {
@@ -145,7 +142,7 @@ public class MatchController implements Initializable {
             }
 
             if(c instanceof SVGPath) {
-                svgPaths.add(c);
+                svgPaths.add((SVGPath) c);
             }
         });
 
