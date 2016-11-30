@@ -35,35 +35,35 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Id of match the player is inside
      */
-    private int matchId = 0;
+    private volatile int matchId = 0;
 
     public int getMathcId() { return this.matchId; }
 
     /**
      * Current player's isPlaying. True if playing, false if attending the match.
      */
-    private boolean isPlaying = false;
+    private volatile boolean isPlaying = false;
 
     public boolean isPlaying() { return this.isPlaying; }
 
     /**
      * Color assigned for the match
      */
-    private Color color;
+    private volatile Color color;
 
     public Color getColor() { return color; }
 
     /**
      * Dominated territories
      */
-    transient private ArrayList<Territory> territories = new ArrayList<>();
+    private transient volatile ArrayList<Territory> territories = new ArrayList<>();
 
     public ArrayList<Territory> getTerritories() { return territories; }
 
     /**
      * Player's mission
      */
-    transient private Mission mission;
+    private transient volatile Mission mission;
 
     public Mission getMission() { return mission; }
 
@@ -153,22 +153,26 @@ public class Player extends SocketHandler implements Runnable {
      * @param MatchId Match this player is participating
      */
     protected void initMatch(Color Color, int MatchId) {
-        this.matchId = MatchId;
-        this.color = Color;
+        synchronized (this) {
+            this.matchId = MatchId;
+            this.color = Color;
 
-        // Player is actively playing
-        this.isPlaying = true;
+            // Player is actively playing
+            this.isPlaying = true;
+        }
     }
 
     /**
      * Reset match fields and bring player back to lobby
      */
     protected void exitMatch() {
-        matchId = 0;
-        isPlaying = false;
-        color = null;
-        territories = new ArrayList<>();
-        mission = null;
+        synchronized (this) {
+            matchId = 0;
+            isPlaying = false;
+            color = null;
+            territories = new ArrayList<>();
+            mission = null;
+        }
     }
 
     /**

@@ -50,8 +50,8 @@ public abstract class MessageReceiver implements Runnable {
     }
 
     public void setIncoming(Message Message) {
-        this.queue.add(Message);
         synchronized (queue) {
+            this.queue.add(Message);
             this.queue.notify();
         }
     }
@@ -78,13 +78,19 @@ public abstract class MessageReceiver implements Runnable {
 
                 Message message = queue.get(0);
 
+                Thread action = null;
+
                 if(messageHandlers.containsKey(message.Type))
-                    messageHandlers.get(message.Type).accept(message);
+                    action = new Thread(() -> messageHandlers.get(message.Type).accept(message));
                 else if(defaultHandler != null)
-                    defaultHandler.accept(message);
+                    action = new Thread(() -> defaultHandler.accept(message));
+
+                action.start();
 
                 // Remove packet from queue
-                this.queue.remove(0);
+                synchronized (queue) {
+                    this.queue.remove(0);
+                }
 
             }catch (Exception e) {}
         }

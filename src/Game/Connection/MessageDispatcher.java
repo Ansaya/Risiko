@@ -78,6 +78,8 @@ public class MessageDispatcher implements Runnable {
                 int playerId = Integer.parseInt(infos[1]);
                 MessageType type = MessageType.valueOf(infos[2]);
 
+                System.out.println("Match id\t= " + matchId + "\nPlayer id\t= " + playerId + "\nType\t= " + type.toString());
+
                 // If match's id is zero the player is in the lobby
                 if(matchId == 0) {
                     GameController.getInstance().setIncoming(playerId, type, infos[3]);
