@@ -27,10 +27,6 @@ import java.util.ResourceBundle;
  */
 public class LobbyController implements Initializable {
 
-    private StackPane parent;
-
-    public void setParent(StackPane Parent) { this.parent = Parent; }
-
     @FXML
     protected Button matchBtn;
 
@@ -90,7 +86,7 @@ public class LobbyController implements Initializable {
 
             // Check if users number is correct to begin a match
             if(selected.size() < 1 || selected.size() >= 6) {
-                Main.getDialog("Match creation", "Cannot create a match with " + (selected.size() + 1) + " users.", "Close").show(parent);
+                Main.showDialog("Match creation", "Cannot create a match with " + (selected.size() + 1) + " users.", "Close");
             }
 
             // Populate user list for the match

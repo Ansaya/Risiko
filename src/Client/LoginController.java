@@ -14,10 +14,6 @@ import java.util.ResourceBundle;
  */
 public class LoginController implements Initializable {
 
-    private StackPane parent;
-
-    public void setParent(StackPane Parent) { this.parent = Parent; }
-
     @FXML
     protected Button loginBtn;
 
@@ -37,7 +33,7 @@ public class LoginController implements Initializable {
         try {
             ServerTalk.getInstance().InitConnection(usernameField.getText());
         } catch (Exception e) {
-            Main.getDialog("Connection error", e.getMessage(), "Close").show(parent);
+            Main.showDialog("Connection error", e.getMessage(), "Close");
             return;
         }
 

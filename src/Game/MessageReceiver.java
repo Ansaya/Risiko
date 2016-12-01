@@ -11,9 +11,9 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver implements Runnable {
 
-    private boolean listen = false;
+    private volatile boolean listen = false;
 
-    private ArrayList<Message> queue = new ArrayList<>();
+    private volatile ArrayList<Message> queue = new ArrayList<>();
 
     protected HashMap<MessageType, Consumer<Message>> messageHandlers = new HashMap<>();
 

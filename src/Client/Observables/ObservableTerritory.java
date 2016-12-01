@@ -1,5 +1,6 @@
 package Client.Observables;
 
+import Client.Main;
 import Game.Connection.User;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -68,6 +69,8 @@ public class ObservableTerritory {
 
     public static void setMapPane(Pane MapPane) { mapPane = MapPane; }
 
+    public boolean addRemove;
+
     public ObservableTerritory(SVGPath SVGTerritory, Label Label) {
         this.svgTerritory = SVGTerritory;
         this.label = Label;
@@ -91,6 +94,33 @@ public class ObservableTerritory {
         Platform.runLater(() -> mapPane.getChildren().add(currentNode));
     }
 
+    public void requestPositioning() {
+        JFXButton add = nodeButton("+", "atk", false);
+        JFXButton sub = nodeButton("-", "def", false);
+        add.setLayoutX(currentNode.getLayoutX() + 50.0f);
+        sub.setLayoutX(currentNode.getLayoutX() - 50.0f);
+        add.setLayoutY(currentNode.getLayoutY());
+        sub.setLayoutY(currentNode.getLayoutY());
+
+        add.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
+            // Implement transaction from global armies counter
+            System.out.println("User want to add an army to " + this.svgTerritory.getId());
+        });
+
+        sub.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
+            // Implement transaction from global armies counter
+            System.out.println("User want to remove an army from " + this.svgTerritory.getId());
+
+            if(this.NewArmies.get() > 0) {
+                this.NewArmies.subtract(1);
+            }
+            else
+            {
+
+            }
+        });
+    }
+
     /**
      * Show popup in UI and return the number of armies used to defend from an attack
      *
@@ -103,17 +133,14 @@ public class ObservableTerritory {
             return 1;
 
         JFXNodesList defendList = getDefendList();
-        defendList.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {});
+        defendList.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
+            System.out.println("Defense button pressed!!");
+        });
 
         Integer defend = 1;
 
-        JFXDialog popup = new JFXDialog();
-        popup.setContent(new Label(DialogText));
-        popup.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, (e) -> mapPane.getChildren().remove(popup));
-
         Platform.runLater(() -> {
-            mapPane.getChildren().add(popup);
-            popup.show();
+            Main.showDialog("You are under attack!", DialogText, "Go ahead");
             mapPane.getChildren().add(defendList);
 
             synchronized (defend){

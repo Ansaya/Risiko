@@ -95,7 +95,7 @@ public class GameController extends MessageReceiver {
         this.stopListen();
         System.out.println("Game controller not listening.");
 
-        Chat end = new Chat(new User(-1, "Admin", Color.ROSSO), "Server is shutting down.");
+        Chat end = new Chat(new User(-1, "Admin", Color.RED), "Server is shutting down.");
 
         // Send end message to matches players and close connection
         for (Match m: matches) {

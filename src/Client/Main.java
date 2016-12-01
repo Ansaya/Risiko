@@ -18,6 +18,8 @@ public class Main extends Application {
 
     private static Stage window;
 
+    private static StackPane parent;
+
     public static void toMatch() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
@@ -29,8 +31,8 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
-        MatchController newMatch = loader.getController();
-        newMatch.setParent((StackPane) root);
+        loader.getController();
+        parent = (StackPane) root;
 
         window.setTitle("Risiko - Match");
         window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
@@ -47,8 +49,8 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
-        LobbyController lobby = loader.getController();
-        lobby.setParent((StackPane) root);
+        loader.getController();
+        parent = (StackPane) root;
 
         window.setTitle("Risiko - Lobby");
         window.setResizable(true);
@@ -69,8 +71,8 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
-        LoginController login = loader.getController();
-        login.setParent((StackPane) root);
+        loader.getController();
+        parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");
         window.setWidth(250.0);
@@ -82,7 +84,7 @@ public class Main extends Application {
         window.show();
     };
 
-    public static JFXDialog getDialog(String Heading, String Body, String BtnText) {
+    public static void showDialog(String Heading, String Body, String BtnText) {
         JFXDialog dialog = new JFXDialog();
 
         JFXDialogLayout layout = new JFXDialogLayout();
@@ -97,16 +99,16 @@ public class Main extends Application {
         }
         dialog.setContent(layout);
 
-        return dialog;
+        dialog.show(parent);
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception{
         this.window = primaryStage;
 
-        toLogin();
+        //toLogin();
 
-        //toMatch();
+        toMatch();
     }
 
 

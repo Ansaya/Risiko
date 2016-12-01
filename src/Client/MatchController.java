@@ -31,10 +31,6 @@ import java.util.ResourceBundle;
  */
 public class MatchController implements Initializable {
 
-    private StackPane parent;
-
-    public void setParent(StackPane Parent) { this.parent = Parent; }
-
     private double mapRatio = 725.0f / 480.0f;
 
     private ServerTalk server = ServerTalk.getInstance();
@@ -189,8 +185,7 @@ public class MatchController implements Initializable {
         server.setUsersUpdate(rootItem.getChildren());
 
         endTurnBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
-            JFXDialog popup = Main.getDialog("Heading text", "Tua mamma troia", "Avanti");
-            popup.show(parent);
+            Main.showDialog("Heading text", "Tua mamma troia", "Avanti");
         });
 
     }

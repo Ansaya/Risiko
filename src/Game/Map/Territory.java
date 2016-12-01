@@ -1,7 +1,5 @@
 package Game.Map;
 
-import Game.Color;
-import Game.Map.Territories;
 import Game.Player;
 
 /**

@@ -88,8 +88,12 @@ public class ServerTalk implements Runnable {
      */
     public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
 
-        this.chatScrollable = Scrollable;
-        this.chatContainer = ToUpdate;
+        synchronized (chatScrollable) {
+            this.chatScrollable = Scrollable;
+        }
+        synchronized (chatContainer) {
+            this.chatContainer = ToUpdate;
+        }
     }
 
     /**
@@ -103,9 +107,8 @@ public class ServerTalk implements Runnable {
      * @param ToUpdate Observable list linked to UI
      */
     public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
-
-        this.users = ToUpdate;
         synchronized (users) {
+            this.users = ToUpdate;
             users.notify();
         }
     }
@@ -169,7 +172,7 @@ public class ServerTalk implements Runnable {
 
             // Update users in lobby
             Platform.runLater(() -> {
-                users.removeIf((t) -> {
+                this.users.removeIf((t) -> {
                     for (User u: lobbyUsers.getToRemove()
                             ) {
                         return t.getValue().UserId.get() == u.getUserId();
@@ -203,6 +206,8 @@ public class ServerTalk implements Runnable {
                 }
             } catch (InterruptedException e) {}
 
+            System.out.println("Match screen loaded and chat field updated.\nNew chat field:\t" + users.toString());
+
             // Load users in player's list
             Platform.runLater(() -> {
                 for (User u: match.getPlayers()) {
@@ -214,6 +219,14 @@ public class ServerTalk implements Runnable {
             });
         });
 
+        // Handler for positioning message
+        packetHandlers.put(MessageType.Positioning, info -> {
+            System.out.println("Positioning message: " + info[1]);
+            Positioning pos = gson.fromJson(info[1], Positioning.class);
+
+
+        });
+
         // Handler for map updates
         packetHandlers.put(MessageType.MapUpdate, (info) -> {
             System.out.println("MapUpdate message: " + info[1]);
@@ -222,10 +235,12 @@ public class ServerTalk implements Runnable {
             Platform.runLater(() -> {
                  /* Update each territory with new information */
                 update.getUpdated().forEach((u) -> {
-                    ObservableTerritory t = map.get(u.getTerritory());
-                    t.Armies.set(u.getArmies());
-                    if(t.getOwner().getUserId() != u.getOwner().getId())
-                        t.setOwner(new User(u.getOwner()));
+                    synchronized (map) {
+                        ObservableTerritory t = map.get(u.getTerritory());
+                        t.Armies.set(u.getArmies());
+                        if (t.getOwner().getUserId() != u.getOwner().getId())
+                            t.setOwner(new User(u.getOwner()));
+                    }
                 });
             });
 
@@ -353,7 +368,7 @@ public class ServerTalk implements Runnable {
                         return;
                     }
 
-                    System.out.println("Received: " + Packet);
+                    System.out.println("ServerTalk: Received: " + Packet);
 
                     String[] info = Packet.split("[-]");
                     MessageType type = MessageType.valueOf(info[0]);
