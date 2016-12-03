@@ -4,6 +4,8 @@ import Game.Connection.MessageType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -11,27 +13,27 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver implements Runnable {
 
-    private volatile boolean listen = false;
-
-    private volatile ArrayList<Message> queue = new ArrayList<>();
+    private AtomicBoolean listen = new AtomicBoolean(false);
 
     protected HashMap<MessageType, Consumer<Message>> messageHandlers = new HashMap<>();
 
     protected Consumer<Message> defaultHandler = null;
 
+    private ArrayList<Thread> activeActions = new ArrayList<>();
+
     private Thread _instance;
 
     protected void startListen() {
-        listen = true;
+        listen.set(true);
         _instance = new Thread(this);
         _instance.start();
     }
 
     protected void stopListen() {
-        if(!listen)
+        if(!listen.get())
             return;
 
-        listen = false;
+        listen.set(false);
 
         try{
             _instance.interrupt();
@@ -40,7 +42,7 @@ public abstract class MessageReceiver implements Runnable {
     }
 
     /**
-     * Set new message into the incoming buffer and notifies for handling
+     * Start new thread to process the message
      * @param PlayerId Player from whom the message was received
      * @param Type Message type
      * @param Incoming Json string received
@@ -49,11 +51,22 @@ public abstract class MessageReceiver implements Runnable {
         this.setIncoming(new Message(PlayerId, Type, Incoming));
     }
 
+    /**
+     * Start new thread to process the message
+     *
+     * @param Message Message to be processed
+     */
     public void setIncoming(Message Message) {
-        synchronized (queue) {
-            this.queue.add(Message);
-            this.queue.notify();
-        }
+        Thread action = null;
+
+        if(messageHandlers.containsKey(Message.Type))
+            action = new Thread(() -> messageHandlers.get(Message.Type).accept(Message));
+        else if(defaultHandler != null)
+            action = new Thread(() -> defaultHandler.accept(Message));
+
+        activeActions.add(action);
+
+        action.start();
     }
 
     /**
@@ -61,36 +74,26 @@ public abstract class MessageReceiver implements Runnable {
      */
     private void waitIncoming() {
         try {
-            synchronized (queue) {
-                this.queue.wait();
+            synchronized (activeActions) {
+                this.activeActions.wait();
             }
         } catch (Exception e) {}
     }
 
     @Override
     public void run() {
-        while (listen) {
+        while (listen.get()) {
 
             try {
                 // If queue is empty wait for notification of new packet
-                if(queue.isEmpty())
+                if(activeActions.isEmpty())
                     waitIncoming();
 
-                Message message = queue.get(0);
+                Thread toWait = activeActions.get(0);
 
-                Thread action = null;
+                toWait.join();
 
-                if(messageHandlers.containsKey(message.Type))
-                    action = new Thread(() -> messageHandlers.get(message.Type).accept(message));
-                else if(defaultHandler != null)
-                    action = new Thread(() -> defaultHandler.accept(message));
-
-                action.start();
-
-                // Remove packet from queue
-                synchronized (queue) {
-                    this.queue.remove(0);
-                }
+                activeActions.remove(toWait);
 
             }catch (Exception e) {}
         }

@@ -1,10 +1,9 @@
 package Client;
 
+import Client.Observables.MapHandler;
 import Client.Observables.ObservableTerritory;
 import Client.Observables.ObservableUser;
-import Game.Color;
 import Game.Connection.*;
-import Game.Map.Territories;
 import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -14,16 +13,13 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.VBox;
 import javafx.util.Builder;
-import sun.reflect.generics.tree.Tree;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 /**
@@ -87,13 +83,8 @@ public class ServerTalk implements Runnable {
      * @param ToUpdate Chat container to add new chats into
      */
     public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
-
-        synchronized (chatScrollable) {
-            this.chatScrollable = Scrollable;
-        }
-        synchronized (chatContainer) {
-            this.chatContainer = ToUpdate;
-        }
+        this.chatScrollable = Scrollable;
+        this.chatContainer = ToUpdate;
     }
 
     /**
@@ -107,8 +98,8 @@ public class ServerTalk implements Runnable {
      * @param ToUpdate Observable list linked to UI
      */
     public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
+        this.users = ToUpdate;
         synchronized (users) {
-            this.users = ToUpdate;
             users.notify();
         }
     }
@@ -116,14 +107,14 @@ public class ServerTalk implements Runnable {
     /**
      * HashMap of territories
      */
-    private volatile HashMap<Territories, ObservableTerritory> map;
+    private volatile MapHandler mapHandler;
 
     /**
      * Set map connected to UI
      *
      * @param Map HashMap of territories in the UI
      */
-    public void setMapUpdate(HashMap<Territories, ObservableTerritory> Map) { this.map = Map; }
+    public void setMapUpdate(MapHandler Map) { this.mapHandler = Map; }
 
     private Thread _threadInstance;
 
@@ -224,7 +215,9 @@ public class ServerTalk implements Runnable {
             System.out.println("Positioning message: " + info[1]);
             Positioning pos = gson.fromJson(info[1], Positioning.class);
 
+            MapUpdate update = mapHandler.positionArmies(pos.getNewArmies());
 
+            SendMessage(MessageType.MapUpdate, update);
         });
 
         // Handler for map updates
@@ -235,8 +228,8 @@ public class ServerTalk implements Runnable {
             Platform.runLater(() -> {
                  /* Update each territory with new information */
                 update.getUpdated().forEach((u) -> {
-                    synchronized (map) {
-                        ObservableTerritory t = map.get(u.getTerritory());
+                    synchronized (mapHandler) {
+                        ObservableTerritory t = mapHandler.getTerritories().get(u.getTerritory());
                         t.Armies.set(u.getArmies());
                         if (t.getOwner().getUserId() != u.getOwner().getId())
                             t.setOwner(new User(u.getOwner()));
@@ -251,15 +244,11 @@ public class ServerTalk implements Runnable {
             System.out.println("Defense message: " + info[1]);
             Attack attack = gson.fromJson(info[1], Attack.class);
 
-            // Message shown to the user
-            String popupInfo = "Player " + attack.getFrom().getOwner().getName() + " is attacking from " + attack.getFrom().toString() + " with " + attack.getArmies() +
-                    " armies to your " + attack.getTo().toString() + "\r\nChoose how many armies do you want to defend with.";
-
             Integer defArmies = null;
 
             // Require to user number of defending armies to be used
             try {
-                defArmies = map.get(attack.getTo().getTerritory()).requestDefense(popupInfo);
+                defArmies = mapHandler.getTerritories().get(attack.getTo().getTerritory()).requestDefense(attack);
             } catch (InterruptedException e) {
                 System.out.println("From defense message handler.");
                 e.printStackTrace();

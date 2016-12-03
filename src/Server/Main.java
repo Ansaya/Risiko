@@ -1,16 +1,13 @@
 package Server;
 
-import Game.Connection.Chat;
 import Game.Connection.ConnectionHandler;
 import Game.Connection.MessageDispatcher;
-import Game.Connection.MessageType;
 import Game.GameController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import com.google.gson.*;
 
 public class Main extends Application {
 
@@ -25,11 +22,13 @@ public class Main extends Application {
 
     public static void main(String[] args) {
 
+        // Load UI
+        launch(args);
+
+        // Launch game server
         GameController.getInstance().init();
         MessageDispatcher.getInstance().init();
         ConnectionHandler.getInstance().Listen(5757);
-
-        launch(args);
     }
 
     @Override
@@ -38,6 +37,10 @@ public class Main extends Application {
         GameController.getInstance().terminate();
         MessageDispatcher.getInstance().terminate();
         System.out.println("Shutdown completed");
+
+
+        Thread.sleep(3000);
+
         super.stop();
     }
 }

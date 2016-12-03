@@ -47,9 +47,9 @@ public class Match extends MessageReceiver {
     private Turn currentTurn;
 
     /**
-     * Global matches counter
+     * Global matches counter (0 not allowed)
      */
-    private static int counter = 0;
+    private static int counter = 1;
 
     /**
      * Instance a new match and starts the game

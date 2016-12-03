@@ -25,6 +25,7 @@ public class Main extends Application {
         Parent root = null;
         try {
             root = (Parent) loader.load(Main.class.getResource("match.fxml").openStream());
+
             root.getStylesheets().add(Main.class.getResource("map.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
         }catch (IOException e) {
@@ -106,9 +107,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         this.window = primaryStage;
 
-        //toLogin();
+        toLogin();
 
-        toMatch();
+        //toMatch();
     }
 
 

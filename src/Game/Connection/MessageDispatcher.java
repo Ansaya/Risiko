@@ -34,6 +34,8 @@ public class MessageDispatcher implements Runnable {
      * @param Packet Packet to add
      */
     public void setIncoming(String Packet) {
+
+
         this.packetsQueue.add(Packet);
         synchronized (packetsQueue) {
             this.packetsQueue.notify();

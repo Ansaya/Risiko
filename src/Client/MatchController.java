@@ -1,5 +1,6 @@
 package Client;
 
+import Client.Observables.MapHandler;
 import Client.Observables.ObservableTerritory;
 import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
@@ -12,12 +13,10 @@ import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
@@ -71,7 +70,7 @@ public class MatchController implements Initializable {
     @FXML
     protected JFXTreeTableView<ObservableUser> playersList;
 
-    private HashMap<Territories, ObservableTerritory> map = new HashMap<>();
+    private MapHandler mapHandler;
 
     /* Game */
     @FXML
@@ -81,12 +80,9 @@ public class MatchController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         /* Chat setup */
+        this.server.setChatUpdate(chatSP, chatContainer);
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
         chatMessage.setOnAction(sendMessage);
-
-        // Set chat updatable fields
-        this.server.setChatUpdate(chatSP, chatContainer);
-
 
         /* Map rescaling */
         worldMap.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
@@ -132,6 +128,7 @@ public class MatchController implements Initializable {
         ArrayList<SVGPath> svgPaths = new ArrayList<>();
         ArrayList<Label> labels = new ArrayList<>();
 
+        // Retrieve territories and labels from map view
         mapPane.getChildren().forEach((c) -> {
             if(c instanceof Label) {
                 labels.add((Label) c);
@@ -142,6 +139,9 @@ public class MatchController implements Initializable {
             }
         });
 
+        HashMap<Territories, ObservableTerritory> map = new HashMap<>();
+
+        // Bind territories and labels, then put them in HashMap
         svgPaths.forEach((svg) -> {
             Label l = null;
 
@@ -155,8 +155,8 @@ public class MatchController implements Initializable {
 
             map.put(Territories.valueOf(svg.getId()), new ObservableTerritory(svg, l));
         });
-        ObservableTerritory.setMapPane(mapPane);
-        server.setMapUpdate(map);
+        mapHandler = new MapHandler(mapPane, map);
+        server.setMapUpdate(mapHandler);
 
 
         /* Players table setup */

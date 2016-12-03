@@ -49,7 +49,7 @@ public enum Mission {
             Color color = Color.valueOf(mission.substring(15));
 
             // Get all players from the match
-            Match match = GameController.getInstance().getMatch(Player.getMathcId());
+            Match match = GameController.getInstance().getMatch(Player.getMatchId());
             Collection<Player> players = match.getPlayers().values();
 
             // Check on all players (Check is performed on current player too, but it won't affect result)

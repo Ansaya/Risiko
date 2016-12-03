@@ -1,17 +1,15 @@
 package Game;
 
-import Game.Connection.GameState;
 import Game.Connection.MessageDispatcher;
 import Game.Connection.MessageType;
 import Game.Map.Mission;
 import Game.Map.Territory;
 import com.google.gson.Gson;
 import javafx.application.Platform;
-
-import javax.jws.soap.SOAPBinding;
-import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Player relative to a match
@@ -35,16 +33,16 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Id of match the player is inside
      */
-    private volatile int matchId = 0;
+    private AtomicInteger matchId = new AtomicInteger(0);
 
-    public int getMathcId() { return this.matchId; }
+    public int getMatchId() { return this.matchId.get(); }
 
     /**
      * Current player's isPlaying. True if playing, false if attending the match.
      */
-    private volatile boolean isPlaying = false;
+    private AtomicBoolean isPlaying = new AtomicBoolean(false);
 
-    public boolean isPlaying() { return this.isPlaying; }
+    public boolean isPlaying() { return this.isPlaying.get(); }
 
     /**
      * Color assigned for the match
@@ -92,8 +90,8 @@ public class Player extends SocketHandler implements Runnable {
 
         this.id = -1;
         this.name = "Computer AI";
-        this.matchId = MatchId;
-        this.isPlaying = true;
+        this.matchId .set(MatchId);
+        this.isPlaying.set(true);
         this.color = Color.values()[2];
     }
 
@@ -114,7 +112,7 @@ public class Player extends SocketHandler implements Runnable {
 
                     // If message isn't empty route it to message dispatcher
                     if(!incoming.equals(""))
-                        MessageDispatcher.getInstance().setIncoming(this.matchId + "-" + this.id + "-" + incoming);
+                        MessageDispatcher.getInstance().setIncoming(this.matchId.get() + "-" + this.id + "-" + incoming);
                 }
             }catch (Exception e){
                 // Handle loss of connection
@@ -132,8 +130,8 @@ public class Player extends SocketHandler implements Runnable {
         send.println("End");
 
         if(!fromServer) {
-            if (matchId != 0)
-                GameController.getInstance().getMatch(matchId).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+            if (matchId.get() != 0)
+                GameController.getInstance().getMatch(matchId.get()).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
             else
                 GameController.getInstance().setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
         }
@@ -152,27 +150,23 @@ public class Player extends SocketHandler implements Runnable {
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
-    protected void initMatch(Color Color, int MatchId) {
-        synchronized (this) {
-            this.matchId = MatchId;
-            this.color = Color;
+    protected synchronized void initMatch(Color Color, int MatchId) {
+        this.matchId.set(MatchId);
+        this.color = Color;
 
-            // Player is actively playing
-            this.isPlaying = true;
-        }
+        // Player is actively playing
+        this.isPlaying.set(true);
     }
 
     /**
      * Reset match fields and bring player back to lobby
      */
-    protected void exitMatch() {
-        synchronized (this) {
-            matchId = 0;
-            isPlaying = false;
-            color = null;
-            territories = new ArrayList<>();
-            mission = null;
-        }
+    protected synchronized void exitMatch() {
+        matchId.set(0);
+        isPlaying.set(false);
+        color = null;
+        territories = new ArrayList<>();
+        mission = null;
     }
 
     /**

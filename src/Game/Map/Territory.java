@@ -24,13 +24,13 @@ public class Territory {
 
     public void addNewArmies(int toAdd) { this.newArmies += toAdd; }
 
-    public boolean canRemoveNewArmies(int toRemove) {
+    /*public boolean canRemoveNewArmies(int toRemove) {
         if(toRemove > this.newArmies)
             return false;
 
         this.newArmies -= toRemove;
         return true;
-    }
+    }*/
 
     private Player owner;
 
