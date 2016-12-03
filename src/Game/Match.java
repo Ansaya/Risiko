@@ -4,8 +4,8 @@ import Game.Connection.*;
 import Game.Map.*;
 import Game.Map.Map;
 import com.google.gson.Gson;
-
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Match object to manage game turns in a dedicated thread
@@ -15,75 +15,75 @@ public class Match extends MessageReceiver {
     /**
      * Match id
      */
-    private int id;
+    private final AtomicInteger id = new AtomicInteger(0);
 
-    public int getId() { return id; }
+    public int getId() { return id.get(); }
 
     /**
      * Players' list for this match (contains witnesses too)
      */
-    private HashMap<Integer, Player> players = new HashMap<>();
+    private final HashMap<Integer, Player> players = new HashMap<>();
 
     public HashMap<Integer, Player> getPlayers() { return players; }
 
     /**
      * Contains playing players' id only
      */
-    private ArrayList<Integer> playersOrder = new ArrayList<>();
+    private final ArrayList<Integer> playersOrder = new ArrayList<>();
 
     /**
      * Game map
      */
-    private Map gameMap = new Map();
+    private final Map gameMap = new Map();
 
     /**
      * Deck containing all territories cards plus two jolly
      */
-    private DeckTerritory cards = new DeckTerritory();
+    private final DeckTerritory cards = new DeckTerritory();
 
     /**
      * Current turn
      */
-    private Turn currentTurn;
+    private volatile Turn currentTurn;
 
     /**
      * Global matches counter (0 not allowed)
      */
-    private static int counter = 1;
+    public static final AtomicInteger counter = new AtomicInteger(0);
 
     /**
      * Instance a new match and starts the game
      *
      * @param Players Players who will play in this match
      */
-    public Match(ArrayList<Player> Players) {
+    public Match(int Id, ArrayList<Player> Players) {
         if(Players.size() < 2 || Players.size() > 6)
             throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", Players.size()));
 
-        this.id = counter++;
+        // Set current match id
+        this.id.set(Id);
 
-        Color[] colors = Color.values();
-        ArrayList<User> users = new ArrayList<>();
+        // Setup players
+        final Color[] colors = Color.values();
+        final AtomicInteger i = new AtomicInteger(0);
+        Players.forEach(p -> p.initMatch(colors[i.getAndIncrement()], this.id.get()));
 
-        for (int i = 0; i < Players.size(); i++) {
-            Player p = Players.get(i);
+        final ArrayList<User> users = new ArrayList<>();
+        Players.forEach(p -> {
             players.put(p.getId(), p);
-            p.initMatch(colors[i], this.id);
             users.add(new User(p));
             playersOrder.add(p.getId());
-        }
-
-        System.out.println("Players in this match are " + players.size());
+        });
 
         // Send all user initial setup containing users and colors
         players.forEach((id, user) -> user.SendMessage(MessageType.Match, new Game.Connection.Match(users)));
 
         // Setup and start match message receiver
-
         listenersInit();
         startListen();
 
         // Start first setup turn
+        System.out.println("Match " + this.getId() + ": Started game with " + players.size() + " players.");
         this.currentTurn = new Turn(this, null, true);
     }
 
@@ -99,7 +99,7 @@ public class Match extends MessageReceiver {
             }
 
             if(message.Json.equals("Winner")){
-                int winnerId = Integer.valueOf(message.Json.split("[-]")[0]);
+                final int winnerId = Integer.valueOf(message.Json.split("[-]")[0]);
 
                 // Send all players winner of the game
                 players.forEach((id, p) -> p.SendMessage(MessageType.GameState, new GameState(StateType.Winner, new User(players.get(winnerId)))));
@@ -137,7 +137,9 @@ public class Match extends MessageReceiver {
         }
 
         // If player is only witness return it to lobby
-        players.remove(PlayerId);
+        synchronized (players) {
+            players.remove(PlayerId);
+        }
         GameController.getInstance().returnPlayer(p);
     }
 
@@ -168,14 +170,14 @@ public class Match extends MessageReceiver {
         /**
          * Currently active player
          */
-        private Player playing;
+        private volatile Player playing;
 
         public Player getPlaying() { return this.playing; }
 
         /**
          * Match where this turn is taking place
          */
-        private Match match;
+        private volatile Match match;
 
         /**
          * Queue for incoming messages
@@ -380,7 +382,7 @@ public class Match extends MessageReceiver {
             Player last = null;
 
             // Create AI player without socket
-            Player ai = new Player(this.match.id);
+            Player ai = new Player(this.match.getId());
 
             // Save last player id to trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);

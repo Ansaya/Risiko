@@ -1,6 +1,7 @@
 package Client.Observables;
 
 import Game.Connection.User;
+import Game.Map.Territories;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -17,7 +18,7 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
 
     public StringProperty Color;
 
-    public IntegerProperty Territories;
+    public IntegerProperty Territories = new SimpleIntegerProperty(0);
 
     public ObservableUser(int userId, String username, String Color) {
         this.UserId = new SimpleIntegerProperty(userId);

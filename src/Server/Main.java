@@ -1,7 +1,6 @@
 package Server;
 
 import Game.Connection.ConnectionHandler;
-import Game.Connection.MessageDispatcher;
 import Game.GameController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +16,10 @@ public class Main extends Application {
         primaryStage.setTitle("Risiko - Server Side");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();
+
+        // Launch game server
+        GameController.getInstance().init();
+        ConnectionHandler.getInstance().Listen(5757);
     }
 
 
@@ -24,20 +27,13 @@ public class Main extends Application {
 
         // Load UI
         launch(args);
-
-        // Launch game server
-        GameController.getInstance().init();
-        MessageDispatcher.getInstance().init();
-        ConnectionHandler.getInstance().Listen(5757);
     }
 
     @Override
     public void stop() throws Exception {
         ConnectionHandler.getInstance().terminate();
         GameController.getInstance().terminate();
-        MessageDispatcher.getInstance().terminate();
         System.out.println("Shutdown completed");
-
 
         Thread.sleep(3000);
 

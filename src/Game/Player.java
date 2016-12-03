@@ -1,6 +1,5 @@
 package Game;
 
-import Game.Connection.MessageDispatcher;
 import Game.Connection.MessageType;
 import Game.Map.Mission;
 import Game.Map.Territory;
@@ -19,28 +18,28 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Player's unique id
      */
-    private int id;
+    private volatile int id;
 
     public int getId() { return this.id; }
 
     /**
      * Username choose from
      */
-    private String name;
+    private volatile String name;
 
     public String getName() { return this.name;}
 
     /**
      * Id of match the player is inside
      */
-    private AtomicInteger matchId = new AtomicInteger(0);
+    private final AtomicInteger matchId = new AtomicInteger(-1);
 
     public int getMatchId() { return this.matchId.get(); }
 
     /**
      * Current player's isPlaying. True if playing, false if attending the match.
      */
-    private AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private final AtomicBoolean isPlaying = new AtomicBoolean(false);
 
     public boolean isPlaying() { return this.isPlaying.get(); }
 
@@ -110,9 +109,17 @@ public class Player extends SocketHandler implements Runnable {
                         return;
                     }
 
-                    // If message isn't empty route it to message dispatcher
-                    if(!incoming.equals(""))
-                        MessageDispatcher.getInstance().setIncoming(this.matchId.get() + "-" + this.id + "-" + incoming);
+                    System.out.println("Player " + this.getId() + ": " + incoming);
+
+                    if(incoming != "") {
+                        String[] info = incoming.split("[-]");
+
+                        if (matchId.get() == -1) {
+                            GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        } else {
+                            GameController.getInstance().getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        }
+                    }
                 }
             }catch (Exception e){
                 // Handle loss of connection
@@ -150,7 +157,7 @@ public class Player extends SocketHandler implements Runnable {
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
-    protected synchronized void initMatch(Color Color, int MatchId) {
+    protected void initMatch(Color Color, int MatchId) {
         this.matchId.set(MatchId);
         this.color = Color;
 

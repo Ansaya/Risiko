@@ -87,6 +87,7 @@ public class LobbyController implements Initializable {
             // Check if users number is correct to begin a match
             if(selected.size() < 1 || selected.size() >= 6) {
                 Main.showDialog("Match creation", "Cannot create a match with " + (selected.size() + 1) + " users.", "Close");
+                return;
             }
 
             // Populate user list for the match

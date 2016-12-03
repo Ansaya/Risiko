@@ -89,11 +89,9 @@ public abstract class MessageReceiver implements Runnable {
                 if(activeActions.isEmpty())
                     waitIncoming();
 
-                Thread toWait = activeActions.get(0);
+                activeActions.get(0).join();
 
-                toWait.join();
-
-                activeActions.remove(toWait);
+                activeActions.remove(0);
 
             }catch (Exception e) {}
         }

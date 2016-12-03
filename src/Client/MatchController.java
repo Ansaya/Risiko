@@ -156,7 +156,6 @@ public class MatchController implements Initializable {
             map.put(Territories.valueOf(svg.getId()), new ObservableTerritory(svg, l));
         });
         mapHandler = new MapHandler(mapPane, map);
-        server.setMapUpdate(mapHandler);
 
 
         /* Players table setup */
@@ -182,11 +181,13 @@ public class MatchController implements Initializable {
         playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(rootItem);
         playersList.setShowRoot(false);
-        server.setUsersUpdate(rootItem.getChildren());
 
         endTurnBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
             Main.showDialog("Heading text", "Tua mamma troia", "Avanti");
         });
 
+        // Update server talk objects
+        server.setUsersUpdate(rootItem.getChildren());
+        server.setMapUpdate(mapHandler);
     }
 }
