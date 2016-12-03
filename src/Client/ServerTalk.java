@@ -56,7 +56,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
     /**
      * Username associated with last chat message received
      */
-    private int lastSenderId = -1;
+    private volatile int lastSenderId = -1;
 
     /**
      * ScrollPane containing chatContainer VBox
@@ -82,6 +82,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
     public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
         this.chatScrollable = Scrollable;
         this.chatContainer = ToUpdate;
+        lastSenderId = -1;
     }
 
     /**
@@ -112,7 +113,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         this.mapHandler = Map;
     }
 
-    private Thread _threadInstance;
+    private final Thread _threadInstance = new Thread(this);
 
     private ServerTalk() {
 
@@ -310,7 +311,6 @@ public class ServerTalk extends MessageReceiver implements Runnable {
 
         // If connection is successfully established start listening and receiving
         this.startListen();
-        this._threadInstance = new Thread(this);
         this._threadInstance.start();
     }
 

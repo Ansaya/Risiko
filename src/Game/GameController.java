@@ -118,7 +118,7 @@ public class GameController extends MessageReceiver {
         // Notify all players for new player
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby(newP, null)));
 
-        lobby.put(Id, new Player(Id, Username, Connection));
+        lobby.put(Id, newP);
 
         // Notify new player for all players
         lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby(new ArrayList<>(lobby.values()), null));

@@ -1,10 +1,8 @@
 package Game;
 
 import Game.Connection.MessageType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -13,19 +11,18 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver implements Runnable {
 
-    private AtomicBoolean listen = new AtomicBoolean(false);
+    private final AtomicBoolean listen = new AtomicBoolean(false);
 
-    protected HashMap<MessageType, Consumer<Message>> messageHandlers = new HashMap<>();
+    protected final HashMap<MessageType, Consumer<Message>> messageHandlers = new HashMap<>();
 
     protected Consumer<Message> defaultHandler = null;
 
-    private ArrayList<Thread> activeActions = new ArrayList<>();
+    private final ArrayList<Thread> activeActions = new ArrayList<>();
 
-    private Thread _instance;
+    private final Thread _instance = new Thread(this);
 
     protected void startListen() {
         listen.set(true);
-        _instance = new Thread(this);
         _instance.start();
     }
 

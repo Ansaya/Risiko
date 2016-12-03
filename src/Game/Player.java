@@ -67,7 +67,7 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Incoming messages handler
      */
-    private Thread _instance;
+    private final Thread _instance = new Thread(this);
 
     public Player(int Id, String Username, Socket Connection) {
         super(Connection);
@@ -75,7 +75,6 @@ public class Player extends SocketHandler implements Runnable {
         this.id = Id;
         this.name = Username;
         this.listen = true;
-        this._instance = new Thread(this);
         this._instance.start();
     }
 
@@ -109,7 +108,7 @@ public class Player extends SocketHandler implements Runnable {
                         return;
                     }
 
-                    System.out.println("Player " + this.getId() + ": " + incoming);
+                    System.out.println("Player " + this.getId() + " from thread " + Thread.currentThread().getId() + ": " + incoming);
 
                     if(incoming != "") {
                         String[] info = incoming.split("[-]");
@@ -157,12 +156,12 @@ public class Player extends SocketHandler implements Runnable {
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
-    protected void initMatch(Color Color, int MatchId) {
-        this.matchId.set(MatchId);
-        this.color = Color;
+    protected synchronized void initMatch(Color Color, int MatchId) {
+        matchId.set(MatchId);
+        color = Color;
 
         // Player is actively playing
-        this.isPlaying.set(true);
+        isPlaying.set(true);
     }
 
     /**
