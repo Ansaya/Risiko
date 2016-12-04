@@ -70,7 +70,7 @@ public class MatchController implements Initializable {
     @FXML
     protected JFXTreeTableView<ObservableUser> playersList;
 
-    private MapHandler mapHandler;
+    private volatile MapHandler mapHandler;
 
     /* Game */
     @FXML
@@ -124,7 +124,7 @@ public class MatchController implements Initializable {
             }
         });
 
-        /* Map territories setup */
+        /* Map handler setup */
         ArrayList<SVGPath> svgPaths = new ArrayList<>();
         ArrayList<Label> labels = new ArrayList<>();
 
@@ -182,6 +182,7 @@ public class MatchController implements Initializable {
         playersList.setRoot(rootItem);
         playersList.setShowRoot(false);
 
+        /* End phase button setup */
         endTurnBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
             Main.showDialog("Heading text", "Tua mamma troia", "Avanti");
         });

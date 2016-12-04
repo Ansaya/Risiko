@@ -1,7 +1,6 @@
 package Game.Connection;
 
 import Game.Map.Territory;
-
 import java.util.ArrayList;
 
 /**

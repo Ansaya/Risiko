@@ -4,6 +4,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -86,9 +87,9 @@ public class Main extends Application {
     };
 
     public static void showDialog(String Heading, String Body, String BtnText) {
-        JFXDialog dialog = new JFXDialog();
+        final JFXDialog dialog = new JFXDialog();
 
-        JFXDialogLayout layout = new JFXDialogLayout();
+        final JFXDialogLayout layout = new JFXDialogLayout();
         layout.setHeading(new Label(Heading));
         layout.setBody(new Label(Body));
         if(BtnText != null){
@@ -100,7 +101,10 @@ public class Main extends Application {
         }
         dialog.setContent(layout);
 
-        dialog.show(parent);
+        if(Platform.isFxApplicationThread())
+            dialog.show(parent);
+        else
+            Platform.runLater(() -> dialog.show(parent));
     }
 
     @Override

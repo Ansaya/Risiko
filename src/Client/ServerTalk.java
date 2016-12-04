@@ -156,16 +156,15 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for users in lobby
         messageHandlers.put(MessageType.Lobby, (message) -> {
             System.out.println("ServerTalk: Lobby message: " + message.Json);
-            Lobby lobbyUsers = gson.fromJson(message.Json, Lobby.class);
+            final Lobby lobbyUsers = gson.fromJson(message.Json, Lobby.class);
 
             // Update users in lobby
             Platform.runLater(() -> {
                 this.users.removeIf((t) -> {
-                    for (User u: lobbyUsers.getToRemove()
-                            ) {
-                        return t.getValue().UserId.get() == u.getUserId();
+                    for (User u: lobbyUsers.getToRemove()) {
+                        if(t.getValue().UserId.get() == u.getUserId())
+                            return true;
                     }
-
                     return false;
                 });
 
@@ -182,22 +181,20 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for match initialization
         messageHandlers.put(MessageType.Match, (message) -> {
             System.out.println("ServerTalk: Match message: " + message.Json);
-            Match match = gson.fromJson(message.Json, Match.class);
-
-            final Object o = new Object();
+            final Match match = gson.fromJson(message.Json, Match.class);
 
             // Launch match screen
             Platform.runLater(() -> {
                 Main.toMatch();
-                synchronized (o){
-                    o.notify();
+                synchronized (match){
+                    match.notify();
                 }
             });
 
             // Wait for screen to load and new user list reference to be set
             try {
-                synchronized (o) {
-                    o.wait();
+                synchronized (match) {
+                    match.wait();
                 }
             } catch (InterruptedException e) {}
 
@@ -219,6 +216,8 @@ public class ServerTalk extends MessageReceiver implements Runnable {
             System.out.println("ServerTalk: Positioning message: " + message.Json);
             Positioning pos = gson.fromJson(message.Json, Positioning.class);
 
+            while (mapHandler == null){}
+
             MapUpdate update = mapHandler.positionArmies(pos.getNewArmies());
 
             SendMessage(MessageType.MapUpdate, update);
@@ -227,7 +226,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for map updates
         messageHandlers.put(MessageType.MapUpdate, (message) -> {
             System.out.println("ServerTalk: MapUpdate message: " + message.Json);
-            MapUpdate update = gson.fromJson(message.Json, MapUpdate.class);
+            final MapUpdate update = gson.fromJson(message.Json, MapUpdate.class);
 
             Platform.runLater(() -> {
                  /* Update each territory with new information */
@@ -246,7 +245,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for attacked territory
         messageHandlers.put(MessageType.Attack, (message) -> {
             System.out.println("ServerTalk: Defense message: " + message.Json);
-            Attack attack = gson.fromJson(message.Json, Attack.class);
+            final Attack attack = gson.fromJson(message.Json, Attack.class);
 
             Integer defArmies = null;
 

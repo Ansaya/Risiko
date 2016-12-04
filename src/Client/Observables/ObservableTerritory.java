@@ -1,6 +1,7 @@
 package Client.Observables;
 
 import Client.Main;
+import Client.ServerTalk;
 import Game.Connection.Attack;
 import Game.Connection.User;
 import com.jfoenix.controls.JFXButton;
@@ -38,19 +39,19 @@ public class ObservableTerritory {
     /**
      * Armies currently placed on the territory
      */
-    public IntegerProperty Armies = new SimpleIntegerProperty(0);
+    public final IntegerProperty Armies = new SimpleIntegerProperty(0);
 
     /**
      * Armies placed during positioning phase not yet submitted to server
      */
-    public IntegerProperty NewArmies = new SimpleIntegerProperty(0);
+    public final IntegerProperty NewArmies = new SimpleIntegerProperty(0);
 
     /**
      * Defending armies choose form user
      */
     private volatile Integer defend = 1;
 
-    private User owner;
+    private User owner = null;
 
     /**
      * Updates current owner and territory color
@@ -69,8 +70,6 @@ public class ObservableTerritory {
     public ObservableTerritory(SVGPath SVGTerritory, Label Label) {
         this.svgTerritory = SVGTerritory;
         this.label = Label;
-
-        this.Armies = new SimpleIntegerProperty(0);
 
         JFXButton btn = new JFXButton();
         btn.setButtonType(JFXButton.ButtonType.RAISED);
@@ -125,12 +124,19 @@ public class ObservableTerritory {
                 System.out.println("User want to add an army to " + this.svgTerritory.getId());
 
                 // Check if new armies are there, then add one
-                if(MapHandler.newArmies > 0){
-                    synchronized (MapHandler.newArmies) {
-                        MapHandler.newArmies--;
-                    }
+                if(MapHandler.newArmies.get() > 0){
+                    MapHandler.newArmies.getAndDecrement();
+
                     synchronized (NewArmies) {
-                        this.NewArmies.add(1);
+                        this.NewArmies.set(NewArmies.add(1).get());
+                    }
+
+                    // If owner is null then we are in setup phase, so end phase after choice
+                    if(this.owner == null) {
+                        setOwner(ServerTalk.getInstance().getUser());
+                        synchronized (MapHandler.goAhead){
+                            MapHandler.goAhead.notify();
+                        }
                     }
                 }
             });
@@ -144,12 +150,16 @@ public class ObservableTerritory {
                     synchronized (NewArmies) {
                         this.NewArmies.subtract(1);
                     }
-                    synchronized (MapHandler.newArmies) {
-                        MapHandler.newArmies++;
-                    }
+
+                    MapHandler.newArmies.getAndIncrement();
                 }
             });
         }
+
+        Platform.runLater(() -> {
+            currentNode.addAnimatedNode(add);
+            currentNode.addAnimatedNode(sub);
+        });
     }
 
     /**
