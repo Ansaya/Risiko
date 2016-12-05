@@ -161,19 +161,19 @@ public class MatchController implements Initializable {
         /* Players table setup */
         JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("ID");
         idColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(idColumn.validateValue(param)) return param.getValue().getValue().UserId.asObject();
+            if(idColumn.validateValue(param)) return param.getValue().getValue().id.asObject();
             else return idColumn.getComputedValue(param);
         });
 
         JFXTreeTableColumn<ObservableUser, String> usernameColumn = new JFXTreeTableColumn<>("Username");
         usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, String> param) -> {
-            if(usernameColumn.validateValue(param)) return param.getValue().getValue().Username;
+            if(usernameColumn.validateValue(param)) return param.getValue().getValue().username;
             else return usernameColumn.getComputedValue(param);
         });
 
         JFXTreeTableColumn<ObservableUser, Integer> territoriesColumn = new JFXTreeTableColumn<>("Territories");
         territoriesColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(territoriesColumn.validateValue(param)) return param.getValue().getValue().Territories.asObject();
+            if(territoriesColumn.validateValue(param)) return param.getValue().getValue().territories.asObject();
             else return territoriesColumn.getComputedValue(param);
         });
 

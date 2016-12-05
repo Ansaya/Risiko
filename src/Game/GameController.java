@@ -98,7 +98,7 @@ public class GameController extends MessageReceiver {
 
         // Send end message and close connection of lobby players
         lobby.forEach((id, p) -> {
-            System.out.println("Game controller: Releasing player " + p.getName());
+            System.out.println("Game controller: Releasing player " + p.getUsername());
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
         });
@@ -133,7 +133,7 @@ public class GameController extends MessageReceiver {
      */
     public void returnPlayer(Player Player) {
 
-        System.out.println("Game controller: Player " + Player.getName() + " got back from match.");
+        System.out.println("Game controller: Player " + Player.getUsername() + " got back from match.");
 
         // Notify all players for new player
         lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby(Player, null)));

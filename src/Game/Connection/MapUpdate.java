@@ -11,7 +11,7 @@ public class MapUpdate {
     /**
      * Updated territories on the map
      */
-    private ArrayList<Territory> updated;
+    private ArrayList<Territory> updated = new ArrayList<>();
 
     public ArrayList<Territory> getUpdated() { return this.updated; }
 
@@ -20,7 +20,6 @@ public class MapUpdate {
     }
 
     public MapUpdate(Territory Updated) {
-        this.updated = new ArrayList<>();
         updated.add(Updated);
     }
 }

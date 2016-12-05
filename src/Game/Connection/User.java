@@ -28,6 +28,6 @@ public class User {
     }
 
     public User(Player Player) {
-        this(Player.getId(), Player.getName(), Player.getColor());
+        this(Player.getId(), Player.getUsername(), Player.getColor());
     }
 }

@@ -14,7 +14,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.SVGPath;
-
 import java.util.ArrayList;
 
 /**
@@ -148,7 +147,7 @@ public class ObservableTerritory {
                 // Check if new armies have been placed on this territory, then remove one
                 if(this.NewArmies.get() > 0) {
                     synchronized (NewArmies) {
-                        this.NewArmies.subtract(1);
+                        this.NewArmies.set(NewArmies.subtract(1).get());
                     }
 
                     MapHandler.newArmies.getAndIncrement();
@@ -165,18 +164,17 @@ public class ObservableTerritory {
     /**
      * Show popup in UI and return the number of armies used to defend from an attack
      *
+     * @param attack Attack message received from server
      * @return Number of armies defending the territory
-     * @throws InterruptedException
      */
-    public int requestDefense(Attack attack) throws InterruptedException {
-        int armies = Integer.valueOf(label.getText());
-        if(armies < 2)
+    public int requestDefense(Attack attack) {
+        if(Armies.get() < 2)
             return 1;
 
-        JFXNodesList defendList = getDefendList();
+        final JFXNodesList defendList = getDefendList();
 
         // Message shown to the user
-        String popupInfo = "Player " + attack.getFrom().getOwner().getName() + " is attacking from " + attack.getFrom().toString() + " with " + attack.getArmies() +
+        final String popupInfo = "Player " + attack.getFrom().getOwner().getUsername() + " is attacking from " + attack.getFrom().toString() + " with " + attack.getArmies() +
                 " armies to " + attack.getTo().toString() + "\r\nChoose how many armies do you want to defend with.";
 
         Platform.runLater(() -> {
@@ -186,7 +184,9 @@ public class ObservableTerritory {
 
         // Wait for defend to be updated
         synchronized (defend){
-            defend.wait();
+            try {
+                defend.wait();
+            } catch (Exception e){}
         }
 
         return defend;

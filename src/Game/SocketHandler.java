@@ -11,13 +11,13 @@ import java.net.Socket;
  */
 public abstract class SocketHandler {
 
-    protected Socket connection;
+    protected transient Socket connection;
 
-    protected BufferedReader receive;
+    protected transient BufferedReader receive;
 
-    protected PrintWriter send;
+    protected transient PrintWriter send;
 
-    protected volatile boolean listen;
+    protected transient volatile boolean listen;
 
     /**
      * Initializes receiver and sender for passed socket

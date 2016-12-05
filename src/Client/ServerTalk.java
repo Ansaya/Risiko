@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Handle communication with the server
@@ -214,11 +213,11 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for positioning message
         messageHandlers.put(MessageType.Positioning, message -> {
             System.out.println("ServerTalk: Positioning message: " + message.Json);
-            Positioning pos = gson.fromJson(message.Json, Positioning.class);
+            final Positioning pos = gson.fromJson(message.Json, Positioning.class);
 
             while (mapHandler == null){}
 
-            MapUpdate update = mapHandler.positionArmies(pos.getNewArmies());
+            final MapUpdate update = mapHandler.positionArmies(pos.getNewArmies());
 
             SendMessage(MessageType.MapUpdate, update);
         });
@@ -247,15 +246,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
             System.out.println("ServerTalk: Defense message: " + message.Json);
             final Attack attack = gson.fromJson(message.Json, Attack.class);
 
-            Integer defArmies = null;
-
-            // Require to user number of defending armies to be used
-            try {
-                defArmies = mapHandler.getTerritories().get(attack.getTo().getTerritory()).requestDefense(attack);
-            } catch (InterruptedException e) {
-                System.out.println("ServerTalk: Error from defense message handler.");
-                e.printStackTrace();
-            }
+            Integer defArmies = mapHandler.getTerritories().get(attack.getTo().getTerritory()).requestDefense(attack);
 
             if(defArmies == null)
                 System.out.println("ServerTalk: Error from defense message handler: Null problem");

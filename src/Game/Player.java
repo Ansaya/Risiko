@@ -25,21 +25,21 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Username choose from
      */
-    private volatile String name;
+    private volatile String username;
 
-    public String getName() { return this.name;}
+    public String getUsername() { return this.username;}
 
     /**
      * Id of match the player is inside
      */
-    private final AtomicInteger matchId = new AtomicInteger(-1);
+    private transient final AtomicInteger matchId = new AtomicInteger(-1);
 
     public int getMatchId() { return this.matchId.get(); }
 
     /**
      * Current player's isPlaying. True if playing, false if attending the match.
      */
-    private final AtomicBoolean isPlaying = new AtomicBoolean(false);
+    private transient final AtomicBoolean isPlaying = new AtomicBoolean(false);
 
     public boolean isPlaying() { return this.isPlaying.get(); }
 
@@ -67,13 +67,13 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Incoming messages handler
      */
-    private final Thread _instance = new Thread(this);
+    private transient final Thread _instance = new Thread(this);
 
     public Player(int Id, String Username, Socket Connection) {
         super(Connection);
 
         this.id = Id;
-        this.name = Username;
+        this.username = Username;
         this.listen = true;
         this._instance.start();
     }
@@ -87,7 +87,7 @@ public class Player extends SocketHandler implements Runnable {
         super(null);
 
         this.id = -1;
-        this.name = "Computer AI";
+        this.username = "Computer AI";
         this.matchId .set(MatchId);
         this.isPlaying.set(true);
         this.color = Color.values()[2];
@@ -191,7 +191,7 @@ public class Player extends SocketHandler implements Runnable {
             send.println(packet);
         }
 
-        System.out.println("Message sent to " + this.name + ": " + packet);
+        System.out.println("Message sent to " + this.username + ": " + packet);
     }
 
     /**
@@ -204,6 +204,6 @@ public class Player extends SocketHandler implements Runnable {
             send.println(packet);
         }
 
-        System.out.println("Message routed to " + this.name + ": " + packet);
+        System.out.println("Message routed to " + this.username + ": " + packet);
     }
 }

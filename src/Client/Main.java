@@ -1,5 +1,8 @@
 package Client;
 
+import Game.Connection.MapUpdate;
+import Game.Map.Territories;
+import Game.Map.Territory;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -25,7 +28,7 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = (Parent) loader.load(Main.class.getResource("match.fxml").openStream());
+            root = loader.load(Main.class.getResource("match.fxml").openStream());
 
             root.getStylesheets().add(Main.class.getResource("map.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
@@ -45,7 +48,7 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = (Parent) loader.load(Main.class.getResource("lobby.fxml").openStream());
+            root = loader.load(Main.class.getResource("lobby.fxml").openStream());
             root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
@@ -68,7 +71,7 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = (Parent) loader.load(Main.class.getResource("login.fxml").openStream());
+            root = loader.load(Main.class.getResource("login.fxml").openStream());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,7 +121,6 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
-
         launch(args);
     }
 

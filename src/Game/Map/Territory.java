@@ -14,25 +14,17 @@ public class Territory {
     /**
      * Armies placed on this territory
      */
-    private int armies = 0;
+    private volatile int armies = 0;
 
     public int getArmies() { return armies; }
 
-    private int newArmies = 0;
+    private volatile int newArmies = 0;
 
     public int getNewArmies() { return this.newArmies; }
 
     public void addNewArmies(int toAdd) { this.newArmies += toAdd; }
 
-    /*public boolean canRemoveNewArmies(int toRemove) {
-        if(toRemove > this.newArmies)
-            return false;
-
-        this.newArmies -= toRemove;
-        return true;
-    }*/
-
-    private Player owner;
+    private volatile Player owner = null;
 
     public Player getOwner() { return this.owner; }
 
