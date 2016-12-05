@@ -1,26 +1,16 @@
 package Game.Connection;
 
-import Game.Player;
-
 /**
  * Chat message packet
  */
-public class Chat {
+public class Chat<T> {
 
-    private String message;
+    public final String message;
 
-    public String getMessage() { return this.message; }
+    public final T sender;
 
-    private User sender;
-
-    public User getSender() { return this.sender; }
-
-    public Chat(User Sender, String Message) {
+    public Chat(T Sender, String Message) {
         this.sender = Sender;
         this.message = Message;
-    }
-
-    public Chat(Player Sender, String Message) {
-        this(new User(Sender), Message);
     }
 }

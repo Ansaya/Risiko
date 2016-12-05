@@ -4,7 +4,6 @@ import Client.Observables.ObservableUser;
 import Game.Connection.Chat;
 import Game.Connection.Match;
 import Game.Connection.MessageType;
-import Game.Connection.User;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.collections.FXCollections;
@@ -15,9 +14,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -92,7 +89,7 @@ public class LobbyController implements Initializable {
 
             // Populate user list for the match
             ArrayList<User> players = new ArrayList<>();
-            selected.forEach((t) -> players.add(new User(t.getValue().UserId.get(), t.getValue().Username.get(), null)));
+            selected.forEach((t) -> players.add(new User(t.getValue().id.get(), t.getValue().username.get(), null)));
             players.add(server.getUser());
 
             // Send match request to the server
@@ -104,13 +101,13 @@ public class LobbyController implements Initializable {
         /* Lobby view setup */
         JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("User ID");
         idColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(idColumn.validateValue(param)) return param.getValue().getValue().UserId.asObject();
+            if(idColumn.validateValue(param)) return param.getValue().getValue().id.asObject();
             else return idColumn.getComputedValue(param);
         });
 
         JFXTreeTableColumn<ObservableUser, String> usernameColumn = new JFXTreeTableColumn<>("Username");
         usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, String> param) -> {
-            if(usernameColumn.validateValue(param)) return param.getValue().getValue().Username;
+            if(usernameColumn.validateValue(param)) return param.getValue().getValue().username;
             else return usernameColumn.getComputedValue(param);
         });
 
@@ -126,7 +123,7 @@ public class LobbyController implements Initializable {
         // Bind search field
         searchField.textProperty().addListener((o,oldVal,newVal)-> {
             System.out.println("Search: " + newVal);
-            rootItem.setPredicate((u) -> (u.getValue().UserId.get()+"").contains(newVal) || u.getValue().Username.get().contains(newVal));
+            rootItem.setPredicate((u) -> (u.getValue().id.get()+"").contains(newVal) || u.getValue().username.get().contains(newVal));
         });
 
 

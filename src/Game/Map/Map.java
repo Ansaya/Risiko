@@ -7,13 +7,10 @@ import java.util.HashMap;
  */
 public class Map {
 
-    private HashMap<Territories, Territory> territories = new HashMap<>();
-
-    public HashMap<Territories, Territory> getTerritories() { return territories; }
+    public final HashMap<Territories, Territory> territories = new HashMap<>();
 
     public Map() {
-        for (Territories t: Territories.values()
-             ) {
+        for (Territories t: Territories.values()) {
             if(t == Territories.Jolly1 || t == Territories.Jolly2)
                 continue;
 

@@ -43,7 +43,7 @@ public enum Mission {
         String mission = Player.getMission().name();
 
         // If mission is to destroy all armies of one color search inside match's players if color is still present
-        // Armies already been destroyed problem is managed from battle class and armies color same as current player is handled in setup phase
+        // armies already been destroyed problem is managed from battle class and armies color same as current player is handled in setup phase
         if(mission.contains("DistruggiArmata")){
             // Get armies' color
             Color color = Color.valueOf(mission.substring(15));

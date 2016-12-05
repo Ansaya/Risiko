@@ -5,7 +5,7 @@ package Game.Connection;
  */
 public enum MessageType {
     Chat(Game.Connection.Chat.class),
-    Lobby(Lobby.class),
+    Lobby(Game.Connection.Lobby.class),
     Match(Game.Connection.Match.class),
     Turn(null),
     Attack(Game.Connection.Attack.class),

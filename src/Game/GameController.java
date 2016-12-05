@@ -1,6 +1,8 @@
 package Game;
 
 import Game.Connection.*;
+import Game.Connection.Chat;
+import Game.Connection.Lobby;
 import com.google.gson.Gson;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -9,7 +11,7 @@ import java.util.HashMap;
 /**
  * Main controller to manage matches and user lobby
  */
-public class GameController extends MessageReceiver {
+public class GameController extends MessageReceiver<MessageType> {
 
     private static GameController _instance = new GameController();
 
@@ -56,9 +58,9 @@ public class GameController extends MessageReceiver {
             System.out.println("Game controller: New match request from " + message.PlayerId);
 
             final ArrayList<Player> toAdd = new ArrayList<>();
-            requested.getPlayers().forEach((u) -> {
-                toAdd.add(lobby.get(u.getUserId()));
-                releasePlayer(u.getUserId());
+            requested.players.forEach((u) -> {
+                toAdd.add(lobby.get(u.getId()));
+                releasePlayer(u.getId());
             });
 
             System.out.println("Game controller: Launch new match with " + toAdd.size() + " players.");
@@ -85,7 +87,7 @@ public class GameController extends MessageReceiver {
         this.stopListen();
         System.out.println("Game controller: Message receiver stopped.");
 
-        final Chat end = new Chat(new User(-1, "Admin", Color.RED), "Server is shutting down.");
+        final Chat end = new Chat(new Player(-1), "Server is shutting down.");
 
         // Send end message to matches players and close connection
         matches.forEach((matchId, m) -> {

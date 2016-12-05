@@ -18,9 +18,7 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Player's unique id
      */
-    private volatile int id;
-
-    public int getId() { return this.id; }
+    public final int id;
 
     /**
      * Username choose from
@@ -88,7 +86,7 @@ public class Player extends SocketHandler implements Runnable {
 
         this.id = -1;
         this.username = "Computer AI";
-        this.matchId .set(MatchId);
+        this.matchId.set(MatchId);
         this.isPlaying.set(true);
         this.color = Color.values()[2];
     }
@@ -108,7 +106,7 @@ public class Player extends SocketHandler implements Runnable {
                         return;
                     }
 
-                    System.out.println("Player " + this.getId() + " from thread " + Thread.currentThread().getId() + ": " + incoming);
+                    System.out.println("Player " + this.id + " from thread " + Thread.currentThread().getId() + ": " + incoming);
 
                     if(incoming != "") {
                         String[] info = incoming.split("[-]");
@@ -205,5 +203,13 @@ public class Player extends SocketHandler implements Runnable {
         }
 
         System.out.println("Message routed to " + this.username + ": " + packet);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o.getClass() != Player.class)
+            return false;
+
+        return this.id == ((Player)o).id;
     }
 }

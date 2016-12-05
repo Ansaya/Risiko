@@ -5,19 +5,14 @@ import Game.StateType;
 /**
  * Current game state for the players
  */
-public class GameState {
+public class GameState<T> {
 
-    private StateType state;
+    public final StateType state;
 
-    public StateType getState() { return this.state; }
+    public final T winner;
 
-    private User winner;
-
-    public User getWinner() { return this.winner; }
-
-    public GameState(StateType State, User Winner) {
+    public GameState(StateType State, T Winner) {
         this.state = State;
         this.winner = Winner;
     }
-
 }

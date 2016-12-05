@@ -1,7 +1,6 @@
 package Game.Connection;
 
 import Game.Map.Territories;
-
 import java.util.ArrayList;
 
 /**
@@ -9,13 +8,10 @@ import java.util.ArrayList;
  */
 public class Cards {
 
-    private ArrayList<Territories> combination = new ArrayList<>();
-
-    public ArrayList<Territories> getCombination() { return this.combination; }
+    public final ArrayList<Territories> combination = new ArrayList<>();
 
     public Cards(Territories... Cards) {
-        for (Territories t: Cards
-             ) {
+        for (Territories t: Cards) {
             combination.add(t);
         }
     }

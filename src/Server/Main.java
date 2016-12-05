@@ -1,7 +1,10 @@
 package Server;
 
+import Client.Observables.ObservableUser;
 import Game.Connection.ConnectionHandler;
 import Game.GameController;
+import Game.Player;
+import com.google.gson.Gson;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -26,7 +29,14 @@ public class Main extends Application {
     public static void main(String[] args) {
 
         // Load UI
-        launch(args);
+        //launch(args);
+
+        ObservableUser u = new ObservableUser(1, "Giocatore", "RED");
+        Gson gson = new Gson();
+        String jsonU = gson.toJson(u);
+        System.out.println(jsonU);
+
+        Player p = gson.fromJson(jsonU, Player.class);
     }
 
     @Override

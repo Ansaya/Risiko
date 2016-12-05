@@ -1,19 +1,20 @@
-package Game.Connection;
+package Client.Connection;
+
+import Client.Observables.ObservableTerritory;
 
 /**
- * Defense packet
+ * Created by fiore on 05/12/2016.
  */
-public class Defense<T> {
-
+public class Defense {
     /**
      * Attacked territory
      */
-    public final T to;
+    public final ObservableTerritory to;
 
     /**
      * Attacker territory
      */
-    public final T from;
+    public final ObservableTerritory from;
 
     /**
      * Attacking armies number
@@ -25,7 +26,7 @@ public class Defense<T> {
      */
     public int defArmies;
 
-    public Defense(T From, T To, int Armies) {
+    public Defense(ObservableTerritory From, ObservableTerritory To, int Armies) {
         this.from = From;
         this.to = To;
         this.armies = Armies;

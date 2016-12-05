@@ -2,10 +2,8 @@ package Client.Observables;
 
 import Client.Main;
 import Client.ServerTalk;
-import Game.Connection.MapUpdate;
-import Game.Connection.User;
+import Client.Connection.MapUpdate;
 import Game.Map.Territories;
-import Game.Map.Territory;
 import javafx.application.Platform;
 import javafx.scene.layout.Pane;
 import java.util.ArrayList;
@@ -76,7 +74,7 @@ public class MapHandler {
         boolean isSetup = NewArmies <= 1;
 
         // Display positioning controls only for territories owned from current user
-        final User current = ServerTalk.getInstance().getUser();
+        final ObservableUser current = ServerTalk.getInstance().getUser();
 
         // If is setup phase user can choose all territories
         if(isSetup){
@@ -87,7 +85,7 @@ public class MapHandler {
         }
         else { //Else armies can be placed only in owned territories
             territories.forEach((territory, obTerritory) -> {
-                if (obTerritory.getOwner().getUserId() == current.getUserId())
+                if (obTerritory.getOwner().equals(current))
                     obTerritory.positioningControls(false);
             });
         }
@@ -105,14 +103,11 @@ public class MapHandler {
         clearUI();
 
         // Check for updated territories
-        final ArrayList<Territory> updated = new ArrayList<>();
+        final ArrayList<ObservableTerritory> updated = new ArrayList<>();
         territories.forEach((territory, obTerritory) -> {
             // Add territory to update only if modified
-            if(obTerritory.NewArmies.get() != 0){
-                Territory t = new Territory(territory);
-                t.addNewArmies(obTerritory.NewArmies.get());
-                updated.add(t);
-            }
+            if(obTerritory.newArmies.get() != 0)
+                updated.add(obTerritory);
         });
 
         // Return update message to be sent back to the server

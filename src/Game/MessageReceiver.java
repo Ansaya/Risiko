@@ -1,6 +1,5 @@
 package Game;
 
-import Game.Connection.MessageType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -9,11 +8,11 @@ import java.util.function.Consumer;
 /**
  * Can receive messages
  */
-public abstract class MessageReceiver implements Runnable {
+public abstract class MessageReceiver<T> implements Runnable {
 
     private final AtomicBoolean listen = new AtomicBoolean(false);
 
-    protected final HashMap<MessageType, Consumer<Message>> messageHandlers = new HashMap<>();
+    protected final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
 
     protected Consumer<Message> defaultHandler = null;
 
@@ -44,7 +43,7 @@ public abstract class MessageReceiver implements Runnable {
      * @param Type Message type
      * @param Incoming Json string received
      */
-    public void setIncoming(int PlayerId, MessageType Type, String Incoming) {
+    public void setIncoming(int PlayerId, T Type, String Incoming) {
         this.setIncoming(new Message(PlayerId, Type, Incoming));
     }
 
@@ -97,11 +96,11 @@ public abstract class MessageReceiver implements Runnable {
     public class Message {
         public int PlayerId;
 
-        public MessageType Type;
+        public T Type;
 
         public String Json;
 
-        public Message(int PlayerId, MessageType Type, String Incoming) {
+        public Message(int PlayerId, T Type, String Incoming) {
             this.PlayerId = PlayerId;
             this.Type = Type;
             this.Json = Incoming;

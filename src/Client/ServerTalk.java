@@ -1,9 +1,7 @@
 package Client;
 
-import Client.Observables.MapHandler;
-import Client.Observables.ObservableTerritory;
-import Client.Observables.ObservableUser;
-import Game.Connection.*;
+import Client.Observables.*;
+import Client.Connection.*;
 import Game.MessageReceiver;
 import com.google.gson.Gson;
 import javafx.application.Platform;
@@ -23,15 +21,15 @@ import java.net.Socket;
 /**
  * Handle communication with the server
  */
-public class ServerTalk extends MessageReceiver implements Runnable {
+public class ServerTalk extends MessageReceiver<MessageType> implements Runnable {
 
     private static ServerTalk _instance = new ServerTalk();
 
     public static ServerTalk getInstance() { return _instance; }
 
-    private User user;
+    private ObservableUser user;
 
-    public User getUser() { return this.user; }
+    public ObservableUser getUser() { return this.user; }
 
     private volatile boolean listen;
 
@@ -119,36 +117,36 @@ public class ServerTalk extends MessageReceiver implements Runnable {
         // Handler for incoming chat messages
         messageHandlers.put(MessageType.Chat, (message) -> {
             // Get chat object
-            Chat chat = gson.fromJson(message.Json, Chat.class);
-            Label sender = chatEntryBuilder.build();
-            Label text = chatEntryBuilder.build();
+            final Chat chat = gson.fromJson(message.Json, Chat.class);
+            final Label sender = chatEntryBuilder.build();
+            final Label text = chatEntryBuilder.build();
 
-            sender.setText(chat.getSender().getUsername());
-            text.setText(chat.getMessage());
+            sender.setText(chat.sender.username.get());
+            text.setText(chat.message);
 
             // If message is from this client display it on opposite side of chat view
-            if(chat.getSender().getUserId() == this.user.getUserId()){
+            if(chat.sender.equals(this.user)){
                 sender.setAlignment(Pos.TOP_RIGHT);
                 text.setAlignment(Pos.TOP_RIGHT);
             }
 
-            if(chat.getSender().getColor() != null) {
-                sender.setStyle("-fx-text-fill: " + chat.getSender().getColor().toString().toLowerCase());
-                text.setStyle("-fx-text-fill: " + chat.getSender().getColor().toString().toLowerCase());
+            if(chat.sender.color.get() != null) {
+                sender.setStyle("-fx-text-fill: " + chat.sender.color.get().toLowerCase());
+                text.setStyle("-fx-text-fill: " + chat.sender.color.get().toLowerCase());
             }
+
+            this.lastSenderId = chat.sender.id.get();
 
             // Update chat from ui thread
             Platform.runLater(() -> {
                 // If message is from same sender as before, avoid to write sender again
-                if(this.lastSenderId != chat.getSender().getUserId())
+                if(this.lastSenderId != chat.sender.id.get())
                     this.chatContainer.getChildren().add(sender);
 
                 this.chatContainer.getChildren().add(text);
 
                 // Scroll container to end
                 this.chatScrollable.setVvalue(1.0f);
-
-                this.lastSenderId = chat.getSender().getUserId();
             });
         });
 
@@ -159,17 +157,11 @@ public class ServerTalk extends MessageReceiver implements Runnable {
 
             // Update users in lobby
             Platform.runLater(() -> {
-                this.users.removeIf((t) -> {
-                    for (User u: lobbyUsers.getToRemove()) {
-                        if(t.getValue().UserId.get() == u.getUserId())
-                            return true;
-                    }
-                    return false;
-                });
+                this.users.removeIf(t -> lobbyUsers.toRemove.removeIf(tl -> tl.equals(t)));
 
-                lobbyUsers.getToAdd().forEach((u) -> {
-                    if(u.getUserId() != user.getUserId())
-                        users.add(new TreeItem<>(new ObservableUser(u)));
+                lobbyUsers.toAdd.forEach((u) -> {
+                    if(!u.equals(this.user))
+                        users.add(new TreeItem<>(u));
                 });
 
                 System.out.println("Lobby updated");
@@ -232,7 +224,7 @@ public class ServerTalk extends MessageReceiver implements Runnable {
                 update.getUpdated().forEach((u) -> {
                     synchronized (mapHandler) {
                         ObservableTerritory t = mapHandler.getTerritories().get(u.getTerritory());
-                        t.Armies.set(u.getArmies());
+                        t.armies.set(u.getArmies());
                         if (t.getOwner().getUserId() != u.getOwner().getId())
                             t.setOwner(new User(u.getOwner()));
                     }

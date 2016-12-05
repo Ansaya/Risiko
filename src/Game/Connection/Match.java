@@ -1,18 +1,15 @@
 package Game.Connection;
 
-import javax.jws.soap.SOAPBinding;
 import java.util.ArrayList;
 
 /**
  * Match initialization message
  */
-public class Match {
+public class Match<T> {
 
-    private ArrayList<User> players;
+    public ArrayList<T> players = new ArrayList<>();
 
-    public ArrayList<User> getPlayers() { return this.players; }
-
-    public Match(ArrayList<User> Players) {
+    public Match(ArrayList<T> Players) {
         this.players = Players;
     }
 }

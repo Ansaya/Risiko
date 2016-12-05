@@ -1,25 +1,23 @@
 package Game.Connection;
 
-import Game.Map.Territory;
 import java.util.ArrayList;
 
 /**
  * Map packet
  */
-public class MapUpdate {
+public class MapUpdate<T> {
 
     /**
      * Updated territories on the map
      */
-    private ArrayList<Territory> updated = new ArrayList<>();
+    public final ArrayList<T> updated;
 
-    public ArrayList<Territory> getUpdated() { return this.updated; }
-
-    public MapUpdate(ArrayList<Territory> Updated) {
+    public MapUpdate(ArrayList<T> Updated) {
         this.updated = Updated;
     }
 
-    public MapUpdate(Territory Updated) {
+    public MapUpdate(T Updated) {
+        this.updated = new ArrayList<>();
         updated.add(Updated);
     }
 }

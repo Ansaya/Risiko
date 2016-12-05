@@ -5,9 +5,7 @@ package Game.Connection;
  */
 public class Positioning {
 
-    private int newArmies;
-
-    public int getNewArmies() { return this.newArmies; }
+    public final int newArmies;
 
     /**
      * Server initializer. Specify new armies to be placed

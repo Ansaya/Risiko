@@ -2,8 +2,8 @@ package Client.Observables;
 
 import Client.Main;
 import Client.ServerTalk;
-import Game.Connection.Attack;
-import Game.Connection.User;
+import Client.Connection.Attack;
+import Game.Map.Territories;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
 import javafx.animation.Interpolator;
@@ -20,66 +20,75 @@ import java.util.ArrayList;
  * Observable territory class
  */
 public class ObservableTerritory {
+
+    public final Territories territory;
+
     /**
      * SVGPath node corresponding to this territory
      */
-    private SVGPath svgTerritory;
+    private final transient SVGPath svgTerritory;
 
     /**
      * Currently displayed node list
      */
-    private JFXNodesList currentNode;
+    private final transient JFXNodesList currentNode = new JFXNodesList();
 
     /**
      * Label containing territory name
      */
-    private Label label;
+    private final transient Label label;
 
     /**
-     * Armies currently placed on the territory
+     * armies currently placed on the territory
      */
-    public final IntegerProperty Armies = new SimpleIntegerProperty(0);
+    public final IntegerProperty armies = new SimpleIntegerProperty(0);
 
     /**
-     * Armies placed during positioning phase not yet submitted to server
+     * armies placed during positioning phase not yet submitted to server
      */
-    public final IntegerProperty NewArmies = new SimpleIntegerProperty(0);
+    public final IntegerProperty newArmies = new SimpleIntegerProperty(0);
 
     /**
      * Defending armies choose form user
      */
-    private volatile Integer defend = 1;
+    private transient volatile Integer defend = 1;
 
-    private User owner = null;
+    private volatile ObservableUser owner = null;
 
     /**
      * Updates current owner and territory color
      *
      * @param Owner New owner of this territory
      */
-    public void setOwner(User Owner) {
+    public void setOwner(ObservableUser Owner) {
         this.owner = Owner;
 
         // Change foreground territory color accordingly to new owner's color
-        Platform.runLater(() -> svgTerritory.setStyle("-fx-background-color: " + owner.getColor().toString().toLowerCase()));
+        Platform.runLater(() -> svgTerritory.setStyle("-fx-background-color: " + owner.color.get().toLowerCase()));
     }
 
-    public User getOwner() { return this.owner; }
+    public ObservableUser getOwner() { return this.owner; }
 
-    public ObservableTerritory(SVGPath SVGTerritory, Label Label) {
+    /**
+     *
+     *
+     * @param SVGTerritory SVGPath for this territory in UI
+     * @param Label Label for this territory in UI
+     */
+    public ObservableTerritory(Territories Territory, SVGPath SVGTerritory, Label Label) {
+        this.territory = Territory;
         this.svgTerritory = SVGTerritory;
         this.label = Label;
 
-        JFXButton btn = new JFXButton();
+        final Label l = new Label();
+        l.textProperty().bind(armies.add(newArmies).asString());
+        l.setStyle("-fx-text-fill:WHITE;");
+
+        final JFXButton btn = new JFXButton();
         btn.setButtonType(JFXButton.ButtonType.RAISED);
         btn.getStyleClass().add("animated-option-button-");
-
-        Label l = new Label();
-        l.textProperty().bind(Armies.add(NewArmies).asString());
-        l.setStyle("-fx-text-fill:WHITE;");
         btn.setGraphic(l);
 
-        this.currentNode = new JFXNodesList();
         currentNode.addAnimatedNode(btn);
         currentNode.setLayoutX(getCenterX(label));
         currentNode.setLayoutY(getCenterY(label));
@@ -126,8 +135,8 @@ public class ObservableTerritory {
                 if(MapHandler.newArmies.get() > 0){
                     MapHandler.newArmies.getAndDecrement();
 
-                    synchronized (NewArmies) {
-                        this.NewArmies.set(NewArmies.add(1).get());
+                    synchronized (newArmies) {
+                        this.newArmies.set(newArmies.add(1).get());
                     }
 
                     // If owner is null then we are in setup phase, so end phase after choice
@@ -145,9 +154,9 @@ public class ObservableTerritory {
                 System.out.println("User want to remove an army from " + this.svgTerritory.getId());
 
                 // Check if new armies have been placed on this territory, then remove one
-                if(this.NewArmies.get() > 0) {
-                    synchronized (NewArmies) {
-                        this.NewArmies.set(NewArmies.subtract(1).get());
+                if(this.newArmies.get() > 0) {
+                    synchronized (newArmies) {
+                        this.newArmies.set(newArmies.subtract(1).get());
                     }
 
                     MapHandler.newArmies.getAndIncrement();
@@ -168,14 +177,14 @@ public class ObservableTerritory {
      * @return Number of armies defending the territory
      */
     public int requestDefense(Attack attack) {
-        if(Armies.get() < 2)
+        if(armies.get() < 2)
             return 1;
 
         final JFXNodesList defendList = getDefendList();
 
         // Message shown to the user
-        final String popupInfo = "Player " + attack.getFrom().getOwner().getUsername() + " is attacking from " + attack.getFrom().toString() + " with " + attack.getArmies() +
-                " armies to " + attack.getTo().toString() + "\r\nChoose how many armies do you want to defend with.";
+        final String popupInfo = "Player " + attack.from.owner.username + " is attacking from " + attack.from.toString() + " with " + attack.armies +
+                " armies to " + attack.to.toString() + "\r\nChoose how many armies do you want to defend with.";
 
         Platform.runLater(() -> {
             Main.showDialog("You are under attack!", popupInfo, "Go ahead");
@@ -292,5 +301,10 @@ public class ObservableTerritory {
      */
     private double getCenterY(Label Label) {
         return Label.getBoundsInParent().getMinY() + (Label.getPrefHeight() / 2) - 17.5;
+    }
+
+    @Override
+    public String toString() {
+        return territory.toString();
     }
 }
