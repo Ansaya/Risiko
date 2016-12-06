@@ -1,5 +1,6 @@
 package Server.Game;
 
+import Game.Color;
 import Game.Connection.Chat;
 import Game.Connection.Lobby;
 import Game.MessageReceiver;
@@ -51,7 +52,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // Handler for incoming chat messages routing
         messageHandlers.put(MessageType.Chat, (message) -> {
-            this.lobby.forEach((id, p) -> p.RouteMessage(message.Type + "-" + message.Json));
+            this.lobby.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json));
         });
 
         // Handler for new match initialization request
@@ -89,7 +90,7 @@ public class GameController extends MessageReceiver<MessageType> {
         this.stopListen();
         System.out.println("Game controller: Message receiver stopped.");
 
-        final Chat<Player> end = new Chat<>(new Player(-1), "Server is shutting down.");
+        final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
 
         // Send end message to matches players and close connection
         matches.forEach((matchId, m) -> {

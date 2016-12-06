@@ -27,8 +27,10 @@ public class Controller implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         consoleView.setEditable(false);
         Console c = new Console(consoleView);
+        PrintStream p = new PrintStream(c);
 
-        System.setOut(new PrintStream(c));
+        System.setOut(p);
+        System.setErr(p);
     }
 
     private static class Console extends OutputStream {

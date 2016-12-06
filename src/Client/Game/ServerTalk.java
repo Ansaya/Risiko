@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -105,20 +106,6 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         this.users = ToUpdate;
     }
 
-    /**
-     * HashMap of territories
-     */
-    private volatile MapHandler mapHandler;
-
-    /**
-     * Set map connected to UI
-     *
-     * @param Map HashMap of territories in the UI
-     */
-    public void setMapUpdate(MapHandler Map) {
-        this.mapHandler = Map;
-    }
-
     private final Thread _threadInstance = new Thread(this);
 
     private ServerTalk() {
@@ -172,7 +159,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
             // Update users in lobby
             Platform.runLater(() -> {
-                this.users.removeIf(t -> lobbyUsers.toRemove.removeIf(tl -> tl.equals(t)));
+                this.users.removeIf(t -> lobbyUsers.toRemove.removeIf(tl -> tl.equals(t.getValue())));
 
                 lobbyUsers.toAdd.forEach((u) -> {
                     if(!u.equals(this.user))
@@ -222,9 +209,15 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             System.out.println("ServerTalk: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
 
-            while (mapHandler == null){}
+            // First time after match creation wait for MapHandler to initialize
+            if(!MapHandler.goAhead.get())
+                synchronized (MapHandler.goAhead) {
+                    try {
+                        MapHandler.goAhead.wait();
+                    } catch (Exception e) {}
+                }
 
-            final MapUpdate<ObservableTerritory> update = mapHandler.positionArmies(pos.newArmies);
+            final MapUpdate<ObservableTerritory> update = MapHandler.positionArmies(pos.newArmies);
 
             SendMessage(MessageType.MapUpdate, update);
         });
@@ -237,8 +230,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             Platform.runLater(() -> {
                  /* Update each territory with new information */
                 update.updated.forEach((u) -> {
-                    synchronized (mapHandler) {
-                        ObservableTerritory t = mapHandler.getTerritories().get(u.territory);
+                    synchronized (MapHandler.territories) {
+                        ObservableTerritory t = MapHandler.territories.get(u.territory);
                         t.armies.set(u.armies.get());
                         t.newArmies.set(0);
                         if (!u.getOwner().equals(t.getOwner()))
@@ -254,7 +247,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             System.out.println("ServerTalk: Defense message: " + message.Json);
             final Attack<ObservableTerritory> attack = gson.fromJson(message.Json, MessageType.Attack.getType());
 
-            Integer defArmies = mapHandler.getTerritories().get(attack.to.territory).requestDefense(attack);
+            final Integer defArmies = MapHandler.territories.get(attack.to.territory).requestDefense(attack);
 
             // Send response to server
             SendMessage(MessageType.Defense, new Defense<>(attack.from, attack.to, defArmies));
@@ -288,12 +281,10 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         }
 
         // Try connecting to server
-        String incoming = "";
-
         // Send username to the server
         this.send.println(Username);
 
-        incoming = receive.readLine();
+        String incoming = receive.readLine();
         System.out.println("Server responded: " + incoming);
 
         // If server doesn't respond notify the user
@@ -301,7 +292,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             throw new Exception("Wrong response from server.");
 
         // Set user for this client
-        this.user = new ObservableUser(Integer.valueOf(incoming.split("[-]")[1]), Username, null);
+        this.user = new ObservableUser(Integer.valueOf(incoming.split("[#]")[1]), Username, null);
         System.out.println("Got id " + user.id.get() + " from server.");
 
         // If connection is successfully established start listening and receiving
@@ -360,7 +351,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
                     System.out.println("ServerTalk: Received: " + Packet);
 
-                    String[] info = Packet.split("[-]");
+                    String[] info = Packet.split("[#]");
                     MessageType type = MessageType.valueOf(info[0]);
 
 
@@ -383,8 +374,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             return;
         }
 
-        // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "-" + gson.toJson(MessageObj, Type.getType());
+        // Build packet string as MessageType#SerializedObject
+        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
 
         synchronized (send) {
             send.println(packet);

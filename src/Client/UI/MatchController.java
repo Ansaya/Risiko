@@ -157,8 +157,6 @@ public class MatchController implements Initializable {
 
             map.put(t, new ObservableTerritory(t, svg, l));
         });
-        mapHandler = new MapHandler(mapPane, map);
-
 
         /* Players table setup */
         JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("ID");
@@ -191,6 +189,6 @@ public class MatchController implements Initializable {
 
         // Update server talk objects
         server.setUsersUpdate(rootItem.getChildren());
-        server.setMapUpdate(mapHandler);
+        MapHandler.Init(mapPane, map);
     }
 }

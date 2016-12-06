@@ -35,7 +35,7 @@ public class ConnectionHandler implements Runnable {
 
         try {
             username = (new BufferedReader(new InputStreamReader(newConn.getInputStream()))).readLine();
-            (new PrintWriter(newConn.getOutputStream(), true)).println("OK-" + id);
+            (new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
         } catch (Exception e) {}
 
         System.out.println("Connection handler: New user connected.");

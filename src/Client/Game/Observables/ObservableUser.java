@@ -27,6 +27,9 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
 
     @Override
     public boolean equals(Object o) {
+        if(o == null)
+            return false;
+
         if(o.getClass() != ObservableUser.class)
             return false;
 

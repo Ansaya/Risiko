@@ -12,7 +12,6 @@ import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Map.Territory;
 import com.google.gson.Gson;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -105,16 +104,16 @@ public class Match extends MessageReceiver<MessageType> {
             }
 
             if(message.Json.equals("Winner")){
-                final int winnerId = Integer.valueOf(message.Json.split("[-]")[0]);
+                final int winnerId = Integer.valueOf(message.Json.split("[#]")[0]);
 
                 // Send all players winner of the game
-                players.forEach((id, p) -> p.SendMessage(MessageType.GameState, new GameState(StateType.Winner, players.get(winnerId))));
+                players.forEach((id, p) -> p.SendMessage(MessageType.GameState, new GameState<>(StateType.Winner, players.get(winnerId))));
             }
         });
 
         messageHandlers.put(MessageType.Chat, (message) -> {
             // Reroute message back to all players as MessageType-JsonSerializedMessage
-            this.players.forEach((id, p) -> p.RouteMessage(message.Type + "-" + message.Json));
+            this.players.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json));
         });
 
         messageHandlers.put(MessageType.GameState, (message) -> {
@@ -159,7 +158,7 @@ public class Match extends MessageReceiver<MessageType> {
         if(lastPlaying == null)
             return players.get(playersOrder.get(0));
 
-        int current = playersOrder.indexOf(lastPlaying);
+        int current = playersOrder.indexOf(lastPlaying.id);
 
         // If current was last of the row, return first again
         if(current == (playersOrder.size() - 1))
@@ -176,19 +175,19 @@ public class Match extends MessageReceiver<MessageType> {
         /**
          * Currently active player
          */
-        private volatile Player playing;
+        private final Player playing;
 
         public Player getPlaying() { return this.playing; }
 
         /**
          * Match where this turn is taking place
          */
-        private volatile Match match;
+        private final Match match;
 
         /**
          * Queue for incoming messages
          */
-        private ArrayList<Message> incoming = new ArrayList<>();
+        private final ArrayList<Message> incoming = new ArrayList<>();
 
         /**
          * Add new message to turn queue
@@ -216,7 +215,7 @@ public class Match extends MessageReceiver<MessageType> {
         /**
          * Deserializer for received messages
          */
-        private Gson deserialize = new Gson();
+        private final Gson deserialize = new Gson();
 
         private Thread _instance;
 
@@ -388,7 +387,7 @@ public class Match extends MessageReceiver<MessageType> {
             Player last = null;
 
             // Create AI player without socket
-            final Player ai = new Player(this.match.getId());
+            final Player ai = Player.getAI(this.match.getId(), Color.BLUE);
 
             // Save last player id to trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
@@ -422,8 +421,8 @@ public class Match extends MessageReceiver<MessageType> {
                     toUpdate = match.gameMap.territories.get(toGo.get((new Random()).nextInt(toGo.size())));
                     toUpdate.addArmies(3);
                     toUpdate.owner = ai;
-                    updateAll(new MapUpdate<>(toUpdate));
                     toGo.remove(toUpdate.territory);
+                    updateAll(new MapUpdate<>(toUpdate));
                 }
             }
 

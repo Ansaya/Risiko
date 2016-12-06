@@ -11,10 +11,12 @@ import javafx.animation.KeyValue;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.SVGPath;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Observable territory class
@@ -51,7 +53,32 @@ public class ObservableTerritory {
     /**
      * Defending armies choose form user
      */
-    private transient volatile Integer defend = 1;
+    private transient final AtomicInteger defend = new AtomicInteger(1);
+
+    private transient volatile boolean posEnabled = false;
+
+    private transient volatile boolean isMoving = false;
+
+    /**
+     * Display positioning command in the UI, so that the user can add or remove armies from this territory
+     *
+     * @param State State of positioning controls
+     */
+    public void positioningControls(PosControls State) {
+        switch (State){
+            case Disabled:
+                posEnabled = false;
+                break;
+            case Enabled:
+                posEnabled = true;
+                isMoving = false;
+                break;
+            case Moving:
+                posEnabled = true;
+                isMoving = true;
+                break;
+        }
+    }
 
     private volatile ObservableUser owner = null;
 
@@ -70,7 +97,7 @@ public class ObservableTerritory {
     public ObservableUser getOwner() { return this.owner; }
 
     /**
-     *
+     * Instance of map territory with reference to UI territory
      *
      * @param SVGTerritory SVGPath for this territory in UI
      * @param Label Label for this territory in UI
@@ -79,7 +106,9 @@ public class ObservableTerritory {
         this.territory = Territory;
         this.svgTerritory = SVGTerritory;
         this.label = Label;
+        label.setMouseTransparent(true);    // Set label mouse transparent to avoid selection issues
 
+        /* Main badge construction */
         final Label l = new Label();
         l.textProperty().bind(armies.add(newArmies).asString());
         l.setStyle("-fx-text-fill:WHITE;");
@@ -89,46 +118,39 @@ public class ObservableTerritory {
         btn.getStyleClass().add("animated-option-button-");
         btn.setGraphic(l);
 
-        currentNode.addAnimatedNode(btn);
-        currentNode.setLayoutX(getCenterX(label));
-        currentNode.setLayoutY(getCenterY(label));
+        // Setup positioning/moving events which will be triggered from posEnabled boolean
+        btn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+            if(!posEnabled)
+                return;
 
-        Platform.runLater(() -> MapHandler.mapPane.getChildren().add(currentNode));
-    }
+            // Get clicked button of mouse (left as add button, right as remove button)
+            final boolean isRightClick = evt.isSecondaryButtonDown();
 
-    /**
-     * Display positioning command in the UI, so that the user can add or remove armies from this territory
-     *
-     * @param isMoving False is adding new armies, true if moving armies during last phase of the turn.
-     */
-    public void positioningControls(boolean isMoving) {
-        // Add button to the right of central node
-        JFXButton add = nodeButton("+", "atk", false);
-        add.setLayoutX(currentNode.getLayoutX() + 50.0f);
-        add.setLayoutY(currentNode.getLayoutY());
+            // If moving armies between territories perform special actions
+            if(isMoving){
+                if(isRightClick){
 
-        // Sub button to the left of central node
-        JFXButton sub = nodeButton("-", "def", false);
-        sub.setLayoutX(currentNode.getLayoutX() - 50.0f);
-        sub.setLayoutY(currentNode.getLayoutY());
+                }
+                else {
 
-        // Add correct event handler for moving/positioning circumstances
-        if(isMoving){
-            // Event handler to move armies to this territory
-            add.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
-                // Implement moving checks to get armies from adjacent territories
-                System.out.println("User want to move armies in " + this.svgTerritory.getId());
-            });
+                }
+                return; // Return after completion
+            }
 
-            // Event handler to move armies from this territory
-            sub.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
-                // Implement moving checks to move armies from this territory to adjacent territories
-                System.out.println("User want to move armies from" + this.svgTerritory.getId());
-            });
-        }
-        else {
-            // Event handler to add new armies
-            add.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
+            // Else if positioning armies at the beginning of turn perform normal positioning
+            if(isRightClick){
+                System.out.println("User want to remove an army from " + this.svgTerritory.getId());
+
+                // Check if new armies have been placed on this territory, then remove one
+                if(newArmies.get() > 0) {
+                    synchronized (newArmies) {
+                        newArmies.set(newArmies.subtract(1).get());
+                    }
+
+                    MapHandler.newArmies.getAndIncrement();
+                }
+            }
+            else {
                 System.out.println("User want to add an army to " + this.svgTerritory.getId());
 
                 // Check if new armies are there, then add one
@@ -136,7 +158,7 @@ public class ObservableTerritory {
                     MapHandler.newArmies.getAndDecrement();
 
                     synchronized (newArmies) {
-                        this.newArmies.set(newArmies.add(1).get());
+                        newArmies.set(newArmies.add(1).get());
                     }
 
                     // If owner is null then we are in setup phase, so end phase after choice
@@ -147,27 +169,19 @@ public class ObservableTerritory {
                         }
                     }
                 }
-            });
-
-            // Event handler to remove new armies
-            sub.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
-                System.out.println("User want to remove an army from " + this.svgTerritory.getId());
-
-                // Check if new armies have been placed on this territory, then remove one
-                if(this.newArmies.get() > 0) {
-                    synchronized (newArmies) {
-                        this.newArmies.set(newArmies.subtract(1).get());
-                    }
-
-                    MapHandler.newArmies.getAndIncrement();
-                }
-            });
-        }
-
-        Platform.runLater(() -> {
-            currentNode.addAnimatedNode(add);
-            currentNode.addAnimatedNode(sub);
+            }
         });
+
+        currentNode.addAnimatedNode(btn);
+        currentNode.setLayoutX(getCenterX(label));
+        currentNode.setLayoutY(getCenterY(label));
+
+        // Add event handler for selection
+        final EventHandler<MouseEvent> selected = evt -> MapHandler.selected(territory);
+        currentNode.addEventFilter(MouseEvent.MOUSE_CLICKED, selected);
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, selected);
+
+        Platform.runLater(() -> MapHandler.mapPane.getChildren().add(currentNode));
     }
 
     /**
@@ -180,15 +194,13 @@ public class ObservableTerritory {
         if(armies.get() < 2)
             return 1;
 
-        final JFXNodesList defendList = getDefendList();
-
         // Message shown to the user
-        final String popupInfo = "Player " + attack.from.owner.username + " is attacking from " + attack.from.toString() + " with " + attack.armies +
+        final String popupInfo = "Player " + attack.from.owner.username.get() + " is attacking from " + attack.from.toString() + " with " + attack.armies +
                 " armies to " + attack.to.toString() + "\r\nChoose how many armies do you want to defend with.";
 
         Platform.runLater(() -> {
             Main.showDialog("You are under attack!", popupInfo, "Go ahead");
-            MapHandler.mapPane.getChildren().add(defendList);
+            showDefenseList();
         });
 
         // Wait for defend to be updated
@@ -198,62 +210,67 @@ public class ObservableTerritory {
             } catch (Exception e){}
         }
 
-        return defend;
+        return defend.get();
     }
 
     /**
-     * Setup defense node list with buttons and event handlers
-     *
-     * @return Initialized defense list to display in UI
+     * Setup and show defense node list with buttons and event handlers
      */
-    private JFXNodesList getDefendList() {
-        // Main button
+    private void showDefenseList() {
+        // Buttons setup
+        final JFXNodesList defenseList = new JFXNodesList();
         JFXButton mainBtn = nodeButton("Defense", "def", true);
-
-        JFXNodesList nodesList = new JFXNodesList();
-        nodesList.setSpacing(10);
-        nodesList.addAnimatedNode(mainBtn, (expanded)-> new ArrayList<KeyValue>(){{ add(new KeyValue(mainBtn.getGraphic().rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
+        JFXButton btn1 = nodeButton("1", "def", false);
+        JFXButton btn2 = nodeButton("2", "def", false);
 
         // One army button
-        JFXButton btn1 = nodeButton("1", "def", false);
         btn1.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
             System.out.println("User want to defend " + this.svgTerritory.getId() + " with one army.");
             synchronized (defend) {
-                defend = 1;
+                defend.set(1);
                 defend.notify();
             }
 
             // After the choice remove unnecessary UI controls
-            MapHandler.mapPane.getChildren().removeIf(node -> node.getId() == "btnRemove");
+            MapHandler.mapPane.getChildren().remove(defenseList);
         });
 
-        nodesList.addAnimatedNode(btn1);
-
         // Two armies button
-        JFXButton btn2 = nodeButton("2", "def", false);
         btn2.addEventFilter(MouseEvent.MOUSE_CLICKED, (evt) -> {
             System.out.println("User want to defend " + this.svgTerritory.getId() + " with two armies.");
             synchronized (defend) {
-                defend = 2;
+                defend.set(2);
                 defend.notify();
             }
 
             // After choice remove unnecessary UI controls
-            MapHandler.mapPane.getChildren().removeIf(node -> node.getId() == "btnRemove");
+            MapHandler.mapPane.getChildren().remove(defenseList);
         });
 
-        nodesList.addAnimatedNode(btn2);
-
-        nodesList.setLayoutX(getCenterX(label));
-        nodesList.setLayoutY(getCenterY(label));
+        defenseList.setSpacing(10);
+        defenseList.addAnimatedNode(mainBtn, (expanded)->
+                new ArrayList<KeyValue>(){{ add(new KeyValue(mainBtn.getGraphic().rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
+        defenseList.addAnimatedNode(btn1);
+        defenseList.addAnimatedNode(btn2);
+        defenseList.setLayoutX(getCenterX(label));
+        defenseList.setLayoutY(getCenterY(label));
 
         // Check where to display additional buttons if near window border
-        if(nodesList.getLayoutX() < 200.0)
-            nodesList.setRotate(270);
+        if(defenseList.getLayoutX() < 200.0)
+            defenseList.setRotate(270);
         else
-            nodesList.setRotate(90);
+            defenseList.setRotate(90);
 
-        return nodesList;
+        // Display defend list in UI
+        if(Platform.isFxApplicationThread()) {
+            MapHandler.mapPane.getChildren().add(defenseList);
+            defenseList.animateList();
+        }
+        else
+            Platform.runLater(() -> {
+                MapHandler.mapPane.getChildren().add(defenseList);
+                defenseList.animateList();
+            });
     }
 
     /**
@@ -306,5 +323,11 @@ public class ObservableTerritory {
     @Override
     public String toString() {
         return territory.toString();
+    }
+
+    enum PosControls {
+        Disabled,
+        Enabled,
+        Moving
     }
 }

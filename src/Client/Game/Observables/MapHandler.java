@@ -4,60 +4,41 @@ import Client.Main;
 import Client.Game.ServerTalk;
 import Game.Connection.MapUpdate;
 import Game.Map.Territories;
-import javafx.application.Platform;
 import javafx.scene.layout.Pane;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import static Client.Game.Observables.ObservableTerritory.PosControls.*;
 
 /**
  * Handler for UI events on game map
  */
 public class MapHandler {
 
-    protected static Pane mapPane;
+    static Pane mapPane;
 
-    private final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
+    public static final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
 
-    public HashMap<Territories, ObservableTerritory> getTerritories() { return this.territories; }
+    private static final ArrayList<Territories> selectedQueue = new ArrayList<>();
 
-    private final ArrayList<ObservableTerritory> selectedQueue = new ArrayList<>();
+    public static final AtomicBoolean goAhead = new AtomicBoolean(false);
 
-    public static final Object goAhead = new Object();
+    static final AtomicInteger newArmies = new AtomicInteger(0);
 
-    public static final AtomicInteger newArmies = new AtomicInteger(0);
-
-    public void selected(ObservableTerritory Selected) {
+    static void selected(Territories Selected) {
         synchronized (selectedQueue) {
             selectedQueue.add(Selected);
             selectedQueue.notify();
         }
     }
 
-    public MapHandler(Pane MapPane, HashMap<Territories, ObservableTerritory> Map) {
-        this.mapPane = MapPane;
-        this.territories.putAll(Map);
-    }
-
-    /**
-     * Remove all UI controls from the map
-     */
-    public void clearUI() {
-        Platform.runLater(() -> {
-            // Remove all controls relative to territories management
-            mapPane.getChildren().removeIf(node -> node.getId() == ("btnRemove"));
-
-            // Notify action completed
-            synchronized (goAhead){
-                goAhead.notify();
-            }
-        });
-
-        // Wait for UI thread to complete the action
-        synchronized (goAhead) {
-            try {
-                goAhead.wait();
-            } catch (InterruptedException e) {}
+    public static void Init(Pane MapPane, HashMap<Territories, ObservableTerritory> Map) {
+        mapPane = MapPane;
+        territories.putAll(Map);
+        goAhead.set(true);
+        synchronized (goAhead){
+            goAhead.notify();
         }
     }
 
@@ -67,8 +48,8 @@ public class MapHandler {
      * @param NewArmies New armies quantity
      * @return At the end of positioning returns updated territory message to send back to the server
      */
-    public MapUpdate<ObservableTerritory> positionArmies(int NewArmies) {
-        this.newArmies.set(NewArmies);
+    public static MapUpdate<ObservableTerritory> positionArmies(int NewArmies) {
+        newArmies.set(NewArmies);
 
         // If only one army to place then is setup phase
         boolean isSetup = NewArmies <= 1;
@@ -80,13 +61,13 @@ public class MapHandler {
         if(isSetup){
             territories.forEach((territory, obTerritory) -> {
                 if(obTerritory.getOwner() == null)
-                    obTerritory.positioningControls(false);
+                    obTerritory.positioningControls(Enabled);
             });
         }
         else { //Else armies can be placed only in owned territories
             territories.forEach((territory, obTerritory) -> {
                 if (obTerritory.getOwner().equals(current))
-                    obTerritory.positioningControls(false);
+                    obTerritory.positioningControls(Enabled);
             });
         }
 
@@ -100,7 +81,7 @@ public class MapHandler {
         }
 
         // Remove UI controls
-        clearUI();
+        territories.forEach((territory, obTerritory) -> obTerritory.positioningControls(Disabled));
 
         // Check for updated territories
         final ArrayList<ObservableTerritory> updated = new ArrayList<>();

@@ -79,23 +79,32 @@ public class Player extends SocketHandler implements Runnable {
     }
 
     /**
+     * Private constructor for AI player
+     *
+     * @param MatchId Match where the AI is required
+     * @param Color Color for the AI
+     */
+    private Player(int MatchId, Color Color){
+        id = -1;
+        username = "Computer AI";
+        matchId.set(MatchId);
+        color = Color;
+        isPlaying.set(true);
+    }
+
+    /**
      * Instance an AI static player
      *
      * @param MatchId Match where the AI player is needed
+     * @param Color Color of AI on map
      */
-    public Player(int MatchId) {
-        super(null);
-
-        this.id = -1;
-        this.username = "Computer AI";
-        this.matchId.set(MatchId);
-        this.isPlaying.set(true);
-        this.color = Color.values()[2];
+    public static Player getAI(int MatchId, Color Color) {
+        return new Player(MatchId, Color);
     }
 
     @Override
     public void run() {
-        String incoming = "";
+        String incoming;
 
         // Handle all incoming messages
         while (listen) {
@@ -110,14 +119,12 @@ public class Player extends SocketHandler implements Runnable {
 
                     System.out.println("Player " + this.id + " from thread " + Thread.currentThread().getId() + ": " + incoming);
 
-                    if(incoming != "") {
-                        String[] info = incoming.split("[-]");
+                    String[] info = incoming.split("[#]");
 
-                        if (matchId.get() == -1) {
-                            GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);
-                        } else {
-                            GameController.getInstance().getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
-                        }
+                    if (matchId.get() == -1) {
+                        GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                    } else {
+                        GameController.getInstance().getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
                     }
                 }
             }catch (Exception e){
@@ -185,7 +192,7 @@ public class Player extends SocketHandler implements Runnable {
         Gson serialize = new Gson();
 
         // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "-" + serialize.toJson(MessageObj, Type.getType());
+        String packet = Type.toString() + "#" + serialize.toJson(MessageObj, Type.getType());
 
         synchronized (send) {
             send.println(packet);
@@ -209,6 +216,9 @@ public class Player extends SocketHandler implements Runnable {
 
     @Override
     public boolean equals(Object o) {
+        if(o == null)
+            return false;
+
         if(o.getClass() != Player.class)
             return false;
 

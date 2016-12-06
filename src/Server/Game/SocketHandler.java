@@ -13,11 +13,11 @@ public abstract class SocketHandler {
 
     protected transient Socket connection;
 
-    protected transient BufferedReader receive;
+    transient BufferedReader receive;
 
-    protected transient PrintWriter send;
+    transient PrintWriter send;
 
-    protected transient volatile boolean listen;
+    transient volatile boolean listen;
 
     /**
      * Initializes receiver and sender for passed socket
@@ -37,4 +37,6 @@ public abstract class SocketHandler {
             e.printStackTrace();
         }
     }
+
+    SocketHandler() {}
 }
