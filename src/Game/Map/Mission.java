@@ -1,9 +1,11 @@
 package Game.Map;
 
 import Game.*;
-
+import Server.Game.GameController;
+import Server.Game.Map.Territory;
+import Server.Game.Match;
+import Server.Game.Player;
 import java.util.*;
-
 import static Game.Map.Continent.*;
 
 /**

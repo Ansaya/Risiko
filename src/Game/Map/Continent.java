@@ -1,7 +1,8 @@
 package Game.Map;
 
-import java.util.ArrayList;
+import Server.Game.Map.Territory;
 
+import java.util.ArrayList;
 import static Game.Map.Territories.*;
 
 /**
@@ -82,7 +83,7 @@ public enum Continent {
         // Increment continent counter for each territory in the array
         for (Territory t: Territories
                 ) {
-            switch (t.getTerritory().continent){
+            switch (t.territory.continent){
                 case NorthAmerica:
                     nordAmerica++;
                     break;

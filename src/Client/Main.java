@@ -1,8 +1,6 @@
 package Client;
 
-import Game.Connection.MapUpdate;
-import Game.Map.Territories;
-import Game.Map.Territory;
+import Client.Game.ServerTalk;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -15,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class Main extends Application {
@@ -28,10 +25,10 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("match.fxml").openStream());
+            root = loader.load(Main.class.getResource("UI/match.fxml").openStream());
 
-            root.getStylesheets().add(Main.class.getResource("map.css").toExternalForm());
-            root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/map.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/chat.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,14 +39,14 @@ public class Main extends Application {
         window.setTitle("Risiko - Match");
         window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
         window.show();
-    };
+    }
 
     public static void toLobby() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("lobby.fxml").openStream());
-            root.getStylesheets().add(Main.class.getResource("chat.css").toExternalForm());
+            root = loader.load(Main.class.getResource("UI/lobby.fxml").openStream());
+            root.getStylesheets().add(Main.class.getResource("UI/chat.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -65,13 +62,13 @@ public class Main extends Application {
         window.setMinHeight(600.0);
         window.setScene(new Scene(root, 1366, 768));
         window.show();
-    };
+    }
 
     public static void toLogin() {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("login.fxml").openStream());
+            root = loader.load(Main.class.getResource("UI/login.fxml").openStream());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -87,7 +84,7 @@ public class Main extends Application {
         window.setScene(new Scene(root, 250, 300));
         window.setResizable(false);
         window.show();
-    };
+    }
 
     public static void showDialog(String Heading, String Body, String BtnText) {
         final JFXDialog dialog = new JFXDialog();

@@ -1,7 +1,6 @@
 package Game.Map;
 
 import java.util.*;
-
 import static Game.Map.Continent.*;
 import static Game.Map.Card.*;
 
@@ -142,10 +141,7 @@ public enum Territories {
      * @param Territories List of adjacent territories
      */
     private void Init(Territories... Territories) {
-        for (Game.Map.Territories t: Territories
-             ) {
-            adjacent.add(t);
-        }
+        adjacent.addAll(Arrays.asList(Territories));
     }
 
     /**

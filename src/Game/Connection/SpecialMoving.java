@@ -16,9 +16,9 @@ public class SpecialMoving<T> {
      *
      * @param SuccessfulAttack Successful attack made from the player
      */
-    public SpecialMoving(Attack<T> SuccessfulAttack) {
+    public SpecialMoving(Attack<T> SuccessfulAttack, int NewArmies) {
         this.from = SuccessfulAttack.from;
         this.to = SuccessfulAttack.to;
-        this.newArmies = from.getArmies() - SuccessfulAttack.getArmies() - 1;   // At minimum one army has to occupy the territory
+        this.newArmies = NewArmies;
     }
 }

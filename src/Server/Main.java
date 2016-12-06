@@ -1,10 +1,7 @@
 package Server;
 
-import Client.Observables.ObservableUser;
-import Game.Connection.ConnectionHandler;
-import Game.GameController;
-import Game.Player;
-import com.google.gson.Gson;
+import Server.Game.Connection.ConnectionHandler;
+import Server.Game.GameController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,7 +12,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("UI/main.fxml"));
         primaryStage.setTitle("Risiko - Server Side");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();
@@ -29,14 +26,7 @@ public class Main extends Application {
     public static void main(String[] args) {
 
         // Load UI
-        //launch(args);
-
-        ObservableUser u = new ObservableUser(1, "Giocatore", "RED");
-        Gson gson = new Gson();
-        String jsonU = gson.toJson(u);
-        System.out.println(jsonU);
-
-        Player p = gson.fromJson(jsonU, Player.class);
+        launch(args);
     }
 
     @Override
