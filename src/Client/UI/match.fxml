@@ -19,7 +19,7 @@
 <StackPane xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.MatchController">
     <AnchorPane>
 
-        <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="310.0" AnchorPane.topAnchor="10.0">
+        <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="360.0" AnchorPane.topAnchor="10.0">
             <Pane fx:id="mapPane" AnchorPane.leftAnchor="-180.0" AnchorPane.topAnchor="-130.0">
 
                <Label id="NorthwestTerritory" layoutX="250.0" layoutY="192.0" prefHeight="13.0" prefWidth="96.0" text="Northwest Territory">
@@ -233,7 +233,7 @@
              </Label>
             </Pane>
         </AnchorPane>
-       <VBox prefWidth="300.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+       <VBox prefWidth="350.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
           <children>
              <JFXTreeTableView fx:id="playersList" prefHeight="180.0" showRoot="false">
                <columns>
@@ -241,20 +241,32 @@
                   <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="125.0" minWidth="125.0" prefWidth="125.0" resizable="false" text="Username" />
                   <TreeTableColumn fx:id="territoriesColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" resizable="false" text="Territories" />
                </columns></JFXTreeTableView>
-            <JFXButton fx:id="endTurnBtn" buttonType="RAISED" style="-fx-background-color: red;" text="End Turn">
-               <font>
-                  <Font name="Trebuchet MS" size="12.0" />
-               </font>
-               <padding>
-                  <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
-               </padding>
+            <HBox prefHeight="40.0" prefWidth="200.0" spacing="5.0" VBox.vgrow="NEVER">
+               <children>
+                  <JFXButton fx:id="endTurnBtn" buttonType="RAISED" style="-fx-background-color: red;" text="End Turn">
+                     <font>
+                        <Font name="Trebuchet MS" size="12.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                     </padding>
+                  </JFXButton>
+                  <Label fx:id="newArmiesLabel" alignment="CENTER" prefHeight="25.0" text="Armies">
+                     <font>
+                        <Font name="Trebuchet MS" size="18.0" />
+                     </font>
+                  </Label>
+               </children>
                <VBox.margin>
-                  <Insets top="5.0" />
+                  <Insets />
                </VBox.margin>
-            </JFXButton>
+               <padding>
+                  <Insets left="7.5" right="7.5" top="7.5" />
+               </padding>
+            </HBox>
           </children>
        </VBox>
-        <TitledPane alignment="TOP_LEFT" contentDisplay="RIGHT" maxWidth="-Infinity" pickOnBounds="false" prefWidth="250.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="50.0">
+        <TitledPane alignment="TOP_LEFT" contentDisplay="RIGHT" maxWidth="-Infinity" pickOnBounds="false" prefWidth="300.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="25.0">
             <content>
                 <VBox prefHeight="200.0" prefWidth="100.0">
                     <children>
@@ -265,7 +277,7 @@
                         </ScrollPane>
                         <HBox alignment="BOTTOM_CENTER" nodeOrientation="LEFT_TO_RIGHT" prefWidth="250.0">
                             <children>
-                                <JFXTextField fx:id="chatMessage" alignment="BASELINE_LEFT" prefColumnCount="14" />
+                                <JFXTextField fx:id="chatMessage" alignment="BASELINE_LEFT" prefColumnCount="14" prefWidth="230.0" />
                                 <JFXButton fx:id="chatSendBtn" alignment="BASELINE_RIGHT" style="-fx-background-color: #00e600;" text="Send">
                                     <font>
                                         <Font name="Trebuchet MS" size="12.0" />

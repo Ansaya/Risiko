@@ -140,15 +140,19 @@ public class ObservableTerritory {
                         newArmies.set(newArmies.subtract(1).get());
                     }
 
-                    MapHandler.newArmies.getAndIncrement();
+                    synchronized (UIHandler.newArmies) {
+                        UIHandler.newArmies.set(UIHandler.newArmies.add(1).get());
+                    }
                 }
             }
             else {
                 System.out.println("User want to add an army to " + this.svgTerritory.getId());
 
                 // Check if new armies are there, then add one
-                if(MapHandler.newArmies.get() > 0){
-                    MapHandler.newArmies.getAndDecrement();
+                if(UIHandler.newArmies.get() > 0){
+                    synchronized (UIHandler.newArmies) {
+                        UIHandler.newArmies.set(UIHandler.newArmies.subtract(1).get());
+                    }
 
                     synchronized (newArmies) {
                         newArmies.set(newArmies.add(1).get());
@@ -157,8 +161,8 @@ public class ObservableTerritory {
                     // If owner is null then we are in setup phase, so end phase after choice
                     if(this.owner == null) {
                         setOwner(ServerTalk.getInstance().getUser());
-                        synchronized (MapHandler.goAhead){
-                            MapHandler.goAhead.notify();
+                        synchronized (UIHandler.goAhead){
+                            UIHandler.goAhead.notify();
                         }
                     }
                 }
@@ -182,10 +186,10 @@ public class ObservableTerritory {
         currentNode.setMouseTransparent(true);
 
         // Add event handler for selection
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(territory));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> UIHandler.selected(territory));
 
         Platform.runLater(() -> {
-            MapHandler.mapPane.getChildren().addAll(svgTerritory, currentNode);
+            UIHandler.mapPane.getChildren().addAll(svgTerritory, currentNode);
             svgTerritory.toBack();
         });
     }
@@ -238,7 +242,7 @@ public class ObservableTerritory {
             }
 
             // After the choice remove unnecessary UI controls
-            MapHandler.mapPane.getChildren().remove(defenseList);
+            UIHandler.mapPane.getChildren().remove(defenseList);
         });
 
         // Two armies button
@@ -250,7 +254,7 @@ public class ObservableTerritory {
             }
 
             // After choice remove unnecessary UI controls
-            MapHandler.mapPane.getChildren().remove(defenseList);
+            UIHandler.mapPane.getChildren().remove(defenseList);
         });
 
         defenseList.setSpacing(10);
@@ -269,12 +273,12 @@ public class ObservableTerritory {
 
         // Display defend list in UI
         if(Platform.isFxApplicationThread()) {
-            MapHandler.mapPane.getChildren().add(defenseList);
+            UIHandler.mapPane.getChildren().add(defenseList);
             defenseList.animateList();
         }
         else
             Platform.runLater(() -> {
-                MapHandler.mapPane.getChildren().add(defenseList);
+                UIHandler.mapPane.getChildren().add(defenseList);
                 defenseList.animateList();
             });
     }

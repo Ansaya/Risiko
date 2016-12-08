@@ -11,13 +11,13 @@ import javafx.beans.property.StringProperty;
  * Observable class of simplified user
  */
 public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
-    public IntegerProperty id = new SimpleIntegerProperty(-1);
+    public final IntegerProperty id = new SimpleIntegerProperty(-1);
 
-    public StringProperty username = new SimpleStringProperty("");
+    public final StringProperty username = new SimpleStringProperty("");
 
     public volatile Color color;
 
-    public IntegerProperty territories = new SimpleIntegerProperty(0);
+    public final IntegerProperty territories = new SimpleIntegerProperty(0);
 
     public ObservableUser(int userId, String username, Color Color) {
         this.id.set(userId);

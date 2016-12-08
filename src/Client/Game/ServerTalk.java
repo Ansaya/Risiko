@@ -8,6 +8,7 @@ import Client.Game.Observables.*;
 import Game.Connection.*;
 import Game.MessageReceiver;
 import Client.Game.Connection.MessageType;
+import Game.StateType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,9 +37,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
     public static ServerTalk getInstance() { return _instance; }
 
-    private ObservableUser user;
-
-    public ObservableUser getUser() { return this.user; }
+    /* Connection section */
 
     private volatile boolean listen;
 
@@ -60,6 +58,9 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
     private final Gson gson;
 
+    /* Connection section end */
+
+    /* Chat section */
     /**
      * Username associated with last chat message received
      */
@@ -92,6 +93,16 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         lastSenderId.set(-1);
     }
 
+    /* Chat section end */
+
+    /* User section */
+    /**
+     * Current user
+     */
+    private ObservableUser user;
+
+    public ObservableUser getUser() { return this.user; }
+
     /**
      * List of users in lobby
      */
@@ -106,8 +117,13 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         this.users = ToUpdate;
     }
 
+    /* User section end */
+
     private final Thread _threadInstance = new Thread(this, "ServerTalk-SocketHandler");
 
+    /**
+     * Initializer for all message handlers
+     */
     private ServerTalk() {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
@@ -208,7 +224,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             System.out.println("ServerTalk: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
 
-            final MapUpdate<ObservableTerritory> update = MapHandler.positionArmies(pos.newArmies);
+            final MapUpdate<ObservableTerritory> update = UIHandler.positionArmies(pos.newArmies);
 
             SendMessage(MessageType.MapUpdate, update);
         });
@@ -221,8 +237,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             Platform.runLater(() -> {
                  /* Update each territory with new information */
                 update.updated.forEach((u) -> {
-                    synchronized (MapHandler.territories) {
-                        ObservableTerritory t = MapHandler.territories.get(u.territory);
+                    synchronized (UIHandler.territories) {
+                        ObservableTerritory t = UIHandler.territories.get(u.territory);
                         t.armies.set(u.armies.get());
                         t.newArmies.set(0);
                         if (!u.getOwner().equals(t.getOwner()))
@@ -233,15 +249,56 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
         });
 
+        // Handler for card messages
+        messageHandlers.put(MessageType.Cards, (message) -> {
+            final Cards cards = gson.fromJson(message.Json, MessageType.Cards.getType());
+
+            if(!cards.combination.isEmpty()) {
+                // Add card to user local cards
+
+                // Notify user
+                return;
+            }
+
+
+
+            // Ask user to play a combination of cards
+        });
+
         // Handler for attacked territory
         messageHandlers.put(MessageType.Attack, (message) -> {
             System.out.println("ServerTalk: Defense message: " + message.Json);
             final Attack<ObservableTerritory> attack = gson.fromJson(message.Json, MessageType.Attack.getType());
 
-            final Integer defArmies = MapHandler.territories.get(attack.to.territory).requestDefense(attack);
+            final Integer defArmies = UIHandler.territories.get(attack.to.territory).requestDefense(attack);
 
             // Send response to server
             SendMessage(MessageType.Defense, new Defense<>(attack.from, attack.to, defArmies));
+        });
+
+        messageHandlers.put(MessageType.GameState, (message) -> {
+            System.out.println("ServerTalk: GameState message: " + message.Json);
+            // If a GameState message is received than match is no longer valid, so go back to lobby
+            Main.toLobby();
+            UIHandler.Reset();
+            user.territories.set(0);
+            user.color = null;
+
+           final GameState<ObservableUser> gameState = gson.fromJson(message.Json, MessageType.GameState.getType());
+
+           switch (gameState.state){
+               case Winner:
+                   if(gameState.winner.equals(user))
+                       Main.showDialog("Game state message", "You won the match!", "Close");
+                   else
+                       Main.showDialog("Game state message",
+                                        "You lost this match. The winner is " + gameState.winner.username.get(),
+                                        "Return to lobby");
+                   break;
+               case Abandoned:
+                   Main.showDialog("Game state message", "Player " + gameState.winner.username.get() + " left the game.", "Close");
+                   break;
+           }
         });
 
 
@@ -321,7 +378,19 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
         Main.toLogin();
 
-        // Notify user
+        Main.showDialog("Application error", "There has been a problem with server connection.", "Close");
+    }
+
+    /**
+     * Leave current match and go back to lobby
+     */
+    public void AbortMatch() {
+        // If player is not in a match return
+        if(!UIHandler.goAhead.get())
+            return;
+
+        SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));
+        Main.toLobby();
     }
 
     @Override

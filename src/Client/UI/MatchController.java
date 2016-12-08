@@ -79,6 +79,9 @@ public class MatchController implements Initializable {
     @FXML
     protected JFXButton endTurnBtn;
 
+    @FXML
+    protected Label newArmiesLabel;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
@@ -136,7 +139,7 @@ public class MatchController implements Initializable {
                 labels.add((Label) c);
             }
         });
-        MapHandler.Init(mapPane, labels, endTurnBtn);
+        UIHandler.Init(mapPane, labels, endTurnBtn, newArmiesLabel);
 
         /* Players table setup */
         idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());

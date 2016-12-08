@@ -33,6 +33,7 @@ public abstract class MessageReceiver<T> implements Runnable {
         listen.set(false);
 
         try{
+            while (!activeActions.isEmpty()){}
             _instance.interrupt();
             _instance.join();
         }catch (Exception e){}
@@ -57,9 +58,19 @@ public abstract class MessageReceiver<T> implements Runnable {
         Thread action = null;
 
         if(messageHandlers.containsKey(Message.Type))
-            action = new Thread(() -> messageHandlers.get(Message.Type).accept(Message));
+            action = new Thread(() -> {
+                messageHandlers.get(Message.Type).accept(Message);
+                synchronized (activeActions){
+                    activeActions.notify();
+                }
+            });
         else if(defaultHandler != null)
-            action = new Thread(() -> defaultHandler.accept(Message));
+            action = new Thread(() -> {
+                defaultHandler.accept(Message);
+                synchronized (activeActions){
+                    activeActions.notify();
+                }
+            });
 
         action.setName(_instance.getName() + "-Message handler");
 
@@ -74,7 +85,7 @@ public abstract class MessageReceiver<T> implements Runnable {
     private void waitIncoming() {
         try {
             synchronized (activeActions) {
-                this.activeActions.wait();
+                activeActions.wait();
             }
         } catch (Exception e) {}
     }

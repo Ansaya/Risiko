@@ -21,7 +21,14 @@ public class Main extends Application {
 
     private static StackPane parent;
 
+    public static final Object dialogClosed = new Object();
+
     public static void toMatch() {
+        if(!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> toMatch());
+            return;
+        }
+
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -42,6 +49,11 @@ public class Main extends Application {
     }
 
     public static void toLobby() {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> toLobby());
+            return;
+        }
+
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -65,6 +77,11 @@ public class Main extends Application {
     }
 
     public static void toLogin() {
+        if(!Platform.isFxApplicationThread()){
+            Platform.runLater(() -> toLogin());
+            return;
+        }
+
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
@@ -96,7 +113,13 @@ public class Main extends Application {
             JFXButton btn = new JFXButton(BtnText);
             btn.setButtonType(JFXButton.ButtonType.RAISED);
             btn.setStyle("-fx-background-color: #44B449");
-            btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> dialog.close());
+            btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
+                synchronized (dialogClosed){
+                    dialogClosed.notify();
+                }
+
+                dialog.close();
+            });
             layout.setActions(btn);
         }
         dialog.setContent(layout);
@@ -109,7 +132,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        this.window = primaryStage;
+        window = primaryStage;
 
         toLogin();
 

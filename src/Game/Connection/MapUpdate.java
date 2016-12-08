@@ -10,14 +10,13 @@ public class MapUpdate<T> {
     /**
      * Updated territories on the map
      */
-    public final ArrayList<T> updated;
+    public final ArrayList<T> updated = new ArrayList<>();
 
     public MapUpdate(ArrayList<T> Updated) {
-        this.updated = Updated;
+        this.updated.addAll(Updated);
     }
 
     public MapUpdate(T Updated) {
-        this.updated = new ArrayList<>();
         updated.add(Updated);
     }
 }

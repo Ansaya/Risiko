@@ -1,5 +1,6 @@
-package Game.Map;
+package Server.Game.Map;
 
+import Game.Map.Territories;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

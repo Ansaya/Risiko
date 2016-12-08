@@ -26,9 +26,7 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Username choose from
      */
-    private volatile String username;
-
-    public String getUsername() { return this.username;}
+    public final String username;
 
     /**
      * Id of match the player is inside
@@ -178,10 +176,20 @@ public class Player extends SocketHandler implements Runnable {
     }
 
     /**
+     * Setup player to witness a running match
+     *
+     * @param MatchId Match id the player is watching
+     */
+    synchronized void witnessMatch(int MatchId) {
+        matchId.set(MatchId);
+        isPlaying.set(false);
+    }
+
+    /**
      * Reset match fields and bring player back to lobby
      */
     synchronized void exitMatch() {
-        matchId.set(0);
+        matchId.set(-1);
         isPlaying.set(false);
         color = null;
         territories = new ArrayList<>();

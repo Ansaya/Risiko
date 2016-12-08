@@ -3,6 +3,7 @@ package Server.Game;
 import Game.Color;
 import Game.Connection.*;
 import Game.Map.*;
+import Server.Game.Map.DeckTerritory;
 import Server.Game.Map.Map;
 import Game.Connection.Attack;
 import Game.Connection.Defense;
@@ -93,7 +94,7 @@ public class Match extends MessageReceiver<MessageType> {
     /**
      * Stop current match thread and returns players to GameController
      */
-    void endMatch() {
+    void terminate() {
         currentTurn.endTurn();
         stopListen();
 
@@ -110,17 +111,8 @@ public class Match extends MessageReceiver<MessageType> {
     private void listenersInit() {
         messageHandlers.put(MessageType.Turn, (message) -> {
             // If a player notified end of his turn, go ahead with next player
-            if(message.Json.equals("GoAhead")) {
-                this.currentTurn.endTurn();
-                this.currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
-            }
-
-            if(message.Json.equals("Winner")){
-                final int winnerId = Integer.valueOf(message.Json.split("[#]")[0]);
-
-                // Send all players winner of the game
-                players.forEach((id, p) -> p.SendMessage(MessageType.GameState, new GameState<>(StateType.Winner, players.get(winnerId))));
-            }
+            currentTurn.endTurn();
+            currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
         });
 
         messageHandlers.put(MessageType.Chat, (message) -> routeAll(message));
@@ -132,17 +124,26 @@ public class Match extends MessageReceiver<MessageType> {
                 case Abandoned: // Message received from user
                     final Player p = players.get(message.PlayerId);
 
-                    if(p.isPlaying())
-                        GameController.getInstance().endMatch(this.id);
-                    else {
+                    // Winner null in Abandoned game state means player has closed the application, so no need to return to lobby
+                    if(gameState.winner == null)
                         players.remove(message.PlayerId);
-                        GameController.getInstance().returnPlayer(p);
+
+                    // If player was playing in this match, abort match
+                    if(p.isPlaying()) {
+                        sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, p));
+                        message.PlayerId = this.id;
+                        GameController.getInstance().setIncoming(message);
+                    }
+                    else { // Else return player to lobby
+                        if(players.remove(p.id, p))
+                            GameController.getInstance().returnPlayer(p);
                     }
 
                     break;
                 case Winner:    // Message received from turn instance
                     routeAll(message);
-                    GameController.getInstance().endMatch(this.id);
+                    message.PlayerId = this.id;
+                    GameController.getInstance().setIncoming(message);
                     break;
                 default:
                     break;
@@ -217,22 +218,11 @@ public class Match extends MessageReceiver<MessageType> {
         }
 
         /**
-         * Waiter for incoming messages on the queue
-         */
-        public void waitIncoming() {
-            try {
-                synchronized (incoming) {
-                    incoming.wait();
-                }
-            } catch (InterruptedException e) {}
-        }
-
-        /**
          * Deserializer for received messages
          */
         private final Gson deserialize = new Gson();
 
-        private Thread _instance;
+        private final Thread _instance;
 
         /**
          * Instance and start new turn
@@ -262,7 +252,7 @@ public class Match extends MessageReceiver<MessageType> {
             try {
                 _instance.interrupt();
                 _instance.join();
-            } catch (InterruptedException e) {}
+            } catch (Exception e) {}
         }
 
         /**
@@ -273,14 +263,19 @@ public class Match extends MessageReceiver<MessageType> {
          * @return Deserialized message
          */
         private <T> T waitMessage(MessageType Type, int PlayerId) {
-            Message received = null;
+            Message received;
 
             // While correct message isn't received discard other messages
             while (true) {
                 if(incoming.size() == 0)
-                    waitIncoming();
+                    try {
+                        synchronized (incoming) {
+                            incoming.wait();
+                        }
+                    } catch (Exception e) {}
 
                 received = incoming.get(0);
+                incoming.remove(0);
 
                 // If correct message is detected exit loop
                 if(received.Type == Type)
@@ -288,18 +283,10 @@ public class Match extends MessageReceiver<MessageType> {
                         break;
                     else if(received.PlayerId == PlayerId)
                         break;
-
-                incoming.remove(0);
             }
 
-            // Deserialize received message object
-            T obj = deserialize.fromJson(incoming.get(0).Json, incoming.get(0).Type.getType());
-
-            // Remove message from queue
-            incoming.remove(0);
-
-            // Return deserialized object
-            return obj;
+            // Deserialize received message object and return
+            return deserialize.fromJson(received.Json, received.Type.getType());
         }
 
         /**
@@ -447,13 +434,20 @@ public class Match extends MessageReceiver<MessageType> {
             });
 
             // Wait for all players to return initial displacement
+            ArrayList<Territory> finalUpdate = new ArrayList<>();
             for(int i = playersOrder.size(); i > 0; i--){
                 MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
-                u.updated.forEach(t -> match.gameMap.territories.get(t.territory).addArmies(t.newArmies));
+                u.updated.forEach(t -> {
+                    Territory tr = match.gameMap.territories.get(t.territory);
+                    tr.addArmies(t.newArmies);
+                    finalUpdate.add(tr);
+                });
             }
 
+            sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
+
             // Notify end of setup when completed
-            match.setIncoming(lastId, MessageType.Turn, "goAhead");
+            match.setIncoming(lastId, MessageType.Turn, "");
         }
 
         @Override
@@ -533,7 +527,7 @@ public class Match extends MessageReceiver<MessageType> {
             // Implement end turn moving
 
             // Notify end of turn when completed
-            match.setIncoming(playing.id, MessageType.Turn, "goAhead");
+            match.setIncoming(playing.id, MessageType.Turn, "");
         }
     }
 }

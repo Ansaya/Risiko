@@ -2,6 +2,7 @@ package Server.Game;
 
 import Game.Color;
 import Game.Connection.Chat;
+import Game.Connection.GameState;
 import Game.Connection.Lobby;
 import Game.MessageReceiver;
 import Game.StateType;
@@ -65,6 +66,9 @@ public class GameController extends MessageReceiver<MessageType> {
             final int newMatchId = Match.counter.getAndIncrement();
             matches.put(newMatchId, new Match(newMatchId, toAdd));
         });
+
+        // Handler for GameState message received from match (always used to finalize match)
+        messageHandlers.put(MessageType.GameState, (message) -> endMatch(message.PlayerId));
     }
 
     /**
@@ -88,14 +92,11 @@ public class GameController extends MessageReceiver<MessageType> {
         final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
 
         // Send end message to matches players and close connection
-        matches.forEach((matchId, m) -> {
-            System.out.println("Game controller: Terminating match " + matchId);
-            endMatch(matchId);
-        });
+        matches.forEach((matchId, m) -> endMatch(matchId));
 
         // Send end message and close connection of lobby players
         lobby.forEach((id, p) -> {
-            System.out.println("Game controller: Releasing player " + p.getUsername());
+            System.out.println("Game controller: Releasing player " + p.username);
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
         });
@@ -130,7 +131,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     public void returnPlayer(Player Player) {
 
-        System.out.println("Game controller: Player " + Player.getUsername() + " got back from match.");
+        System.out.println("Game controller: Player " + Player.username + " got back from match.");
 
         // Notify all players for new player
         lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
@@ -157,8 +158,9 @@ public class GameController extends MessageReceiver<MessageType> {
      *
      * @param MatchId Match to remove
      */
-    protected void endMatch(int MatchId) {
-        matches.get(MatchId).endMatch();
+    private void endMatch(int MatchId) {
+        matches.get(MatchId).terminate();
+        System.out.println("Game controller: Terminating match " + MatchId);
         matches.remove(MatchId);
     }
 }
