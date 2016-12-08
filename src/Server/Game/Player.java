@@ -1,6 +1,7 @@
 package Server.Game;
 
 import Game.Color;
+import Game.Connection.GameState;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Game.Map.Mission;
@@ -75,7 +76,9 @@ public class Player extends SocketHandler implements Runnable {
         this.id = Id;
         this.username = Username;
         this.listen = true;
-        this._instance.start();
+
+        _instance.setName("Player" + this.id);
+        _instance.start();
     }
 
     /**
@@ -98,7 +101,7 @@ public class Player extends SocketHandler implements Runnable {
      * @param MatchId Match where the AI player is needed
      * @param Color Color of AI on map
      */
-    public static Player getAI(int MatchId, Color Color) {
+    static Player getAI(int MatchId, Color Color) {
         return new Player(MatchId, Color);
     }
 
@@ -143,10 +146,13 @@ public class Player extends SocketHandler implements Runnable {
         send.println("End");
 
         if(!fromServer) {
-            if (matchId.get() != 0)
-                GameController.getInstance().getMatch(matchId.get()).setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+            if (matchId.get() != -1)
+                GameController.getInstance().getMatch(matchId.get())
+                        .setIncoming(this.id,
+                                MessageType.GameState,
+                                (new Gson()).toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
             else
-                GameController.getInstance().setIncoming(this.id, MessageType.GameState, StateType.Abandoned.toString());
+                GameController.getInstance().releasePlayer(this.id);
         }
 
         try {
@@ -163,7 +169,7 @@ public class Player extends SocketHandler implements Runnable {
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
-    protected synchronized void initMatch(Color Color, int MatchId) {
+    synchronized void initMatch(Color Color, int MatchId) {
         matchId.set(MatchId);
         color = Color;
 
@@ -174,7 +180,7 @@ public class Player extends SocketHandler implements Runnable {
     /**
      * Reset match fields and bring player back to lobby
      */
-    protected synchronized void exitMatch() {
+    synchronized void exitMatch() {
         matchId.set(0);
         isPlaying.set(false);
         color = null;

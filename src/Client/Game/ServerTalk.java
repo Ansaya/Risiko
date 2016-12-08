@@ -106,7 +106,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         this.users = ToUpdate;
     }
 
-    private final Thread _threadInstance = new Thread(this);
+    private final Thread _threadInstance = new Thread(this, "ServerTalk-SocketHandler");
 
     private ServerTalk() {
         GsonBuilder gsonBuilder = new GsonBuilder();
@@ -131,11 +131,10 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 text.setAlignment(Pos.TOP_RIGHT);
             }
 
-            if(chat.sender.color != null)
-                if(chat.sender.color.get() != "") {
-                    sender.setStyle("-fx-text-fill: " + chat.sender.color.get().toLowerCase());
-                    text.setStyle("-fx-text-fill: " + chat.sender.color.get().toLowerCase());
-                }
+            if(chat.sender.color != null) {
+                sender.setTextFill(chat.sender.color.hexColor);
+                text.setTextFill(chat.sender.color.hexColor);
+            }
 
             // Update chat from ui thread
             Platform.runLater(() -> {
@@ -197,7 +196,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             Platform.runLater(() -> {
                 match.players.forEach((u) -> {
                     if(u.equals(this.user))
-                        this.user.color.set(u.color.get());
+                        this.user.color = u.color;
 
                     this.users.add(new TreeItem<>(u));
                 });
@@ -208,14 +207,6 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         messageHandlers.put(MessageType.Positioning, message -> {
             System.out.println("ServerTalk: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
-
-            // First time after match creation wait for MapHandler to initialize
-            if(!MapHandler.goAhead.get())
-                synchronized (MapHandler.goAhead) {
-                    try {
-                        MapHandler.goAhead.wait();
-                    } catch (Exception e) {}
-                }
 
             final MapUpdate<ObservableTerritory> update = MapHandler.positionArmies(pos.newArmies);
 
@@ -296,8 +287,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         System.out.println("Got id " + user.id.get() + " from server.");
 
         // If connection is successfully established start listening and receiving
-        this.startListen();
-        this._threadInstance.start();
+        startListen("ServerTalk-MessageReceiver");
+        _threadInstance.start();
     }
 
     /**
@@ -337,7 +328,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     public void run() {
 
         // Incoming message buffer
-        String Packet = "";
+        String Packet;
 
         // Listen to the server until necessary
         while (listen) {
@@ -352,10 +343,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                     System.out.println("ServerTalk: Received: " + Packet);
 
                     String[] info = Packet.split("[#]");
-                    MessageType type = MessageType.valueOf(info[0]);
 
-
-                    this.setIncoming(0, type, info[1]);
+                    this.setIncoming(0, MessageType.valueOf(info[0]), info[1]);
                 }
 
             }catch (IOException e) {}

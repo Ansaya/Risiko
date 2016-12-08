@@ -11,9 +11,10 @@ import javafx.animation.KeyValue;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.event.EventHandler;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,7 +29,7 @@ public class ObservableTerritory {
     /**
      * SVGPath node corresponding to this territory
      */
-    private final transient SVGPath svgTerritory;
+    private final transient SVGPath svgTerritory = new SVGPath();
 
     /**
      * Currently displayed node list
@@ -91,7 +92,7 @@ public class ObservableTerritory {
         this.owner = Owner;
 
         // Change foreground territory color accordingly to new owner's color
-        Platform.runLater(() -> svgTerritory.setStyle("-fx-background-color: " + owner.color.get().toLowerCase()));
+        Platform.runLater(() -> svgTerritory.setFill(owner.color.hexColor));
     }
 
     public ObservableUser getOwner() { return this.owner; }
@@ -99,32 +100,24 @@ public class ObservableTerritory {
     /**
      * Instance of map territory with reference to UI territory
      *
-     * @param SVGTerritory SVGPath for this territory in UI
+     * @param Territory Territory associated to this object
      * @param Label Label for this territory in UI
      */
-    public ObservableTerritory(Territories Territory, SVGPath SVGTerritory, Label Label) {
+    public ObservableTerritory(Territories Territory, Label Label) {
         this.territory = Territory;
-        this.svgTerritory = SVGTerritory;
         this.label = Label;
         label.setMouseTransparent(true);    // Set label mouse transparent to avoid selection issues
-
-        /* Main badge construction */
-        final Label l = new Label();
-        l.textProperty().bind(armies.add(newArmies).asString());
-        l.setStyle("-fx-text-fill:WHITE;");
-
-        final JFXButton btn = new JFXButton();
-        btn.setButtonType(JFXButton.ButtonType.RAISED);
-        btn.getStyleClass().add("animated-option-button-");
-        btn.setGraphic(l);
+        svgTerritory.setContent(territory.svgPath);
+        svgTerritory.getStyleClass().add("territory");
+        svgTerritory.setFill(territory.continent.hexColor);
 
         // Setup positioning/moving events which will be triggered from posEnabled boolean
-        btn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
             if(!posEnabled)
                 return;
 
             // Get clicked button of mouse (left as add button, right as remove button)
-            final boolean isRightClick = evt.isSecondaryButtonDown();
+            final boolean isRightClick = evt.getButton().equals(MouseButton.SECONDARY);
 
             // If moving armies between territories perform special actions
             if(isMoving){
@@ -172,16 +165,29 @@ public class ObservableTerritory {
             }
         });
 
+
+        /* Main badge construction */
+        final Label l = new Label();
+        l.textProperty().bind(armies.add(newArmies).asString());
+        l.setTextFill(Color.WHITE);
+
+        final JFXButton btn = new JFXButton();
+        btn.setButtonType(JFXButton.ButtonType.RAISED);
+        btn.getStyleClass().add("animated-option-button-");
+        btn.setGraphic(l);
+
         currentNode.addAnimatedNode(btn);
         currentNode.setLayoutX(getCenterX(label));
         currentNode.setLayoutY(getCenterY(label));
+        currentNode.setMouseTransparent(true);
 
         // Add event handler for selection
-        final EventHandler<MouseEvent> selected = evt -> MapHandler.selected(territory);
-        currentNode.addEventFilter(MouseEvent.MOUSE_CLICKED, selected);
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, selected);
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(territory));
 
-        Platform.runLater(() -> MapHandler.mapPane.getChildren().add(currentNode));
+        Platform.runLater(() -> {
+            MapHandler.mapPane.getChildren().addAll(svgTerritory, currentNode);
+            svgTerritory.toBack();
+        });
     }
 
     /**
@@ -285,11 +291,10 @@ public class ObservableTerritory {
         JFXButton btn = new JFXButton();
         btn.setButtonType(JFXButton.ButtonType.RAISED);
         btn.getStyleClass().add("animated-option-button-" + cssClass);
-        btn.setId("btnRemove");
 
         if(label) {
             Label l = new Label(Text);
-            l.setStyle("-fx-text-fill:WHITE;");
+            l.setTextFill(Color.WHITE);
             btn.setGraphic(l);
         }
         else {

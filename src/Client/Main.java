@@ -77,10 +77,10 @@ public class Main extends Application {
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");
-        window.setWidth(250.0);
-        window.setHeight(300.0);
         window.setMinWidth(250.0);
         window.setMinHeight(300.0);
+        window.setWidth(250.0);
+        window.setHeight(300.0);
         window.setScene(new Scene(root, 250, 300));
         window.setResizable(false);
         window.show();

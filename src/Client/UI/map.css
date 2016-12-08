@@ -1,11 +1,7 @@
 .mapContainer {
-    -fx-background-color: aquamarine;
+    -fx-background-color: #1e3eff;
     /*-fx-padding: -100px, 0, 0, -100px;*/
     -fx-scale-shape: false;
-}
-
-.prova {
-    -fx-background-color: red;
 }
 
 .territory {
@@ -13,56 +9,12 @@
     -fx-stroke-width: 1px;
 }
 
+.territory:hover {
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.25), 50, 1.0, 0, 0);
+}
+
 .selected {
     -fx-effect: innershadow(gaussian, rgba(245, 115, 0, 0.54), 4, 1.0, 0, 0);
-}
-
-.northAmerica {
-    -fx-fill: #d0ad00;
-}
-
-.northAmerica:hover {
-    -fx-fill: #b19000;
-}
-
-.southAmerica {
-    -fx-fill: brown;
-}
-
-.southAmerica:hover {
-    -fx-fill: #852a2a;
-}
-
-.europe {
-    -fx-fill: cornflowerblue;
-}
-
-.europe:hover {
-    -fx-fill: #627ed5;
-}
-
-.africa {
-    -fx-fill: darkgoldenrod;
-}
-
-.africa:hover {
-    -fx-fill: #a7770b;
-}
-
-.asia {
-    -fx-fill: darkolivegreen;
-}
-
-.asia:hover {
-    -fx-fill: #445b2d;
-}
-
-.australia {
-    -fx-fill: blueviolet;
-}
-
-.australia:hover {
-    -fx-fill: #631b9c;
 }
 
 /* armies selector */

@@ -23,9 +23,7 @@ public class Match extends MessageReceiver<MessageType> {
     /**
      * Match id
      */
-    private final AtomicInteger id = new AtomicInteger(0);
-
-    public int getId() { return id.get(); }
+    public final int id;
 
     /**
      * Players' list for this match (contains witnesses too)
@@ -69,27 +67,41 @@ public class Match extends MessageReceiver<MessageType> {
             throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", Players.size()));
 
         // Set current match id
-        this.id.set(Id);
+        this.id = Id;
 
         // Setup players
         final Color[] colors = Color.values();
         final AtomicInteger i = new AtomicInteger(0);
         Players.forEach(p -> {
-            p.initMatch(colors[i.getAndIncrement()], this.id.get());
+            p.initMatch(colors[i.getAndIncrement()], this.id);
             players.put(p.id, p);
             playersOrder.add(p.id);
         });
 
         // Send all user initial setup containing users and colors
-        players.forEach((id, user) -> user.SendMessage(MessageType.Match, new Game.Connection.Match(Players)));
+        players.forEach((id, user) -> user.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players)));
 
         // Setup and start match message receiver
         listenersInit();
-        startListen();
+        startListen("Match " + this.id);
 
         // Start first setup turn
-        System.out.println("Match " + this.getId() + ": Started game with " + players.size() + " players.");
+        System.out.println("Match " + this.id + ": Started game with " + players.size() + " players.");
         this.currentTurn = new Turn(this, null, true);
+    }
+
+    /**
+     * Stop current match thread and returns players to GameController
+     */
+    void endMatch() {
+        currentTurn.endTurn();
+        stopListen();
+
+        players.forEach((id, p) -> {
+            p.exitMatch();
+            GameController.getInstance().returnPlayer(p);
+        });
+        players.clear();
     }
 
     /**
@@ -111,14 +123,30 @@ public class Match extends MessageReceiver<MessageType> {
             }
         });
 
-        messageHandlers.put(MessageType.Chat, (message) -> {
-            // Reroute message back to all players as MessageType-JsonSerializedMessage
-            this.players.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json));
-        });
+        messageHandlers.put(MessageType.Chat, (message) -> routeAll(message));
 
         messageHandlers.put(MessageType.GameState, (message) -> {
-            if(message.Json.equals(StateType.Abandoned.toString()))
-                releasePlayer(message.PlayerId);
+            final GameState<Player> gameState = (new Gson()).fromJson(message.Json, message.Type.getType());
+
+            switch (gameState.state){
+                case Abandoned: // Message received from user
+                    final Player p = players.get(message.PlayerId);
+
+                    if(p.isPlaying())
+                        GameController.getInstance().endMatch(this.id);
+                    else {
+                        players.remove(message.PlayerId);
+                        GameController.getInstance().returnPlayer(p);
+                    }
+
+                    break;
+                case Winner:    // Message received from turn instance
+                    routeAll(message);
+                    GameController.getInstance().endMatch(this.id);
+                    break;
+                default:
+                    break;
+            }
         });
 
         defaultHandler = (message) -> {
@@ -127,25 +155,12 @@ public class Match extends MessageReceiver<MessageType> {
         };
     }
 
-    /**
-     * Release player from current match
-     *
-     * @param PlayerId Id of player to release
-     */
-    public void releasePlayer(int PlayerId) {
-        final Player p = players.get(PlayerId);
+    void sendAll(MessageType Type, Object Message) {
+        players.forEach((id, p) -> p.SendMessage(Type, Message));
+    }
 
-        // If player is playing abort match
-        if(p.isPlaying()){
-            // Handle match abort
-            return;
-        }
-
-        // If player is only witness return it to lobby
-        synchronized (players) {
-            players.remove(PlayerId);
-        }
-        GameController.getInstance().returnPlayer(p);
+    void routeAll(Message Message) {
+        players.forEach((id, p) -> p.RouteMessage(Message.Type + "#" + Message.Json));
     }
 
     /**
@@ -154,7 +169,7 @@ public class Match extends MessageReceiver<MessageType> {
      * @param lastPlaying Last player who played
      * @return Player who has to play now
      */
-    public Player nextPlaying(Player lastPlaying) {
+    private Player nextPlaying(Player lastPlaying) {
         if(lastPlaying == null)
             return players.get(playersOrder.get(0));
 
@@ -230,14 +245,14 @@ public class Match extends MessageReceiver<MessageType> {
             this.match = Match;
             this.playing = Current;
 
-            if(isSetup){
+            if(isSetup)
                 this._instance = new Thread(() -> Setup(match.players.size() < 3));
-                this._instance.start();
-                return;
-            }
+            else
+                this._instance = new Thread(this);
 
-            this._instance = new Thread(this);
-            this._instance.start();
+
+            _instance.setName("Match" + match.id + "-Turn");
+            _instance.start();
         }
 
         /**
@@ -245,7 +260,8 @@ public class Match extends MessageReceiver<MessageType> {
          */
         public void endTurn() {
             try {
-                this._instance.join();
+                _instance.interrupt();
+                _instance.join();
             } catch (InterruptedException e) {}
         }
 
@@ -284,15 +300,6 @@ public class Match extends MessageReceiver<MessageType> {
 
             // Return deserialized object
             return obj;
-        }
-
-        /**
-         * Send map update to all players
-         *
-         * @param Update Update to route
-         */
-        private void updateAll(MapUpdate Update) {
-            match.players.forEach((id, p) -> p.SendMessage(MessageType.MapUpdate, Update));
         }
 
         /**
@@ -352,7 +359,7 @@ public class Match extends MessageReceiver<MessageType> {
                 result.add(defender);
 
             // Send update to all players
-            updateAll(new MapUpdate<>(result));
+            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(result));
 
             // If attacker hasn't conquered the territory or no more armies can be moved go ahead
             if(lostAtk != 0 || attacker.getArmies() == 1)
@@ -376,7 +383,7 @@ public class Match extends MessageReceiver<MessageType> {
             to.addArmies(update.to.newArmies);
 
             // Send new placement to all players
-            updateAll(new MapUpdate<>(new ArrayList<>(Arrays.asList(from, to))));
+            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(new ArrayList<>(Arrays.asList(from, to))));
         }
 
         /**
@@ -387,7 +394,7 @@ public class Match extends MessageReceiver<MessageType> {
             Player last = null;
 
             // Create AI player without socket
-            final Player ai = Player.getAI(this.match.getId(), Color.BLUE);
+            final Player ai = Player.getAI(this.match.id, Color.BLUE);
 
             // Save last player id to trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
@@ -413,7 +420,7 @@ public class Match extends MessageReceiver<MessageType> {
                 toGo.remove(toUpdate.territory);
 
                 // Send update to all players
-                updateAll(new MapUpdate<>(toUpdate));
+                match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
 
                 // At the end of the row chose one for ai if only two players are in match
                 if(twoOnly && last.id == lastId){
@@ -422,7 +429,7 @@ public class Match extends MessageReceiver<MessageType> {
                     toUpdate.addArmies(3);
                     toUpdate.owner = ai;
                     toGo.remove(toUpdate.territory);
-                    updateAll(new MapUpdate<>(toUpdate));
+                    match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
                 }
             }
 
@@ -479,10 +486,10 @@ public class Match extends MessageReceiver<MessageType> {
             newPlacement.updated.forEach((t) -> match.gameMap.territories.get(t.territory).addArmies(t.newArmies));
 
             // Send update to all players
-            updateAll(newPlacement);
+            match.sendAll(MessageType.MapUpdate, newPlacement);
 
             // Ask player to attack
-            playing.SendMessage(MessageType.Attack, new Attack(null, null, 0));
+            playing.SendMessage(MessageType.Attack, new Attack<Player>(null, null, 0));
 
             final int beforeAtkTerritories = playing.getTerritories().size();
 

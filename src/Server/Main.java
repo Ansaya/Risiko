@@ -13,7 +13,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load(getClass().getResource("UI/main.fxml"));
-        primaryStage.setTitle("Risiko - Server Side");
+        primaryStage.setTitle("Risiko - Server");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();
 
@@ -34,8 +34,6 @@ public class Main extends Application {
         ConnectionHandler.getInstance().terminate();
         GameController.getInstance().terminate();
         System.out.println("Shutdown completed");
-
-        Thread.sleep(3000);
 
         super.stop();
     }

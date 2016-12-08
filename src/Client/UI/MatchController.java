@@ -1,11 +1,9 @@
 package Client.UI;
 
-import Client.Main;
 import Client.Game.Observables.*;
 import Client.Game.ServerTalk;
 import Game.Connection.*;
 import Client.Game.Connection.MessageType;
-import Game.Map.Territories;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.value.ObservableValue;
@@ -18,11 +16,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.ResourceBundle;
 
 /**
@@ -70,7 +66,14 @@ public class MatchController implements Initializable {
     @FXML
     protected JFXTreeTableView<ObservableUser> playersList;
 
-    private volatile MapHandler mapHandler;
+    @FXML
+    protected TreeTableColumn<ObservableUser, Integer> idColumn;
+
+    @FXML
+    protected TreeTableColumn<ObservableUser, String> usernameColumn;
+
+    @FXML
+    protected TreeTableColumn<ObservableUser, Integer> territoriesColumn;
 
     /* Game */
     @FXML
@@ -125,70 +128,26 @@ public class MatchController implements Initializable {
         });
 
         /* Map handler setup */
-        ArrayList<SVGPath> svgPaths = new ArrayList<>();
-        ArrayList<Label> labels = new ArrayList<>();
+        final ArrayList<Label> labels = new ArrayList<>();
 
         // Retrieve territories and labels from map view
         mapPane.getChildren().forEach((c) -> {
             if(c instanceof Label) {
                 labels.add((Label) c);
             }
-
-            if(c instanceof SVGPath) {
-                svgPaths.add((SVGPath) c);
-            }
         });
-
-        HashMap<Territories, ObservableTerritory> map = new HashMap<>();
-
-        // Bind territories and labels, then put them in HashMap
-        svgPaths.forEach((svg) -> {
-            Label l = null;
-
-            for (Label lb: labels) {
-                if(lb.getId().contains(svg.getId())) {
-                    l = lb;
-                    labels.remove(lb);
-                    break;
-                }
-            }
-
-            Territories t = Territories.valueOf(svg.getId());
-
-            map.put(t, new ObservableTerritory(t, svg, l));
-        });
+        MapHandler.Init(mapPane, labels, endTurnBtn);
 
         /* Players table setup */
-        JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("ID");
-        idColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(idColumn.validateValue(param)) return param.getValue().getValue().id.asObject();
-            else return idColumn.getComputedValue(param);
-        });
-
-        JFXTreeTableColumn<ObservableUser, String> usernameColumn = new JFXTreeTableColumn<>("Username");
-        usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, String> param) -> {
-            if(usernameColumn.validateValue(param)) return param.getValue().getValue().username;
-            else return usernameColumn.getComputedValue(param);
-        });
-
-        JFXTreeTableColumn<ObservableUser, Integer> territoriesColumn = new JFXTreeTableColumn<>("Territories");
-        territoriesColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(territoriesColumn.validateValue(param)) return param.getValue().getValue().territories.asObject();
-            else return territoriesColumn.getComputedValue(param);
-        });
+        idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
+        usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
+        territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
 
         final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(rootItem);
-        playersList.setShowRoot(false);
-
-        /* End phase button setup */
-        endTurnBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
-            Main.showDialog("Heading text", "Tua mamma troia", "Avanti");
-        });
 
         // Update server talk objects
         server.setUsersUpdate(rootItem.getChildren());
-        MapHandler.Init(mapPane, map);
     }
 }

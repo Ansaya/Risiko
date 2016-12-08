@@ -4,6 +4,9 @@ import Client.Main;
 import Client.Game.ServerTalk;
 import Game.Connection.MapUpdate;
 import Game.Map.Territories;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,11 +21,13 @@ public class MapHandler {
 
     static Pane mapPane;
 
+    private static Button endPhaseBtn;
+
     public static final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
 
     private static final ArrayList<Territories> selectedQueue = new ArrayList<>();
 
-    public static final AtomicBoolean goAhead = new AtomicBoolean(false);
+    static final AtomicBoolean goAhead = new AtomicBoolean(false);
 
     static final AtomicInteger newArmies = new AtomicInteger(0);
 
@@ -33,9 +38,22 @@ public class MapHandler {
         }
     }
 
-    public static void Init(Pane MapPane, HashMap<Territories, ObservableTerritory> Map) {
+    public static void Init(Pane MapPane, ArrayList<Label> Labels, Button EndPhaseBtn) {
         mapPane = MapPane;
-        territories.putAll(Map);
+        endPhaseBtn = EndPhaseBtn;
+        endPhaseBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+            endPhaseBtn.setDisable(true);
+            synchronized (goAhead){
+                goAhead.notify();
+            }
+        });
+        endPhaseBtn.setDisable(true);
+
+        Labels.forEach(l -> {
+            Territories t = Territories.valueOf(l.getId());
+            territories.put(t, new ObservableTerritory(t, l));
+        });
+
         goAhead.set(true);
         synchronized (goAhead){
             goAhead.notify();
@@ -49,6 +67,14 @@ public class MapHandler {
      * @return At the end of positioning returns updated territory message to send back to the server
      */
     public static MapUpdate<ObservableTerritory> positionArmies(int NewArmies) {
+        endPhaseBtn.setDisable(false);
+        if(!MapHandler.goAhead.get())
+            synchronized (MapHandler.goAhead) {
+                try {
+                    MapHandler.goAhead.wait();
+                } catch (Exception e) {}
+            }
+
         newArmies.set(NewArmies);
 
         // If only one army to place then is setup phase

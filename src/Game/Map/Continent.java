@@ -1,31 +1,33 @@
 package Game.Map;
 
 import Server.Game.Map.Territory;
-
+import javafx.scene.paint.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import static Game.Map.Territories.*;
 
 /**
  * Continents' list from earth map
  */
 public enum Continent {
-    NorthAmerica(Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates),
-    SouthAmerica(Argentina, Brazil, Peru, Venezuela),
-    Europe(GreatBritain, Iceland, NorthernEurope, Scandinavia, SouthernEurope, Ukraine, WesternEurope),
-    Africa(Congo, EastAfrica, Egypt, Madagascar, NorthAfrica, SouthAfrica),
-    Asia(Afghanistan, China, India, Irkutsk, Japan, Kamchatka, MiddleEast, Mongolia, Siam, Siberia, Ural, Yakutsk),
-    Australia(EasternAustralia, Indonesia, NewGuinea, WesternAustralia);
+    NorthAmerica("#d0ad00", Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates),
+    SouthAmerica("#a52a2a", Argentina, Brazil, Peru, Venezuela),
+    Europe("#6495ed", GreatBritain, Iceland, NorthernEurope, Scandinavia, SouthernEurope, Ukraine, WesternEurope),
+    Africa("#b8860b", Congo, EastAfrica, Egypt, Madagascar, NorthAfrica, SouthAfrica),
+    Asia("#556b2f", Afghanistan, China, India, Irkutsk, Japan, Kamchatka, MiddleEast, Mongolia, Siam, Siberia, Ural, Yakutsk),
+    Australia("#8a2be2", EasternAustralia, Indonesia, NewGuinea, WesternAustralia);
+
+    public final Color hexColor;
 
     /**
      * Continent's territories
      */
-    private ArrayList<Territories> territories = new ArrayList<>();
+    private final ArrayList<Territories> territories = new ArrayList<>();
 
-    Continent(Territories... Territories) {
-        for (Game.Map.Territories t: Territories
-             ) {
-            this.territories.add(t);
-        }
+    Continent(String HexColor, Territories... Territories) {
+        this.hexColor = Color.web(HexColor);
+
+        this.territories.addAll(Arrays.asList(Territories));
     }
 
     /**
@@ -42,8 +44,7 @@ public enum Continent {
         int bonus = 0;
 
         // If complete continents are present, assign bonus armies
-        for (Continent c: dominated
-             ) {
+        for (Continent c: dominated) {
             switch (c){
                 case NorthAmerica:
                     bonus += 5;

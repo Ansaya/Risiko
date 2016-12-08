@@ -20,8 +20,9 @@ public abstract class MessageReceiver<T> implements Runnable {
 
     private final Thread _instance = new Thread(this);
 
-    protected void startListen() {
+    protected void startListen(String Name) {
         listen.set(true);
+        _instance.setName(Name);
         _instance.start();
     }
 
@@ -59,6 +60,8 @@ public abstract class MessageReceiver<T> implements Runnable {
             action = new Thread(() -> messageHandlers.get(Message.Type).accept(Message));
         else if(defaultHandler != null)
             action = new Thread(() -> defaultHandler.accept(Message));
+
+        action.setName(_instance.getName() + "-Message handler");
 
         activeActions.add(action);
 

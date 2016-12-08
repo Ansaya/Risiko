@@ -29,28 +29,56 @@ public class ConnectionHandler implements Runnable {
     private final ArrayList<Thread> welcomers = new ArrayList<>();
 
     private final Consumer<Socket> welcomeAction = newConn -> {
-        int id = playerCounter.getAndIncrement();
-
         String username = "";
-
+        int id = 0;
         try {
             username = (new BufferedReader(new InputStreamReader(newConn.getInputStream()))).readLine();
+
+            // If username is empty throw error and exit
+            if(username.equals("")){
+                System.err.println("Connection handler: Username can not be null.");
+                (new PrintWriter(newConn.getOutputStream(), true)).println("Username not valid");
+                synchronized (welcomers) {
+                    welcomers.notify();
+                }
+                return;
+            }
+
+            // If username is valid confirm login to client and go ahead
+            id = playerCounter.getAndIncrement();
             (new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.println("Connection handler: Error during username request.");
+        }
 
         System.out.println("Connection handler: New user connected.");
         GameController.getInstance().addPlayer(id, username, newConn);
         System.out.println("Connection handler: User passed to game controller.");
+        synchronized (welcomers) {
+            welcomers.notify();
+        }
     };
 
-    private Thread reception;
+    private final Thread reception= new Thread(this, "ConnectionHandler-Reception");
 
-    private Thread joiner;
+    private final Thread joiner= new Thread(() -> {
+        while (listen){
+            try{
+                if(welcomers.isEmpty())
+                    synchronized (welcomers) {
+                        welcomers.wait();
+                    }
+
+                welcomers.get(0).join();
+                welcomers.remove(0);
+            } catch (Exception e) {}
+        }
+    }, "ConnectionHandler-Joiner");
 
     private ConnectionHandler() {}
 
     public synchronized void Listen(int Port) {
-        if(reception != null){
+        if(reception.isAlive()){
             terminate();
         }
 
@@ -58,26 +86,11 @@ public class ConnectionHandler implements Runnable {
             this.server = new ServerSocket(Port);
         }
         catch (IOException e){
-            System.out.println("Connection handler: Cannot connect");
+            System.err.println("Connection handler: Cannot connect");
         }
 
         listen = true;
-
-        joiner = new Thread(() -> {
-            while (listen){
-                try{
-                    if(welcomers.isEmpty())
-                        synchronized (welcomers) {
-                            welcomers.wait();
-                        }
-
-                    welcomers.get(0).join();
-                    welcomers.remove(0);
-                } catch (Exception e) {}
-            }
-        });
         joiner.start();
-        reception = new Thread(this);
         reception.start();
     }
 
@@ -86,10 +99,9 @@ public class ConnectionHandler implements Runnable {
             listen = false;
             server.close();
             reception.join();
-            reception = null;
+            while (!welcomers.isEmpty()) {}
             welcomers.notify();
             joiner.join();
-            joiner = null;
         } catch (Exception e) {}
 
         System.out.println("Connection handler: Terminated.");
@@ -102,7 +114,7 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("Connection handler: Waiting for users...");
                 final Socket newConn = server.accept();
 
-                Thread welcome = new Thread(() -> welcomeAction.accept(newConn));
+                Thread welcome = new Thread(() -> welcomeAction.accept(newConn), "ConnectionHandler-Welcomer");
                 welcomers.add(welcome);
                 welcome.start();
 

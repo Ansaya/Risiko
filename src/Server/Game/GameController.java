@@ -44,11 +44,6 @@ public class GameController extends MessageReceiver<MessageType> {
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
     private GameController() {
-        // Handler for leaving players
-        messageHandlers.put(MessageType.GameState, (message) -> {
-            if(message.Json.equals(StateType.Abandoned.toString()))
-                releasePlayer(message.PlayerId);
-        });
 
         // Handler for incoming chat messages routing
         messageHandlers.put(MessageType.Chat, (message) -> {
@@ -77,7 +72,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     public void init() {
         // Start message receiver
-        this.startListen();
+        this.startListen("GameController");
 
         System.out.println("Game controller: Message receiver up and running.");
     }
@@ -95,10 +90,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Send end message to matches players and close connection
         matches.forEach((matchId, m) -> {
             System.out.println("Game controller: Terminating match " + matchId);
-            m.getPlayers().forEach((id, p) -> {
-                p.SendMessage(MessageType.Chat, end);
-                p.closeConnection(true);
-            });
+            endMatch(matchId);
         });
 
         // Send end message and close connection of lobby players
@@ -154,18 +146,19 @@ public class GameController extends MessageReceiver<MessageType> {
      *
      * @param PlayerId Player to remove from lobby
      */
-    public void releasePlayer(int PlayerId) {
+    void releasePlayer(int PlayerId) {
         final Player leaving = lobby.get(PlayerId);
         lobby.remove(PlayerId);
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, leaving)));
     }
 
     /**
-     * Removes ended match from list
+     * End specified match and removes it from match list
      *
      * @param MatchId Match to remove
      */
     protected void endMatch(int MatchId) {
+        matches.get(MatchId).endMatch();
         matches.remove(MatchId);
     }
 }

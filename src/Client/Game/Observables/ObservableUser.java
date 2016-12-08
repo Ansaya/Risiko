@@ -1,5 +1,6 @@
 package Client.Game.Observables;
 
+import Game.Color;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -14,15 +15,15 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
 
     public StringProperty username = new SimpleStringProperty("");
 
-    public StringProperty color = new SimpleStringProperty("");
+    public volatile Color color;
 
     public IntegerProperty territories = new SimpleIntegerProperty(0);
 
-    public ObservableUser(int userId, String username, String Color) {
+    public ObservableUser(int userId, String username, Color Color) {
         this.id.set(userId);
         this.username.set(username);
         if(Color != null)
-            this.color.set(Color);
+            this.color = Color;
     }
 
     @Override

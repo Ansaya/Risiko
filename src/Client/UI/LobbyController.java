@@ -29,10 +29,16 @@ public class LobbyController implements Initializable {
     @FXML
     protected Button matchBtn;
 
-    private ServerTalk server;
+    private ServerTalk server = ServerTalk.getInstance();
 
     @FXML
     protected JFXTreeTableView<ObservableUser> lobbyTable;
+
+    @FXML
+    protected TreeTableColumn<ObservableUser, Integer> idColumn;
+
+    @FXML
+    protected TreeTableColumn<ObservableUser, String> usernameColumn;
 
     @FXML
     protected Label lobbyCount;
@@ -71,9 +77,6 @@ public class LobbyController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        this.server = ServerTalk.getInstance();
-
         /* Chat setup */
         this.server.setChatUpdate(chatSP, chatContainer);
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
@@ -101,22 +104,12 @@ public class LobbyController implements Initializable {
         });
 
         /* Lobby view setup */
-        JFXTreeTableColumn<ObservableUser, Integer> idColumn = new JFXTreeTableColumn<>("User ID");
-        idColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, Integer> param) -> {
-            if(idColumn.validateValue(param)) return param.getValue().getValue().id.asObject();
-            else return idColumn.getComputedValue(param);
-        });
-
-        JFXTreeTableColumn<ObservableUser, String> usernameColumn = new JFXTreeTableColumn<>("Username");
-        usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<ObservableUser, String> param) -> {
-            if(usernameColumn.validateValue(param)) return param.getValue().getValue().username;
-            else return usernameColumn.getComputedValue(param);
-        });
+        idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
+        usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
 
         final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         lobbyTable.getColumns().setAll(idColumn, usernameColumn);
         lobbyTable.setRoot(rootItem);
-        lobbyTable.setShowRoot(false);
         lobbyTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         // Bind user counter
@@ -127,7 +120,6 @@ public class LobbyController implements Initializable {
             System.out.println("Search: " + newVal);
             rootItem.setPredicate((u) -> (u.getValue().id.get()+"").contains(newVal) || u.getValue().username.get().contains(newVal));
         });
-
 
         this.server.setUsersUpdate(rootItem.getChildren());
     }
