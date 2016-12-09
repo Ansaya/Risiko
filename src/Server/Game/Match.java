@@ -444,6 +444,7 @@ public class Match extends MessageReceiver<MessageType> {
                 });
             }
 
+            // Send global initial displacement to all players
             sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
 
             // Notify end of setup when completed
