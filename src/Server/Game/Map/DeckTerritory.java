@@ -1,10 +1,12 @@
 package Server.Game.Map;
 
+import Game.Map.Card;
 import Game.Map.Territories;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represent a deck of territories cards and two jolly
@@ -19,7 +21,7 @@ public class DeckTerritory implements Deck<Territories> {
     /**
      * Current bonus armies counter
      */
-    private int bonus = 4;
+    private final AtomicInteger bonus = new AtomicInteger(4);
 
     public DeckTerritory() {
         Shuffle();
@@ -33,7 +35,7 @@ public class DeckTerritory implements Deck<Territories> {
         System.out.println("Executed from thread " + Thread.currentThread().getId());
 
         deck = new ArrayList<>(Arrays.asList(Territories.values()));
-        bonus = 4;
+        bonus.set(4);
 
         Collections.shuffle(deck, new Random(System.nanoTime()));
     }
@@ -61,49 +63,25 @@ public class DeckTerritory implements Deck<Territories> {
      * @return Number of bonus armies if combination is valid, zero otherwise
      */
     public int isCombinationValid(boolean use, ArrayList<Territories> Cards) {
-        if(Cards.size() != 3)
+        if(!Card.isCombinationValid(Cards))
             return 0;
 
-        int infantry = 0, cavalry = 0, artillery = 0, jolly = 0;
-
-        // Increment respective counter for each card
-        for (Territories t: Cards
-                ) {
-            switch (t.card){
-                case Infantry:
-                    infantry++;
-                    break;
-                case Cavalry:
-                    cavalry++;
-                    break;
-                case Artillery:
-                    artillery++;
-                    break;
-                case Jolly:
-                    jolly++;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        int armies = 0;
-
-        // Check for valid combinations
-        // Three same cards         Two same cards plus jolly       Three different cards
-        if(infantry == 3 || cavalry == 3 || artillery == 3 || (infantry == 1 && cavalry == 1 && artillery == 1) ||
-                ((infantry == 2 || cavalry == 2 || artillery == 2) && jolly == 1)) {
-            armies = this.bonus;
+            int armies = this.bonus.get();
 
             // If player redeems combination
             if(use) {
-                // Increment bonus armies
-                this.bonus += 2;
+
+                // Increment bonus armies by 2 till 12 then from 15 by 5 each time
+                if(bonus.get() < 12)
+                    bonus.getAndAdd(2);
+                else {
+                    bonus.compareAndSet(12, 13);
+                    bonus.getAndAdd(5);
+                }
 
                 // Add redeemed cards to the end of the deck
                 this.deck.addAll(this.deck.size() - 1, Cards);
             }
-        }
 
         return armies;
     }

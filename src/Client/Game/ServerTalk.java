@@ -253,16 +253,23 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         messageHandlers.put(MessageType.Cards, (message) -> {
             final Cards cards = gson.fromJson(message.Json, MessageType.Cards.getType());
 
+            // If message is not empty add the card to user's list
             if(!cards.combination.isEmpty()) {
                 // Add card to user local cards
+                UIHandler.CardsHandler.addCard(cards.combination.get(0));
 
                 // Notify user
+                Main.showDialog("Territories cards",
+                                  "You received " + cards.combination.get(0).name() + " card!",
+                                "Continue");
                 return;
             }
 
+            // Else ask user to play a combination of cards
+            final Cards response = UIHandler.CardsHandler.requestCombination();
 
-
-            // Ask user to play a combination of cards
+            // Return response to server
+            SendMessage(MessageType.Cards, response);
         });
 
         // Handler for attacked territory

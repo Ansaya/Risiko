@@ -3,13 +3,12 @@ package Client.Game.Observables;
 import Client.Main;
 import Client.Game.ServerTalk;
 import Game.Connection.MapUpdate;
-import Game.Map.Card;
 import Game.Map.Territories;
+import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -36,9 +35,7 @@ public class UIHandler {
 
     private static Label newArmiesLabel;
 
-    private static Button showCards;
-
-    private static ObservableList<Card> cards;
+    public static CardsHandler CardsHandler;
 
     /**
      * Territories displayed in mapPane
@@ -95,6 +92,7 @@ public class UIHandler {
         selectedQueue.clear();
         newArmies.set(0);
         goAhead.set(false);
+        CardsHandler = null;
     }
 
     /**
