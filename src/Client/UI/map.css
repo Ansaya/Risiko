@@ -48,3 +48,17 @@
     -fx-background-radius:35px !important;
     -fx-border-radius: 35px !important;
 }
+
+.Alberta {
+    -fx-background-image: url("Cards/Alberta.jpg");
+    -fx-background-position: center center;
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: 137 212;
+}
+
+.WesternUnitedStates {
+    -fx-background-image: url("Cards/WesternUnitedStates.jpg");
+    -fx-background-position: center center;
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: 137 212;
+}

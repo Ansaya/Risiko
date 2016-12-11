@@ -2,11 +2,14 @@
 
 <?import com.jfoenix.controls.JFXBadge?>
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXDialog?>
+<?import com.jfoenix.controls.JFXDialogLayout?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -16,7 +19,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.MatchController">
+<StackPane minHeight="600.0" minWidth="1067.0" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.MatchController">
     <AnchorPane>
 
         <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="360.0" AnchorPane.topAnchor="10.0">
@@ -235,7 +238,7 @@
         </AnchorPane>
        <VBox prefWidth="350.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
           <children>
-             <JFXTreeTableView fx:id="playersList" prefHeight="180.0" showRoot="false">
+             <JFXTreeTableView fx:id="playersList" prefHeight="250.0" showRoot="false">
                <columns>
                   <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Id" />
                   <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="125.0" minWidth="125.0" prefWidth="125.0" resizable="false" text="Username" />
@@ -269,7 +272,12 @@
                   <Insets left="7.5" right="7.5" top="7.5" />
                </padding>
                <children>
-                  <JFXButton buttonType="RAISED" prefHeight="25.0" prefWidth="125.0" ripplerFill="#ffd000" text="Cards">
+                  <JFXButton fx:id="cardsBtn" buttonType="RAISED" prefHeight="25.0" prefWidth="125.0" ripplerFill="#ffd000" style="-fx-background-color: yellow;" text="Cards">
+                     <font>
+                        <Font name="Trebuchet MS" size="14.0" />
+                     </font>
+                  </JFXButton>
+                  <JFXButton fx:id="missionBtn" buttonType="RAISED" prefHeight="25.0" prefWidth="125.0" ripplerFill="#0035e4" style="-fx-background-color: lightblue;" text="Mission" textAlignment="CENTER">
                      <font>
                         <Font name="Trebuchet MS" size="14.0" />
                      </font>

@@ -19,7 +19,7 @@ public class Main extends Application {
 
     private static Stage window;
 
-    private static StackPane parent;
+    public static StackPane parent;
 
     public static final Object dialogClosed = new Object();
 
@@ -134,9 +134,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;
 
-        toLogin();
+        //toLogin();
 
-        //toMatch();
+        toMatch();
     }
 
 

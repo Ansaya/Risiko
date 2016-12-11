@@ -2,8 +2,10 @@ package Client.UI;
 
 import Client.Game.Observables.*;
 import Client.Game.ServerTalk;
+import Client.Main;
 import Game.Connection.*;
 import Client.Game.Connection.MessageType;
+import Game.Map.Territories;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.value.ObservableValue;
@@ -11,11 +13,15 @@ import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import java.net.URL;
 import java.util.ArrayList;
@@ -82,8 +88,45 @@ public class MatchController implements Initializable {
     @FXML
     protected Label newArmiesLabel;
 
+    @FXML
+    protected Button cardsBtn;
+
+    @FXML
+    protected JFXDialog cardsDialog;
+
+    @FXML
+    protected Button missionBtn;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        final HBox cardsDisplay = new HBox();
+        cardsDisplay.setSpacing(15.0f);
+        cardsDisplay.setPadding(new Insets(0, 7.5, 0, 7.5));
+        cardsDisplay.setAlignment(Pos.CENTER);
+        cardsDisplay.setPrefHeight(227.0f);
+
+        final JFXButton btn = new JFXButton("Close");
+        btn.setButtonType(JFXButton.ButtonType.RAISED);
+        btn.setStyle("-fx-background-color: #44B449");
+        btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> cardsDialog.close());
+
+        final JFXDialogLayout dl = new JFXDialogLayout();
+        dl.setMinSize(168.0f, 310.0f);
+        dl.setMaxSize(868.0f, 310.0f);
+        dl.setHeading(new Label("   Territories cards"));
+        dl.setBody(cardsDisplay);
+        dl.setActions(btn);
+
+        cardsDialog = new JFXDialog();
+        cardsDialog.setContent(dl);
+
+        cardsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+            cardsDialog.show(Main.parent);
+        });
+
+
+        cardsDisplay.getChildren().addAll(getCard(Territories.Alberta), getCard(Territories.WesternUnitedStates));
 
         /* Chat setup */
         this.server.setChatUpdate(chatSP, chatContainer);
@@ -152,5 +195,18 @@ public class MatchController implements Initializable {
 
         // Update server talk objects
         server.setUsersUpdate(rootItem.getChildren());
+    }
+
+    private AnchorPane getCard(Territories Territory) {
+
+        final AnchorPane card = new AnchorPane();
+        card.setPrefSize(137.0f, 212.0f);
+        card.setStyle("-fx-background-image: url(\"Cards/Alberta.jpg\");" +
+                      "-fx-background-position: center center;" +
+                      "-fx-background-repeat: no-repeat;" +
+                      "-fx-background-size: 137 212;");
+        card.applyCss();
+
+        return card;
     }
 }
