@@ -206,17 +206,18 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 }
             } catch (InterruptedException e) {}
 
+            UIHandler.Mission = match.Mission;
+
             System.out.println("ServerTalk: Match screen loaded and chat field updated.");
 
             // Load users in player's list
-            Platform.runLater(() -> {
-                match.players.forEach((u) -> {
+            Platform.runLater(() -> match.Players.forEach((u) -> {
                     if(u.equals(this.user))
                         this.user.color = u.color;
 
                     this.users.add(new TreeItem<>(u));
-                });
-            });
+                })
+            );
         });
 
         // Handler for positioning message

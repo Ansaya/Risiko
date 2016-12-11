@@ -3,8 +3,8 @@ package Client.Game.Observables;
 import Client.Main;
 import Client.Game.ServerTalk;
 import Game.Connection.MapUpdate;
+import Game.Map.Mission;
 import Game.Map.Territories;
-import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -33,9 +33,35 @@ public class UIHandler {
      */
     private static Button endPhaseBtn;
 
+    public static void setPhaseButton(Button PhaseBtn) {
+        endPhaseBtn = PhaseBtn;
+        endPhaseBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+            endPhaseBtn.setDisable(true);
+            synchronized (goAhead){
+                goAhead.notify();
+            }
+        });
+        endPhaseBtn.setDisable(true);
+    }
+
     private static Label newArmiesLabel;
 
+    public static void  setArmiesLabel(Label ArmiesLabel) {
+        newArmiesLabel = ArmiesLabel;
+        newArmiesLabel.textProperty().bind((new SimpleStringProperty("Available armies:  ")).concat(newArmies));
+        newArmiesLabel.setVisible(false);
+    }
+
     public static CardsHandler CardsHandler;
+
+    public static Mission Mission;
+
+    private static Button missionBtn;
+
+    public static void setMissionButton(Button MissionBtn) {
+        missionBtn = MissionBtn;
+        missionBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog("Mission", Mission.Description, "Continue"));
+    }
 
     /**
      * Territories displayed in mapPane
@@ -58,25 +84,13 @@ public class UIHandler {
         }
     }
 
-    public static void Init(Pane MapPane, ArrayList<Label> Labels, Button EndPhaseBtn, Label NewArmiesLabel) {
+    public static void Init(Pane MapPane, ArrayList<Label> Labels) {
         mapPane = MapPane;
-        endPhaseBtn = EndPhaseBtn;
-        newArmiesLabel = NewArmiesLabel;
-        endPhaseBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
-            endPhaseBtn.setDisable(true);
-            synchronized (goAhead){
-                goAhead.notify();
-            }
-        });
-        endPhaseBtn.setDisable(true);
 
         Labels.forEach(l -> {
             Territories t = Territories.valueOf(l.getId());
             territories.put(t, new ObservableTerritory(t, l));
         });
-
-        newArmiesLabel.textProperty().bind((new SimpleStringProperty("Available armies:  ")).concat(newArmies));
-        newArmiesLabel.setVisible(false);
 
         goAhead.set(true);
         synchronized (goAhead){
@@ -115,14 +129,11 @@ public class UIHandler {
             newArmies.set(NewArmies);
         });
 
-        // If only one army to place then is setup phase
-        boolean isSetup = NewArmies <= 1;
-
         // Display positioning controls only for territories owned from current user
         final ObservableUser current = ServerTalk.getInstance().getUser();
 
         // If is setup phase user can choose all territories
-        if(isSetup){
+        if(NewArmies <= 1){
             territories.forEach((territory, obTerritory) -> {
                 if(obTerritory.getOwner() == null)
                     obTerritory.positioningControls(Enabled);
@@ -135,7 +146,7 @@ public class UIHandler {
             });
         }
 
-        Main.showDialog("Positioning message", "You have " + NewArmies + " to place.", "Start displacement");
+        Main.showDialog("Positioning message", "You have " + NewArmies + " new armies to place.", "Start displacement");
 
         // Wait till UI send notification of displacement completed
         synchronized (goAhead){
@@ -147,6 +158,7 @@ public class UIHandler {
             }
         }
 
+        // Disable button and remove armies label
         endPhaseBtn.setDisable(true);
         newArmiesLabel.setVisible(false);
 

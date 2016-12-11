@@ -51,7 +51,7 @@ public class CardsHandler {
 
         /* Container setup */
         container.setSpacing(15.0f);
-        container.setPadding(new Insets(0, 7.5, 0, 7.5));
+        container.setPadding(new Insets(0, 7.5, 0, 22.5));
         container.setAlignment(Pos.CENTER);
         container.setPrefHeight(227.0f);
 
@@ -84,7 +84,7 @@ public class CardsHandler {
 
         /* Layout setup */
         final JFXDialogLayout dl = new JFXDialogLayout();
-        dl.setHeading(new Label("   Territories cards"));
+        dl.setHeading(new Label("     Territories cards"));
         dl.setBody(container);
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 

@@ -167,9 +167,10 @@ public class Player extends SocketHandler implements Runnable {
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
      */
-    synchronized void initMatch(Color Color, int MatchId) {
+    synchronized void initMatch(Color Color, int MatchId, Mission Mission) {
         matchId.set(MatchId);
         color = Color;
+        mission = Mission;
 
         // Player is actively playing
         isPlaying.set(true);

@@ -2,10 +2,8 @@ package Client.UI;
 
 import Client.Game.Observables.*;
 import Client.Game.ServerTalk;
-import Client.Main;
 import Game.Connection.*;
 import Client.Game.Connection.MessageType;
-import Game.Map.Territories;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.value.ObservableValue;
@@ -13,15 +11,9 @@ import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import java.net.URL;
 import java.util.ArrayList;
@@ -158,17 +150,20 @@ public class MatchController implements Initializable {
         });
 
         // Initialize UI handler
-        UIHandler.Init(mapPane, labels, endTurnBtn, newArmiesLabel);
+        UIHandler.setPhaseButton(endTurnBtn);
+        UIHandler.setArmiesLabel(newArmiesLabel);
+        UIHandler.setMissionButton(missionBtn);
         UIHandler.CardsHandler = new CardsHandler(parent);
         cardsDialog = UIHandler.CardsHandler.getCardsDialog();
         cardsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> cardsDialog.show());
+        UIHandler.Init(mapPane, labels);
 
         /* Players table setup */
         idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
         territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
 
-        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
+        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(rootItem);
 

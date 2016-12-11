@@ -1,131 +1,82 @@
 package Game.Map;
 
-import Game.*;
-import Server.Game.GameController;
-import Server.Game.Map.Territory;
-import Server.Game.Match;
-import Server.Game.Player;
+import Game.Color;
 import java.util.*;
-import static Game.Map.Continent.*;
+import static Game.Map.Territories.*;
 
 /**
  * List of missions for earth map
  */
 public enum Mission {
-    EuropaAustraliaContinente(""),
-    EuropaSudAmericaContinente(""),
-    NordAmericaAfrica(""),
-    NordAmericaAustralia(""),
-    AsiaSudAmerica(""),
-    AsiaAfrica(""),
-    Territori24(""),
-    Territori18Due(""),
-    DistruggiArmataROSSO(""),
-    DistruggiArmataGIALLO(""),
-    DistruggiArmataVERDE(""),
-    DistruggiArmataBLU(""),
-    DistruggiArmataNERO(""),
-    DistruggiArmataROSA("");
+    EuropeAustraliaContinent("", 3, GreatBritain, Iceland, NorthernEurope, Scandinavia, SouthernEurope, Ukraine, WesternEurope, EasternAustralia, Indonesia, NewGuinea, WesternAustralia),
+    EuropeSouthAmericaContinent("", 3, GreatBritain, Iceland, NorthernEurope, Scandinavia, SouthernEurope, Ukraine, WesternEurope, Argentina, Brazil, Peru, Venezuela),
+    NorthAmericaAfrica("", Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates, Congo, EastAfrica, Egypt, Madagascar, NorthAfrica, SouthAfrica),
+    NorthAmericaAustralia("", Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates, EasternAustralia, Indonesia, NewGuinea, WesternAustralia),
+    AsiaSouthAmerica("", Afghanistan, China, India, Irkutsk, Japan, Kamchatka, MiddleEast, Mongolia, Siam, Siberia, Ural, Yakutsk, Argentina, Brazil, Peru, Venezuela),
+    AsiaAfrica("", Afghanistan, China, India, Irkutsk, Japan, Kamchatka, MiddleEast, Mongolia, Siam, Siberia, Ural, Yakutsk, Congo, EastAfrica, Egypt, Madagascar, NorthAfrica, SouthAfrica),
+    Territory24("", 24),
+    Territory18Two("", 18),
+    DestroyRed("", Color.RED),
+    DestroyYellow("", Color.YELLOW),
+    DestroyGreen("", Color.GREEN),
+    DestroyBlue("", Color.BLUE),
+    DestroyBlack("", Color.BLACK),
+    DestroyPurple("", Color.PURPLE),
+    Special1("", Madagascar, EastAfrica, NorthAfrica, Brazil, Venezuela, CentralAmerica, EasternUnitedStates, Ontario, Alberta, Kamchatka, Japan, Yakutsk, Siberia, Ural),
+    Special2("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, NorthwestTerritory, Alaska, Kamchatka, Irkutsk, Mongolia, China, Afghanistan, Siam, Indonesia, WesternAustralia),
+    Special3("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, Quebec, Greenland, Iceland, Scandinavia, Ukraine, Ural, Siberia, Afghanistan, MiddleEast, India),
+    Special4("", NewGuinea, Indonesia, Siam, China, Siberia, Yakutsk, Kamchatka, Alaska, NorthwestTerritory, Quebec, Greenland, WesternUnitedStates, Iceland, GreatBritain, NorthernEurope),
+    Special5("", Argentina, Brazil, NorthAfrica, Congo, Egypt, WesternEurope, NorthernEurope, Scandinavia, Ukraine, Ural, China, Mongolia, India, Japan, Siam),
+    Special6("", Madagascar, EastAfrica, NorthAfrica, SouthernEurope, WesternEurope, Scandinavia, GreatBritain, MiddleEast, China, Ural, Siberia, Siam, Indonesia, WesternAustralia),
+    Special8("", SouthAfrica, EastAfrica, Egypt, SouthernEurope, WesternEurope, Ukraine, MiddleEast, China, Mongolia, Kamchatka, Alaska, Alberta, Ontario, EasternUnitedStates, Greenland),
+    Special9("", Argentina, Brazil, NorthAfrica, Congo, SouthAfrica, NorthernEurope, SouthernEurope, Scandinavia, Iceland, Greenland, Quebec, NorthwestTerritory, Alberta, WesternUnitedStates, CentralAmerica);
 
-    private String description;
+    public final String Description;
 
-    public String getDescription() { return description; }
+    public final ArrayList<Territories> ToConquer;
 
-    Mission(String Description) {
-        this.description = Description;
+    public final Integer Number;
+
+    public final Color Army;
+
+    public final MissionType Type;
+
+    Mission(String Description, Territories... ToConquer) {
+        this.Description = Description;
+        this.ToConquer = new ArrayList<>(Arrays.asList(ToConquer));
+        this.Number = ToConquer.length;
+        this.Army = null;
+        this.Type = MissionType.Conquer;
     }
 
-    /**
-     * Check if player has completed his mission
-     *
-     * @param Player Player to check mission for
-     * @return True if mission is accomplished, false otherwise.
-     */
-    public static boolean Completed(Player Player) {
-        String mission = Player.getMission().name();
+    Mission(String Description, Integer Number) {
+        this.Description = Description;
+        this.ToConquer = null;
+        this.Number = Number;
+        this.Army = null;
+        this.Type = MissionType.Number;
+    }
 
-        // If mission is to destroy all armies of one color search inside match's players if color is still present
-        // armies already been destroyed problem is managed from battle class and armies color same as current player is handled in setup phase
-        if(mission.contains("DistruggiArmata")){
-            // Get armies' color
-            Color color = Color.valueOf(mission.substring(15));
+    Mission(String Description, Color Army) {
+        this.Description = Description;
+        this.ToConquer = null;
+        this.Number = null;
+        this.Army = Army;
+        this.Type = MissionType.Destroy;
+    }
 
-            // Get all players from the match
-            Match match = GameController.getInstance().getMatch(Player.getMatchId());
-            Collection<Player> players = match.getPlayers().values();
+    Mission(String Description, Integer Continents, Territories... ToConquer) {
+        this.Description = Description;
+        this.ToConquer = new ArrayList<>(Arrays.asList(ToConquer));
+        this.Number = Continents;
+        this.Army = null;
+        this.Type = MissionType.Special;
+    }
 
-            // Check on all players (Check is performed on current player too, but it won't affect result)
-            for (Player g: players
-                 ) {
-                if(g.isPlaying() && g.getColor() == color)
-                    return false;
-            }
-
-            return true;
-        }
-
-        if(mission.contains("Territori")){
-            // Get territories number
-            int numero = Integer.valueOf(mission.substring(9, 10));
-
-            // Get player's territories
-            ArrayList<Territory> territories = Player.getTerritories();
-
-            if(numero == 24)
-                return territories.size() >= 24;
-
-            if(territories.size() < 18)
-                return false;
-
-            // If mission is 18 territories, player need to place at least two armies on each
-            for (Territory t: territories
-                 ) {
-                if(t.getArmies() < 2)
-                    return false;
-            }
-            return true;
-        }
-
-        // Check for common missions
-        ArrayList<Continent> dominated = Continent.dominatedContinents(Player.getTerritories());
-        if (dominated.size() > 1)
-            switch (Player.getMission()) {
-                case NordAmericaAfrica:
-                    if(dominated.contains(NorthAmerica) &&dominated.contains(Africa))
-                            return true;
-                    break;
-                case NordAmericaAustralia:
-                    if(dominated.contains(NorthAmerica) && dominated.contains(Australia))
-                        return true;
-                    break;
-                case AsiaAfrica:
-                    if (dominated.contains(Asia) && dominated.contains(Africa))
-                        return true;
-                    break;
-                case AsiaSudAmerica:
-                    if (dominated.contains(Asia) && dominated.contains(SouthAmerica))
-                        return true;
-                    break;
-                default:
-                    break;
-            }
-        else
-            return false;
-
-        if (dominated.size() > 2)
-            switch (Player.getMission()) {
-                case EuropaAustraliaContinente:
-                    if(dominated.contains(Europe) && dominated.contains(Australia))
-                        return true;
-                    break;
-                case EuropaSudAmericaContinente:
-                    if (dominated.contains(Europe) && dominated.contains(SouthAmerica))
-                        return true;
-                    break;
-                default:
-                    break;
-            }
-
-        return false;
+    private enum MissionType {
+        Conquer,
+        Destroy,
+        Number,
+        Special;
     }
 }

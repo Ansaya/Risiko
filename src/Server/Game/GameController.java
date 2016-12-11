@@ -2,10 +2,8 @@ package Server.Game;
 
 import Game.Color;
 import Game.Connection.Chat;
-import Game.Connection.GameState;
 import Game.Connection.Lobby;
 import Game.MessageReceiver;
-import Game.StateType;
 import Server.Game.Connection.MessageType;
 import com.google.gson.Gson;
 import java.net.Socket;
@@ -57,12 +55,12 @@ public class GameController extends MessageReceiver<MessageType> {
             System.out.println("Game controller: New match request from " + message.PlayerId);
 
             final ArrayList<Player> toAdd = new ArrayList<>();
-            requested.players.forEach((u) -> {
+            requested.Players.forEach((u) -> {
                 toAdd.add(lobby.get(u.id));
                 releasePlayer(u.id);
             });
 
-            System.out.println("Game controller: Launch new match with " + toAdd.size() + " players.");
+            System.out.println("Game controller: Launch new match with " + toAdd.size() + " Players.");
             final int newMatchId = Match.counter.getAndIncrement();
             matches.put(newMatchId, new Match(newMatchId, toAdd));
         });
@@ -91,10 +89,10 @@ public class GameController extends MessageReceiver<MessageType> {
 
         final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
 
-        // Send end message to matches players and close connection
+        // Send end message to matches Players and close connection
         matches.forEach((matchId, m) -> endMatch(matchId));
 
-        // Send end message and close connection of lobby players
+        // Send end message and close connection of lobby Players
         lobby.forEach((id, p) -> {
             System.out.println("Game controller: Releasing player " + p.username);
             p.SendMessage(MessageType.Chat, end);
@@ -113,12 +111,12 @@ public class GameController extends MessageReceiver<MessageType> {
 
         final Player newP = new Player(Id, Username, Connection);
 
-        // Notify all players for new player
+        // Notify all Players for new player
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(newP, null)));
 
         lobby.put(Id, newP);
 
-        // Notify new player for all players
+        // Notify new player for all Players
         lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
 
         System.out.println("Game controller: New player in lobby.");
@@ -133,12 +131,12 @@ public class GameController extends MessageReceiver<MessageType> {
 
         System.out.println("Game controller: Player " + Player.username + " got back from match.");
 
-        // Notify all players for new player
+        // Notify all Players for new player
         lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
 
         lobby.put(Player.id, Player);
 
-        // Notify new player for all players
+        // Notify new player for all Players
         Player.SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
     }
 

@@ -17,6 +17,10 @@
     -fx-effect: innershadow(gaussian, rgba(245, 115, 0, 0.54), 4, 1.0, 0, 0);
 }
 
+.card-selected {
+    -fx-effect: dropshadow(gaussian, rgb(255, 142, 0), 15, 0.5, 0, 0);
+}
+
 /* armies selector */
 .animated-option-button-atk {
     -fx-background-color:rgb(203,104,96);
@@ -47,18 +51,4 @@
     -fx-pref-width:35px !important;
     -fx-background-radius:35px !important;
     -fx-border-radius: 35px !important;
-}
-
-.Alberta {
-    -fx-background-image: url("Cards/Alberta.jpg");
-    -fx-background-position: center center;
-    -fx-background-repeat: no-repeat;
-    -fx-background-size: 137 212;
-}
-
-.WesternUnitedStates {
-    -fx-background-image: url("Cards/WesternUnitedStates.jpg");
-    -fx-background-position: center center;
-    -fx-background-repeat: no-repeat;
-    -fx-background-size: 137 212;
 }

@@ -34,7 +34,7 @@ public class Match extends MessageReceiver<MessageType> {
     public HashMap<Integer, Player> getPlayers() { return players; }
 
     /**
-     * Contains playing players' id only
+     * Contains playing Players' id only
      */
     private final ArrayList<Integer> playersOrder = new ArrayList<>();
 
@@ -70,29 +70,32 @@ public class Match extends MessageReceiver<MessageType> {
         // Set current match id
         this.id = Id;
 
-        // Setup players
+        // Setup Players
         final Color[] colors = Color.values();
+        final ArrayList<Mission> missions = new ArrayList<>(Arrays.asList(Mission.values()));
+        final Random rnd = new Random();
         final AtomicInteger i = new AtomicInteger(0);
         Players.forEach(p -> {
-            p.initMatch(colors[i.getAndIncrement()], this.id);
+            // Initialize player with color, match id and mission
+            p.initMatch(colors[i.getAndIncrement()], this.id, missions.remove(rnd.nextInt(missions.size())));
             players.put(p.id, p);
             playersOrder.add(p.id);
         });
 
-        // Send all user initial setup containing users and colors
-        players.forEach((id, user) -> user.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players)));
+        // Send all players initial setup containing all players and mission
+        players.forEach((id, player) -> player.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players, player.getMission())));
 
         // Setup and start match message receiver
         listenersInit();
         startListen("Match " + this.id);
 
         // Start first setup turn
-        System.out.println("Match " + this.id + ": Started game with " + players.size() + " players.");
+        System.out.println("Match " + this.id + ": Started game with " + players.size() + " Players.");
         this.currentTurn = new Turn(this, null, true);
     }
 
     /**
-     * Stop current match thread and returns players to GameController
+     * Stop current match thread and returns Players to GameController
      */
     void terminate() {
         currentTurn.endTurn();
@@ -345,7 +348,7 @@ public class Match extends MessageReceiver<MessageType> {
             if(lostDef != 0)
                 result.add(defender);
 
-            // Send update to all players
+            // Send update to all Players
             match.sendAll(MessageType.MapUpdate, new MapUpdate<>(result));
 
             // If attacker hasn't conquered the territory or no more armies can be moved go ahead
@@ -369,7 +372,7 @@ public class Match extends MessageReceiver<MessageType> {
             from.canRemoveArmies(update.to.newArmies);
             to.addArmies(update.to.newArmies);
 
-            // Send new placement to all players
+            // Send new placement to all Players
             match.sendAll(MessageType.MapUpdate, new MapUpdate<>(new ArrayList<>(Arrays.asList(from, to))));
         }
 
@@ -406,10 +409,10 @@ public class Match extends MessageReceiver<MessageType> {
                 // Remove it from remaining territories
                 toGo.remove(toUpdate.territory);
 
-                // Send update to all players
+                // Send update to all Players
                 match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
 
-                // At the end of the row chose one for ai if only two players are in match
+                // At the end of the row chose one for ai if only two Players are in match
                 if(twoOnly && last.id == lastId){
                     // Get random territory from remaining territories
                     toUpdate = match.gameMap.territories.get(toGo.get((new Random()).nextInt(toGo.size())));
@@ -433,7 +436,7 @@ public class Match extends MessageReceiver<MessageType> {
                 p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
             });
 
-            // Wait for all players to return initial displacement
+            // Wait for all Players to return initial displacement
             ArrayList<Territory> finalUpdate = new ArrayList<>();
             for(int i = playersOrder.size(); i > 0; i--){
                 MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
@@ -444,7 +447,7 @@ public class Match extends MessageReceiver<MessageType> {
                 });
             }
 
-            // Send global initial displacement to all players
+            // Send global initial displacement to all Players
             sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
 
             // Notify end of setup when completed
@@ -480,7 +483,7 @@ public class Match extends MessageReceiver<MessageType> {
             // Update armies number in game map
             newPlacement.updated.forEach((t) -> match.gameMap.territories.get(t.territory).addArmies(t.newArmies));
 
-            // Send update to all players
+            // Send update to all Players
             match.sendAll(MessageType.MapUpdate, newPlacement);
 
             // Ask player to attack
