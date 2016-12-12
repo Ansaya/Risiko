@@ -27,13 +27,7 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if(o == null)
-            return false;
-
-        if(o.getClass() != ObservableUser.class)
-            return false;
-
-        return this.id.get() == ((ObservableUser)o).id.get();
+    public boolean equals(Object other) {
+        return other instanceof  ObservableUser && this.id.get() == ((ObservableUser)other).id.get();
     }
 }

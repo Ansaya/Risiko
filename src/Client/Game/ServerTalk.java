@@ -38,9 +38,6 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     public static ServerTalk getInstance() { return _instance; }
 
     /* Connection section */
-
-    private volatile boolean listen;
-
     /**
      * Connection to the server
      */
@@ -57,6 +54,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     private PrintWriter send;
 
     private final Gson gson;
+
+    private volatile boolean listen;
 
     /* Connection section end */
 
@@ -263,6 +262,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 Main.showDialog("Territories cards",
                                   "You received " + cards.combination.get(0).name() + " card!",
                                 "Continue");
+
+                //Implement final move
                 return;
             }
 
@@ -274,16 +275,32 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         });
 
         // Handler for attacked territory
-        messageHandlers.put(MessageType.Attack, (message) -> {
-            System.out.println("ServerTalk: Defense message: " + message.Json);
-            final Attack<ObservableTerritory> attack = gson.fromJson(message.Json, MessageType.Attack.getType());
+        messageHandlers.put(MessageType.Battle, (message) -> {
+            System.out.println("ServerTalk: Battle message: " + message.Json);
+            final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());
 
-            final Integer defArmies = UIHandler.territories.get(attack.to.territory).requestDefense(attack);
+            if(battle.from == null){
+                // Start battle phase
+                return;
+            }
+
+            // Else player is under attack
+            // Request defense armies to player and update message
+            battle.defArmies = UIHandler.territories.get(battle.to.territory).requestDefense(battle);
 
             // Send response to server
-            SendMessage(MessageType.Defense, new Defense<>(attack.from, attack.to, defArmies));
+            SendMessage(MessageType.Battle, battle);
         });
 
+        // Handler for special move
+        messageHandlers.put(MessageType.SpecialMoving, (message) -> {
+            System.out.println("ServerTalk: Special moving message: " + message.Json);
+            final SpecialMoving<ObservableTerritory> sMoving = gson.fromJson(message.Json, MessageType.SpecialMoving.getType());
+
+            // Implement special moving request
+        });
+
+        // Handler for game state changes
         messageHandlers.put(MessageType.GameState, (message) -> {
             System.out.println("ServerTalk: GameState message: " + message.Json);
             // If a GameState message is received than match is no longer valid, so go back to lobby

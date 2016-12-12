@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Player relative to a match
  */
-public class Player extends SocketHandler implements Runnable {
+public class Player extends SocketHandler {
 
     /**
      * Player's unique id
@@ -63,20 +63,11 @@ public class Player extends SocketHandler implements Runnable {
 
     public Mission getMission() { return mission; }
 
-    /**
-     * Incoming messages handler
-     */
-    private transient final Thread _instance = new Thread(this);
-
     public Player(int Id, String Username, Socket Connection) {
-        super(Connection);
+        super(Connection, "Player" + Id);
 
         this.id = Id;
         this.username = Username;
-        this.listen = true;
-
-        _instance.setName("Player" + this.id);
-        _instance.start();
     }
 
     /**
@@ -118,7 +109,7 @@ public class Player extends SocketHandler implements Runnable {
                         return;
                     }
 
-                    System.out.println("Player " + this.id + " from thread " + Thread.currentThread().getId() + ": " + incoming);
+                    System.out.println("Player-" + id + ": Received <- " + incoming);
 
                     String[] info = incoming.split("[#]");
 
@@ -130,35 +121,28 @@ public class Player extends SocketHandler implements Runnable {
                 }
             }catch (Exception e){
                 // Handle loss of connection
+                System.err.println("Player-" + id + ": Connection lost");
             }
         }
-
-        receive = null;
-        send = null;
     }
 
     /**
      * Gently close connection with the client
      */
-    protected void closeConnection(boolean fromServer) {
+    synchronized void closeConnection(boolean fromServer) {
         send.println("End");
 
         if(!fromServer) {
             if (matchId.get() != -1)
                 GameController.getInstance().getMatch(matchId.get())
                         .setIncoming(this.id,
-                                MessageType.GameState,
-                                (new Gson()).toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
+                                     MessageType.GameState,
+                                     gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
             else
                 GameController.getInstance().releasePlayer(this.id);
         }
 
-        try {
-            this.listen = false;
-            this.connection.close();
-            this._instance.join();
-            this.connection = null;
-        } catch (Exception e) {}
+        super.closeConnection();
     }
 
     /**
@@ -204,16 +188,15 @@ public class Player extends SocketHandler implements Runnable {
      * @param MessageObj Object of specified type
      */
     protected void SendMessage(MessageType Type, Object MessageObj) {
-        Gson serialize = new Gson();
 
         // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "#" + serialize.toJson(MessageObj, Type.getType());
+        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
 
         synchronized (send) {
             send.println(packet);
         }
 
-        System.out.println("Message sent to " + this.username + ": " + packet);
+        System.out.println("Player-" + id + ": Sent -> " + packet);
     }
 
     /**
@@ -226,17 +209,14 @@ public class Player extends SocketHandler implements Runnable {
             send.println(packet);
         }
 
-        System.out.println("Message routed to " + this.username + ": " + packet);
+        System.out.println("Player-" + id + ": Sent -> " + packet);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if(o == null)
-            return false;
+    public boolean equals(Object other) {
+        if(other instanceof Color)
+            return other == this.color;
 
-        if(o.getClass() != Player.class)
-            return false;
-
-        return this.id == ((Player)o).id;
+        return other instanceof Player && this.id == ((Player) other).id;
     }
 }

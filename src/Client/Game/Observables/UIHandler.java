@@ -56,11 +56,8 @@ public class UIHandler {
 
     public static Mission Mission;
 
-    private static Button missionBtn;
-
     public static void setMissionButton(Button MissionBtn) {
-        missionBtn = MissionBtn;
-        missionBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog("Mission", Mission.Description, "Continue"));
+        MissionBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog("Mission", Mission.Description, "Continue"));
     }
 
     /**

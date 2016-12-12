@@ -82,8 +82,7 @@ public enum Continent {
         int nordAmerica = 0, sudAmerica = 0, europa = 0, africa = 0, asia = 0, australia = 0;
 
         // Increment continent counter for each territory in the array
-        for (Territory t: Territories
-                ) {
+        for (Territory t: Territories) {
             switch (t.territory.continent){
                 case NorthAmerica:
                     nordAmerica++;

@@ -1,9 +1,9 @@
 package Game.Connection;
 
 /**
- * Attack packet
+ * Battle packet
  */
-public class Attack<T> {
+public class Battle<T> {
 
     /**
      * Attacked territory
@@ -18,11 +18,13 @@ public class Attack<T> {
     /**
      * Attacking armies number
      */
-    public final int armies;
+    public final int atkArmies;
 
-    public Attack(T From, T To, int Armies) {
+    public int defArmies = 1;
+
+    public Battle(T From, T To, int AtkArmies) {
         this.from = From;
         this.to = To;
-        this.armies = Armies;
+        this.atkArmies = AtkArmies;
     }
 }

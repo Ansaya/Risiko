@@ -13,12 +13,9 @@ public enum MessageType {
     Chat(new TypeToken<Chat<ObservableUser>>(){}.getType()),
     Lobby(new TypeToken<Lobby<ObservableUser>>(){}.getType()),
     Match(new TypeToken<Match<ObservableUser>>(){}.getType()),
-    Turn(null),
-    Attack(new TypeToken<Attack<ObservableTerritory>>(){}.getType()),
-    Defense(new TypeToken<Defense<ObservableTerritory>>(){}.getType()),
+    Battle(new TypeToken<Battle<ObservableTerritory>>(){}.getType()),
     Cards(Cards.class),
     Positioning(Positioning.class),
-    Moving(null),
     SpecialMoving(new TypeToken<SpecialMoving<ObservableTerritory>>(){}.getType()),
     MapUpdate(new TypeToken<MapUpdate<ObservableTerritory>>(){}.getType()),
     GameState(new TypeToken<GameState<ObservableUser>>(){}.getType());

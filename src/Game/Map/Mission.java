@@ -22,18 +22,20 @@ public enum Mission {
     DestroyBlue("", Color.BLUE),
     DestroyBlack("", Color.BLACK),
     DestroyPurple("", Color.PURPLE),
-    Special1("", Madagascar, EastAfrica, NorthAfrica, Brazil, Venezuela, CentralAmerica, EasternUnitedStates, Ontario, Alberta, Kamchatka, Japan, Yakutsk, Siberia, Ural),
-    Special2("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, NorthwestTerritory, Alaska, Kamchatka, Irkutsk, Mongolia, China, Afghanistan, Siam, Indonesia, WesternAustralia),
-    Special3("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, Quebec, Greenland, Iceland, Scandinavia, Ukraine, Ural, Siberia, Afghanistan, MiddleEast, India),
-    Special4("", NewGuinea, Indonesia, Siam, China, Siberia, Yakutsk, Kamchatka, Alaska, NorthwestTerritory, Quebec, Greenland, WesternUnitedStates, Iceland, GreatBritain, NorthernEurope),
-    Special5("", Argentina, Brazil, NorthAfrica, Congo, Egypt, WesternEurope, NorthernEurope, Scandinavia, Ukraine, Ural, China, Mongolia, India, Japan, Siam),
-    Special6("", Madagascar, EastAfrica, NorthAfrica, SouthernEurope, WesternEurope, Scandinavia, GreatBritain, MiddleEast, China, Ural, Siberia, Siam, Indonesia, WesternAustralia),
-    Special8("", SouthAfrica, EastAfrica, Egypt, SouthernEurope, WesternEurope, Ukraine, MiddleEast, China, Mongolia, Kamchatka, Alaska, Alberta, Ontario, EasternUnitedStates, Greenland),
-    Special9("", Argentina, Brazil, NorthAfrica, Congo, SouthAfrica, NorthernEurope, SouthernEurope, Scandinavia, Iceland, Greenland, Quebec, NorthwestTerritory, Alberta, WesternUnitedStates, CentralAmerica);
+    Multiple1("", Madagascar, EastAfrica, NorthAfrica, Brazil, Venezuela, CentralAmerica, EasternUnitedStates, Ontario, Alberta, Kamchatka, Japan, Yakutsk, Siberia, Ural),
+    Multiple2("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, NorthwestTerritory, Alaska, Kamchatka, Irkutsk, Mongolia, China, Afghanistan, Siam, Indonesia, WesternAustralia),
+    Multiple3("", Peru, Venezuela, CentralAmerica, WesternUnitedStates, Ontario, Quebec, Greenland, Iceland, Scandinavia, Ukraine, Ural, Siberia, Afghanistan, MiddleEast, India),
+    Multiple4("", NewGuinea, Indonesia, Siam, China, Siberia, Yakutsk, Kamchatka, Alaska, NorthwestTerritory, Quebec, Greenland, WesternUnitedStates, Iceland, GreatBritain, NorthernEurope),
+    Multiple5("", Argentina, Brazil, NorthAfrica, Congo, Egypt, WesternEurope, NorthernEurope, Scandinavia, Ukraine, Ural, China, Mongolia, India, Japan, Siam),
+    Multiple6("", Madagascar, EastAfrica, NorthAfrica, SouthernEurope, WesternEurope, Scandinavia, GreatBritain, MiddleEast, China, Ural, Siberia, Siam, Indonesia, WesternAustralia),
+    Multiple7("", SouthAfrica, EastAfrica, Egypt, SouthernEurope, WesternEurope, Ukraine, MiddleEast, China, Mongolia, Kamchatka, Alaska, Alberta, Ontario, EasternUnitedStates, Greenland),
+    Multiple8("", Argentina, Brazil, NorthAfrica, Congo, SouthAfrica, NorthernEurope, SouthernEurope, Scandinavia, Iceland, Greenland, Quebec, NorthwestTerritory, Alberta, WesternUnitedStates, CentralAmerica);
 
     public final String Description;
 
-    public final ArrayList<Territories> ToConquer;
+    private final ArrayList<Territories> ToConquer;
+
+    public ArrayList<Territories> getToConquer() { return ToConquer.getClass().cast(ToConquer.clone()); }
 
     public final Integer Number;
 

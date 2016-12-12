@@ -2,7 +2,7 @@ package Client.Game.Observables;
 
 import Client.Main;
 import Client.Game.ServerTalk;
-import Game.Connection.Attack;
+import Game.Connection.Battle;
 import Game.Map.Territories;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
@@ -195,21 +195,20 @@ public class ObservableTerritory {
     }
 
     /**
-     * Show popup in UI and return the number of armies used to defend from an attack
+     * Show popup in UI and return the number of armies used to defend from an battle
      *
-     * @param attack Attack message received from server
+     * @param battle Battle message received from server
      * @return Number of armies defending the territory
      */
-    public int requestDefense(Attack<ObservableTerritory> attack) {
-        if(armies.get() < 2)
-            return 1;
+    public int requestDefense(Battle<ObservableTerritory> battle) {
+        // Request is not sent from server if armies are less then two
 
         // Message shown to the user
-        final String popupInfo = "Player " + attack.from.owner.username.get() + " is attacking from " + attack.from.toString() + " with " + attack.armies +
-                " armies to " + attack.to.toString() + "\r\nChoose how many armies do you want to defend with.";
+        final String popupInfo = "Player " + battle.from.owner.username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
+                " armies to " + battle.to.toString() + "\r\nChoose how many armies do you want to defend with.";
 
         Platform.runLater(() -> {
-            Main.showDialog("You are under attack!", popupInfo, "Go ahead");
+            Main.showDialog("You are under battle!", popupInfo, "Go ahead");
             showDefenseList();
         });
 

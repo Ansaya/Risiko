@@ -33,9 +33,10 @@ public class Territory {
     public void addArmies(int toAdd) { armies += toAdd; }
 
     /**
-     * Remove armies from this territory
+     * Removes armies from this territory if is possible
      *
      * @param toRemove armies to remove
+     * @return True if armies have been removed, false if cannot remove requested number of armies
      */
     public boolean canRemoveArmies(int toRemove) {
         if(toRemove >= this.armies)
@@ -48,5 +49,13 @@ public class Territory {
     @Override
     public String toString() {
         return territory.toString();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if(other instanceof Territory)
+            return ((Territory)other).territory == this.territory;
+
+        return other instanceof Territories && other == this.territory;
     }
 }
