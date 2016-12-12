@@ -73,7 +73,7 @@ public enum Mission {
         this.Type = MissionType.Special;
     }
 
-    private enum MissionType {
+    public enum MissionType {
         Conquer,
         Destroy,
         Number,

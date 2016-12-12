@@ -100,17 +100,14 @@ public class UIHandler {
 
     public static void Reset() {
         mapPane = null;
-        endPhaseBtn = null;
-        newArmiesLabel = null;
         territories.clear();
         selectedQueue.clear();
         newArmies.set(0);
         goAhead.set(false);
-        CardsHandler = null;
     }
 
     /**
-     * Display UI controls to position new armies over user territories.
+     * Enable UI controls to position new armies over user territories.
      *
      * @param NewArmies New armies quantity
      * @return At the end of positioning returns updated territory message to send back to the server

@@ -187,6 +187,25 @@ public class Match extends MessageReceiver<MessageType> {
         return players.get(playersOrder.get(current + 1));
     }
 
+    private boolean checkMission(Player Player) {
+        final Mission mission = Player.getMission();
+        if(mission == null)
+            return false;
+
+        switch (mission.Type){
+            case Conquer:
+                break;
+            case Destroy:
+                break;
+            case Number:
+                break;
+            case Special:
+                break;
+        }
+
+        return false;
+    }
+
     /**
      * Implementation of a complete turn of game for a player
      */
@@ -196,7 +215,7 @@ public class Match extends MessageReceiver<MessageType> {
          */
         private final Player playing;
 
-        public Player getPlaying() { return this.playing; }
+        Player getPlaying() { return this.playing; }
 
         /**
          * Match where this turn is taking place
@@ -213,7 +232,7 @@ public class Match extends MessageReceiver<MessageType> {
          *
          * @param Message Message to add
          */
-        public void setIncoming(Message Message) {
+        void setIncoming(Message Message) {
             synchronized (incoming){
                 incoming.add(Message);
                 incoming.notify();
@@ -251,7 +270,7 @@ public class Match extends MessageReceiver<MessageType> {
         /**
          * Join turn thread
          */
-        public void endTurn() {
+        void endTurn() {
             try {
                 _instance.interrupt();
                 _instance.join();
@@ -519,7 +538,7 @@ public class Match extends MessageReceiver<MessageType> {
                 Battle(newAttack, defense);
 
                 // After each battle check if mission completed
-                if(Mission.Completed(playing)){
+                if(match.checkMission(playing)){
                     match.setIncoming(playing.id, MessageType.Turn, playing.id + "-Winner");
                 }
             }

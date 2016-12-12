@@ -130,6 +130,10 @@ public class CardsHandler {
      * @return Message containing combination played from the user
      */
     public Cards requestCombination() {
+        // If cards needed for combination are not present return empty list
+        if(container.getChildren().size() < 3)
+            return new Cards();
+
         redeemBtn.setDisable(false);
         cardsDialog.show();
 

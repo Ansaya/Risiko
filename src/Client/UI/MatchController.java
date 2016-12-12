@@ -163,7 +163,7 @@ public class MatchController implements Initializable {
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
         territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
 
-        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
+        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(rootItem);
 
