@@ -1,6 +1,7 @@
 package Game.Connection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Map packet
@@ -16,7 +17,7 @@ public class MapUpdate<T> {
         this.updated.addAll(Updated);
     }
 
-    public MapUpdate(T Updated) {
-        updated.add(Updated);
+    public MapUpdate(T... Updated) {
+        updated.addAll(Arrays.asList(Updated));
     }
 }

@@ -10,7 +10,7 @@ public class SpecialMoving<T> {
     public final T to;
 
     /**
-     * Server initializer. Calculate possible number of armies to be moved to newly conquered territory
+     * Server initializer. Calculate possible number of Armies to be moved to newly conquered Territory
      *
      * @param successfulBattle Successful attack made from the player
      */

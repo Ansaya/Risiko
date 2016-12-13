@@ -388,12 +388,12 @@ public class Match extends MessageReceiver<MessageType> {
             final Territory attacker = match.gameMap.territories.get(Battle.from.territory);
             final Territory defender = match.gameMap.territories.get(Battle.to.territory);
 
-            // Remove defeated armies from attacker
+            // Remove defeated Armies from attacker
             if(lostAtk > 0)
                 attacker.canRemoveArmies(lostAtk);
 
-            // Remove defeated armies from defender, else if cannot remove all armies from
-            // defender territory change ownership and add necessary armies
+            // Remove defeated Armies from defender, else if cannot remove all Armies from
+            // defender Territory change ownership and add necessary Armies
             if(!defender.canRemoveArmies(lostDef)) {
                 // If player has no more territories, notify defeat to match object
                 if(defender.owner.getTerritories().size() == 1)
@@ -401,27 +401,26 @@ public class Match extends MessageReceiver<MessageType> {
                                       MessageType.GameState,
                                       gson.toJson(new GameState<>(StateType.Defeated, defender.owner), MessageType.GameState.getType()));
 
-                // Update conquered territory information
+                // Update conquered Territory information
                 defender.owner = match.players.get(Battle.from.owner.id);
                 defender.addArmies(atkDice.size() - defDice.size());
             }
             /* Battle phase end */
 
             /* Update */
-            // Create map update after battle result
-            final ArrayList<Territory> result = new ArrayList<>();
-            result.add(attacker);
-            if(lostDef != 0)
-                result.add(defender);
+            // If attacker hasn't conquered the Territory or no Armies can be moved to it complete battle
+            if(lostAtk != 0 || attacker.getArmies() == 1) {
+                // Create map update after battle result
+                final MapUpdate<Territory> result = new MapUpdate<>(attacker);
+                if(lostDef != 0)
+                    result.updated.add(defender);
 
-            // Send update to all Players
-            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(result));
-
-            // If attacker hasn't conquered the territory or no armies can be moved to it complete battle
-            if(lostAtk != 0 || attacker.getArmies() == 1)
+                // Send update to all Players
+                match.sendAll(MessageType.MapUpdate, result);
                 return;
+            }
 
-            // Else if there are some armies which can be moved to new territory
+            // Else if there are some Armies which can be moved to new Territory
             // send special move to current player and wait for response
             playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(Battle));
             final SpecialMoving<Territory> update = waitMessage(MessageType.SpecialMoving, playing.id);
@@ -430,16 +429,16 @@ public class Match extends MessageReceiver<MessageType> {
             if(update.from == null)
                 return;
 
-            // Else if armies have been moved update game map
+            // Else if Armies have been moved update game map
             attacker.canRemoveArmies(update.to.newArmies);
             defender.addArmies(update.to.newArmies);
 
             // Send new placement to all Players
-            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(new ArrayList<>(Arrays.asList(attacker, defender))));
+            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(attacker, defender));
         }
 
         /**
-         * Takes care of initial armies distribution and territories choosing turns
+         * Takes care of initial Armies distribution and territories choosing turns
          */
         private void Setup(boolean twoOnly) {
             // Setup
@@ -460,7 +459,7 @@ public class Match extends MessageReceiver<MessageType> {
                // Send next player positioning message with one army
                (last = match.nextPlaying(last)).SendMessage(MessageType.Positioning, new Positioning(1));
 
-                // Get chosen territory
+                // Get chosen Territory
                 MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
 
                 // Update game map
@@ -476,7 +475,7 @@ public class Match extends MessageReceiver<MessageType> {
 
                 // At the end of the row chose one for ai if only two Players are in match
                 if(twoOnly && last.id == lastId){
-                    // Get random territory from remaining territories
+                    // Get random Territory from remaining territories
                     toUpdate = match.gameMap.territories.get(toGo.get((new Random()).nextInt(toGo.size())));
                     toUpdate.addArmies(3);
                     toUpdate.owner = ai;
@@ -485,16 +484,16 @@ public class Match extends MessageReceiver<MessageType> {
                 }
             }
 
-            /* armies displacement */
+            /* Armies displacement */
 
-            // Generate initial armies for each player
+            // Generate initial Armies for each player
             final int startingArmies = 50 - (5 * playersOrder.size());
 
-            // Send player initial armies
+            // Send player initial Armies
             playersOrder.forEach(pId -> {
                 Player p = match.players.get(pId);
 
-                // Calculate remaining armies to send                 (    total      -   already placed armies   )
+                // Calculate remaining Armies to send                 (    total      -   already placed Armies   )
                 p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
             });
 
@@ -519,13 +518,13 @@ public class Match extends MessageReceiver<MessageType> {
         @Override
         public void run() {
             /* Positioning phase */
-            // Ask for a card combination to get more armies
+            // Ask for a card combination to get more Armies
             playing.SendMessage(MessageType.Cards, new Cards());
 
-            // Calculate standard armies reinforcement
+            // Calculate standard Armies reinforcement
             int newArmies = (playing.getTerritories().size() / 3) >= 3 ? (playing.getTerritories().size() / 3) : 3;
 
-            // Extra armies due to continent ownership
+            // Extra Armies due to continent ownership
             newArmies += Continent.bonusArmies(playing.getTerritories());
 
             // Wait for Cards message to return from user
@@ -535,13 +534,13 @@ public class Match extends MessageReceiver<MessageType> {
             if(redeemed.combination.size() != 0)
                 newArmies += match.cards.isCombinationValid(true, redeemed.combination);
 
-            // Send new armies to player
+            // Send new Armies to player
             playing.SendMessage(MessageType.Positioning, new Positioning(newArmies));
 
-            // Wait to get new armies displacement over player's territories
+            // Wait to get new Armies displacement over player's territories
             final MapUpdate<Territory> newPlacement = waitMessage(MessageType.MapUpdate);
 
-            // Update armies number in game map
+            // Update Armies number in game map
             newPlacement.updated.forEach((t) -> match.gameMap.territories.get(t.territory).addArmies(t.newArmies));
 
             // Send update to all Players
@@ -559,11 +558,11 @@ public class Match extends MessageReceiver<MessageType> {
                 // Get attack message from player
                 Battle<Territory> newBattle = waitMessage(MessageType.Battle);
 
-                // If armies are zero end attack phase
+                // If Armies are zero end attack phase
                 if(newBattle.atkArmies == 0)
                     break;
 
-                // If more than one army is present on defender territory ask player how many he want to use
+                // If more than one army is present on defender Territory ask player how many he want to use
                 if(newBattle.to.getArmies() > 1) {
                     // Get defender player id
                     int defenderId = newBattle.to.owner.id;
@@ -588,7 +587,7 @@ public class Match extends MessageReceiver<MessageType> {
                 }
             }
 
-            // If player has conquered at least one new territory send him a card
+            // If player has conquered at least one new Territory send him a card
             if(beforeAtkTerritories < playing.getTerritories().size())
                 playing.SendMessage(MessageType.Cards, new Cards(match.cards.next()));
 

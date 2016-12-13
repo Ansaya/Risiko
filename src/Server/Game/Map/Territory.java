@@ -4,14 +4,14 @@ import Game.Map.Territories;
 import Server.Game.Player;
 
 /**
- * Instance of a territory on the map
+ * Instance of a Territory on the map
  */
 public class Territory {
 
     public final Territories territory;
 
     /**
-     * Armies placed on this territory
+     * Armies placed on this Territory
      */
     private volatile int armies = 0;
 
@@ -26,17 +26,17 @@ public class Territory {
     }
 
     /**
-     * Add armies to this territory
+     * Add Armies to this Territory
      *
-     * @param toAdd armies to add
+     * @param toAdd Armies to add
      */
     public void addArmies(int toAdd) { armies += toAdd; }
 
     /**
-     * Removes armies from this territory if is possible
+     * Removes Armies from this Territory if is possible
      *
-     * @param toRemove armies to remove
-     * @return True if armies have been removed, false if cannot remove requested number of armies
+     * @param toRemove Armies to remove
+     * @return True if Armies have been removed, false if cannot remove requested number of Armies
      */
     public boolean canRemoveArmies(int toRemove) {
         if(toRemove >= this.armies)

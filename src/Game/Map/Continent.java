@@ -31,10 +31,10 @@ public enum Continent {
     }
 
     /**
-     * Check if passed territories list contains complete continent to assign bonus armies
+     * Check if passed territories list contains complete continent to assign bonus Armies
      *
      * @param Territories Player's territories
-     * @return int Bonus armies to be assigned
+     * @return int Bonus Armies to be assigned
      */
     public static int bonusArmies(ArrayList<Territory> Territories) {
 
@@ -43,7 +43,7 @@ public enum Continent {
 
         int bonus = 0;
 
-        // If complete continents are present, assign bonus armies
+        // If complete continents are present, assign bonus Armies
         for (Continent c: dominated) {
             switch (c){
                 case NorthAmerica:
@@ -81,7 +81,7 @@ public enum Continent {
     public static ArrayList<Continent> dominatedContinents(ArrayList<Territory> Territories) {
         int nordAmerica = 0, sudAmerica = 0, europa = 0, africa = 0, asia = 0, australia = 0;
 
-        // Increment continent counter for each territory in the array
+        // Increment continent counter for each Territory in the array
         for (Territory t: Territories) {
             switch (t.territory.continent){
                 case NorthAmerica:

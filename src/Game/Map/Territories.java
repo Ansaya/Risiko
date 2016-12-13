@@ -151,7 +151,7 @@ public enum Territories {
     }
 
     /**
-     * Check if this and the passed territory are adjacent
+     * Check if this and the passed Territory are adjacent
      *
      * @param Territories Territories to check adjoining with
      * @return True if the two territories are adjacent, false otherwise.

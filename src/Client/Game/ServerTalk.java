@@ -190,6 +190,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             System.out.println("ServerTalk: Match message: " + message.Json);
             final Match<ObservableUser> match = gson.fromJson(message.Json, MessageType.Match.getType());
 
+            UIHandler.Mission = match.Mission;
+
             // Launch match screen
             Platform.runLater(() -> {
                 Main.toMatch();
@@ -203,9 +205,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 synchronized (match) {
                     match.wait();
                 }
-            } catch (InterruptedException e) {}
-
-            UIHandler.Mission = match.Mission;
+            } catch (Exception e) {}
 
             System.out.println("ServerTalk: Match screen loaded and chat field updated.");
 
@@ -230,21 +230,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         // Handler for map updates
         messageHandlers.put(MessageType.MapUpdate, (message) -> {
             System.out.println("ServerTalk: MapUpdate message: " + message.Json);
-            final MapUpdate<ObservableTerritory> update = gson.fromJson(message.Json, MessageType.MapUpdate.getType());
-
-            Platform.runLater(() -> {
-                 /* Update each territory with new information */
-                update.updated.forEach((u) -> {
-                    synchronized (UIHandler.territories) {
-                        ObservableTerritory t = UIHandler.territories.get(u.territory);
-                        t.armies.set(u.armies.get());
-                        t.newArmies.set(0);
-                        if (!u.getOwner().equals(t.getOwner()))
-                            t.setOwner(u.getOwner());
-                    }
-                });
-            });
-
+            UIHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType()));
         });
 
         // Handler for card messages
@@ -264,34 +250,30 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             }
 
             // Else ask user to play a combination of cards
-            final Cards response = UIHandler.CardsHandler.requestCombination();
-
             // Return response to server
-            SendMessage(MessageType.Cards, response);
+            SendMessage(MessageType.Cards, UIHandler.CardsHandler.requestCombination());
         });
 
-        // Handler for attacked territory
+        // Handler for attacked Territory
         messageHandlers.put(MessageType.Battle, (message) -> {
             System.out.println("ServerTalk: Battle message: " + message.Json);
             final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());
 
             if(battle.from == null){
-                // Start battle phase
+                UIHandler.attackPhase();
                 return;
             }
 
             // Else player is under attack
-            // Request defense armies to player and update message
-            battle.defArmies = UIHandler.territories.get(battle.to.territory).requestDefense(battle);
-
+            // Request defense Armies to player and update message
             // Send response to server
-            SendMessage(MessageType.Battle, battle);
+            SendMessage(MessageType.Battle, UIHandler.requestDefense(battle));
         });
 
         // Handler for special move
         messageHandlers.put(MessageType.SpecialMoving, (message) -> {
             System.out.println("ServerTalk: Special moving message: " + message.Json);
-            // Request user to move armies and send response to server
+            // Request user to move Armies and send response to server
             SendMessage(MessageType.SpecialMoving, UIHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
         });
 

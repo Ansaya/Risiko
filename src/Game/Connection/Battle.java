@@ -6,17 +6,17 @@ package Game.Connection;
 public class Battle<T> {
 
     /**
-     * Attacked territory
+     * Attacked Territory
      */
     public final T to;
 
     /**
-     * Attacker territory
+     * Attacker Territory
      */
     public final T from;
 
     /**
-     * Attacking armies number
+     * Attacking Armies number
      */
     public final int atkArmies;
 

@@ -19,7 +19,7 @@ public class DeckTerritory implements Deck<Territories> {
     private ArrayList<Territories> deck;
 
     /**
-     * Current bonus armies counter
+     * Current bonus Armies counter
      */
     private final AtomicInteger bonus = new AtomicInteger(4);
 
@@ -60,7 +60,7 @@ public class DeckTerritory implements Deck<Territories> {
      *
      * @param use If combination is redeemed push cards to the bottom of current deck
      * @param Cards Three cards list
-     * @return Number of bonus armies if combination is valid, zero otherwise
+     * @return Number of bonus Armies if combination is valid, zero otherwise
      */
     public int isCombinationValid(boolean use, ArrayList<Territories> Cards) {
         if(!Card.isCombinationValid(Cards))
@@ -71,7 +71,7 @@ public class DeckTerritory implements Deck<Territories> {
             // If player redeems combination
             if(use) {
 
-                // Increment bonus armies by 2 till 12 then from 15 by 5 each time
+                // Increment bonus Armies by 2 till 12 then from 15 by 5 each time
                 if(bonus.get() < 12)
                     bonus.getAndAdd(2);
                 else {
