@@ -121,18 +121,53 @@ public class ObservableTerritory {
 
             // If moving armies between territories perform special actions
             if(isMoving){
-                if(isRightClick){
+                if(isRightClick){ // Remove army
+                    // If no army can be moved return
+                    if(armies.get() == 1)
+                        return;
 
+                    // If armies owner is null set this territory as owner
+                    if(UIHandler.newArmiesOwner == null)
+                        UIHandler.newArmiesOwner = territory;
+
+                    // If user moves armies from different territories notify error
+                    if(UIHandler.newArmiesOwner != territory){
+                        Main.showDialog("Moving error", "You can move armies from one territory only.", "Continue");
+                        return;
+                    }
+
+                    // Else perform movement
+                    synchronized (armies){
+                        armies.set(armies.subtract(1).get());
+                    }
+                    UIHandler.addNewArmy();
                 }
-                else {
+                else {  // Add army
+                    // If no armies can be moved return
+                    if(UIHandler.getNewArmies() == 0)
+                        return;
 
+                    // If user is moving armies to non adjacent territory notify error
+                    if(!territory.isAdjacent(UIHandler.newArmiesOwner)){
+                        Main.showDialog("Moving error", "You can move armies between adjacent territories only.", "Continue");
+                        return;
+                    }
+
+                    // Else perform movement
+                    synchronized (newArmies){
+                        newArmies.set(newArmies.add(UIHandler.removeNewArmy()).get());
+                    }
+
+                    // If all armies are moved back to owner territory, reset newArmiesOwner
+                    if(UIHandler.getNewArmies() == 0 && UIHandler.newArmiesOwner == territory)
+                        UIHandler.newArmiesOwner = null;
                 }
                 return; // Return after completion
             }
 
             // Else if positioning armies at the beginning of turn perform normal positioning
             if(isRightClick){
-                System.out.println("User want to remove an army from " + this.svgTerritory.getId());
+                System.out.println("User want to remove an army from " + territory.toString());
 
                 // Check if new armies have been placed on this territory, then remove one
                 if(newArmies.get() > 0) {
@@ -140,30 +175,22 @@ public class ObservableTerritory {
                         newArmies.set(newArmies.subtract(1).get());
                     }
 
-                    synchronized (UIHandler.newArmies) {
-                        UIHandler.newArmies.set(UIHandler.newArmies.add(1).get());
-                    }
+                    UIHandler.addNewArmy();
                 }
             }
             else {
-                System.out.println("User want to add an army to " + this.svgTerritory.getId());
+                System.out.println("User want to add an army to " + territory.toString());
 
-                // Check if new armies are there, then add one
-                if(UIHandler.newArmies.get() > 0){
-                    synchronized (UIHandler.newArmies) {
-                        UIHandler.newArmies.set(UIHandler.newArmies.subtract(1).get());
-                    }
+                // If new army is available UIHandler.removeNewArmy() returns 1 else 0
+                synchronized (newArmies) {
+                    newArmies.set(newArmies.add(UIHandler.removeNewArmy()).get());
+                }
 
-                    synchronized (newArmies) {
-                        newArmies.set(newArmies.add(1).get());
-                    }
-
-                    // If owner is null then we are in setup phase, so end phase after choice
-                    if(this.owner == null) {
-                        setOwner(ServerTalk.getInstance().getUser());
-                        synchronized (UIHandler.goAhead){
-                            UIHandler.goAhead.notify();
-                        }
+                // If owner is null then we are in setup phase, so update owner and end phase after choice
+                if(newArmies.get() != 0 && this.owner == null) {
+                    setOwner(ServerTalk.getInstance().getUser());
+                    synchronized (UIHandler.goAhead){
+                        UIHandler.goAhead.notify();
                     }
                 }
             }
@@ -186,7 +213,7 @@ public class ObservableTerritory {
         currentNode.setMouseTransparent(true);
 
         // Add event handler for selection
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> UIHandler.selected(territory));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> UIHandler.selected(this, evt.getButton().equals(MouseButton.SECONDARY)));
 
         Platform.runLater(() -> {
             UIHandler.mapPane.getChildren().addAll(svgTerritory, currentNode);

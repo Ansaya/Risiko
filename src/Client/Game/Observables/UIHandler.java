@@ -3,6 +3,7 @@ package Client.Game.Observables;
 import Client.Main;
 import Client.Game.ServerTalk;
 import Game.Connection.MapUpdate;
+import Game.Connection.SpecialMoving;
 import Game.Map.Mission;
 import Game.Map.Territories;
 import javafx.application.Platform;
@@ -40,6 +41,8 @@ public class UIHandler {
             synchronized (goAhead){
                 goAhead.notify();
             }
+
+            endPhase();
         });
         endPhaseBtn.setDisable(true);
     }
@@ -65,21 +68,81 @@ public class UIHandler {
      */
     public static final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
 
-    private static final ArrayList<Territories> selectedQueue = new ArrayList<>();
+    private static volatile boolean canSelect = false;
+
+    private static final ArrayList<SelectedTerritory> selectedQueue = new ArrayList<>();
+
+    static void selected(ObservableTerritory Selected, boolean IsRightClick) {
+        if(!canSelect)
+            return;
+
+        synchronized (selectedQueue) {
+            selectedQueue.add(new SelectedTerritory(Selected, IsRightClick));
+            selectedQueue.notify();
+        }
+    }
+
+    private static SelectedTerritory waitSelected(){
+        synchronized (selectedQueue){
+            try {
+                selectedQueue.wait();
+            } catch (Exception e) {
+                System.err.println("UIHandler: Interrupted exception");
+                return null;
+            }
+        }
+
+        if(selectedQueue.isEmpty())
+            return null;
+
+        return selectedQueue.remove(0);
+    }
+
+    private static SelectedTerritory waitSelected(ObservableUser Owner) {
+        SelectedTerritory st;
+        while ((st = waitSelected())  != null){
+            if(st.Selected.getOwner() == Owner)
+                return st;
+        }
+
+        return null;
+    }
+
+    private static void endPhase() {
+        synchronized (selectedQueue){
+            selectedQueue.notify();
+        }
+    }
 
     public static final AtomicBoolean goAhead = new AtomicBoolean(false);
 
     /**
      * Global counter for armies to be displaced
      */
-    static final IntegerProperty newArmies = new SimpleIntegerProperty(0);
+    private static final IntegerProperty newArmies = new SimpleIntegerProperty(0);
 
-    static void selected(Territories Selected) {
-        synchronized (selectedQueue) {
-            selectedQueue.add(Selected);
-            selectedQueue.notify();
+    static int getNewArmies() {
+        return newArmies.get();
+    }
+
+    static void addNewArmy() {
+        synchronized (newArmies){
+            newArmies.set(newArmies.add(1).get());
         }
     }
+
+    static int removeNewArmy() {
+        if(newArmies.get() == 0)
+            return 0;
+
+        synchronized (newArmies){
+            newArmies.set(newArmies.subtract(1).get());
+        }
+
+        return 1;
+    }
+
+    static volatile Territories newArmiesOwner;
 
     public static void Init(Pane MapPane, ArrayList<Label> Labels) {
         mapPane = MapPane;
@@ -119,6 +182,7 @@ public class UIHandler {
 
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
+            endPhaseBtn.setText("End displacement");
             newArmiesLabel.setVisible(true);
             newArmies.set(NewArmies);
         });
@@ -126,31 +190,22 @@ public class UIHandler {
         // Display positioning controls only for territories owned from current user
         final ObservableUser current = ServerTalk.getInstance().getUser();
 
-        // If is setup phase user can choose all territories
-        if(NewArmies <= 1){
-            territories.forEach((territory, obTerritory) -> {
-                if(obTerritory.getOwner() == null)
-                    obTerritory.positioningControls(Enabled);
-            });
-        }
-        else { //Else armies can be placed only in owned territories
-            territories.forEach((territory, obTerritory) -> {
-                if (obTerritory.getOwner().equals(current))
-                    obTerritory.positioningControls(Enabled);
-            });
-        }
-
         Main.showDialog("Positioning message", "You have " + NewArmies + " new armies to place.", "Start displacement");
 
-        // Wait till UI send notification of displacement completed
-        synchronized (goAhead){
-            try {
-                goAhead.wait();
-            } catch (Exception e) {
-                System.err.println("UIHandler: Interrupted exception");
-                return null;
-            }
+        while (true){
+            SelectedTerritory st;
+            if(NewArmies == 1)
+                st = waitSelected(null);
+            else
+                st = waitSelected(current);
+
+            if(st == null)
+                break;
+
+            // Do something
+
         }
+
 
         // Disable button and remove armies label
         endPhaseBtn.setDisable(true);
@@ -169,5 +224,63 @@ public class UIHandler {
 
         // Return update message to be sent back to the server
         return new MapUpdate<>(updated);
+    }
+
+    /**
+     * Enable positioning controls to let the user move armies to newly conquered territory from attacking territory
+     *
+     * @param SpecialMoving SpecialMoving message revceived from server
+     * @return Response message with updated displacement to send back to server
+     */
+    public static SpecialMoving<ObservableTerritory> specialMoving(SpecialMoving<ObservableTerritory> SpecialMoving) {
+        // Enable end phase button
+        Platform.runLater(() -> {
+            endPhaseBtn.setDisable(false);
+            endPhaseBtn.setText("Continue");
+        });
+
+        final ObservableTerritory from = territories.get(SpecialMoving.from.territory);
+        final ObservableTerritory to = territories.get(SpecialMoving.to.territory);
+
+        // Set armies in attacking territory as new armies to enable moving
+        synchronized (from.armies){
+            final int temp = from.armies.get();
+            from.armies.set(1);
+            synchronized (from.newArmies){
+                from.newArmies.set(temp - 1);
+            }
+        }
+
+        // Enable moving controls in from/to territory
+        from.positioningControls(Enabled);
+        to.positioningControls(Enabled);
+
+        // Wait for user to complete moves
+        synchronized (goAhead){
+            try {
+                goAhead.wait();
+            } catch (Exception e) {}
+        }
+
+        from.positioningControls(Disabled);
+        to.positioningControls(Disabled);
+
+        // If user has not moved armies return null response
+        if(from.newArmies.get() == 0)
+            return new SpecialMoving<>(null, null);
+
+        // Else return new displacement
+        return new SpecialMoving<>(from, to);
+    }
+
+    private static class SelectedTerritory {
+        final boolean IsRightClick;
+
+        final ObservableTerritory Selected;
+
+        SelectedTerritory(ObservableTerritory Selected, boolean IsRightClick){
+            this.IsRightClick = IsRightClick;
+            this.Selected = Selected;
+        }
     }
 }

@@ -224,9 +224,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             System.out.println("ServerTalk: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
 
-            final MapUpdate<ObservableTerritory> update = UIHandler.positionArmies(pos.newArmies);
-
-            SendMessage(MessageType.MapUpdate, update);
+            SendMessage(MessageType.MapUpdate, UIHandler.positionArmies(pos.newArmies));
         });
 
         // Handler for map updates
@@ -262,8 +260,6 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 Main.showDialog("Territories cards",
                                   "You received " + cards.combination.get(0).name() + " card!",
                                 "Continue");
-
-                //Implement final move
                 return;
             }
 
@@ -295,9 +291,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         // Handler for special move
         messageHandlers.put(MessageType.SpecialMoving, (message) -> {
             System.out.println("ServerTalk: Special moving message: " + message.Json);
-            final SpecialMoving<ObservableTerritory> sMoving = gson.fromJson(message.Json, MessageType.SpecialMoving.getType());
-
-            // Implement special moving request
+            // Request user to move armies and send response to server
+            SendMessage(MessageType.SpecialMoving, UIHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
         });
 
         // Handler for game state changes
