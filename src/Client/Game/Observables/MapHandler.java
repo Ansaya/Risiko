@@ -160,7 +160,7 @@ public class MapHandler {
                 ObservableTerritory t = territories.get(u.Territory);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
-                if (!u.getOwner().equals(t.getOwner()))
+                if (!t.getOwner().equals(u.getOwner()))
                     t.setOwner(u.getOwner());
             }
         });

@@ -88,7 +88,7 @@ public enum Territories {
 
         // Afirca
         Congo.Init(EastAfrica, NorthAfrica, SouthAfrica);
-        EastAfrica.Init(Congo, Egypt, Madagascar, SouthAfrica, MiddleEast);
+        EastAfrica.Init(Congo, Egypt, Madagascar, SouthAfrica, MiddleEast, NorthAfrica);
         Egypt.Init(Congo, EastAfrica, NorthAfrica, SouthernEurope, MiddleEast);
         Madagascar.Init(EastAfrica, SouthAfrica);
         NorthAfrica.Init(Congo, EastAfrica, Egypt, SouthernEurope, WesternEurope, Brazil);
