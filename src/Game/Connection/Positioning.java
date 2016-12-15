@@ -8,7 +8,7 @@ public class Positioning {
     public final int newArmies;
 
     /**
-     * Server initializer. Specify new Armies to be placed
+     * Server initializer. Specify new Armies To be placed
      *
      * @param NewArmies Number of new Armies
      */

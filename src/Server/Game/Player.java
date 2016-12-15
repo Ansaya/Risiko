@@ -6,7 +6,6 @@ import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Game.Map.Mission;
 import Server.Game.Map.Territory;
-import com.google.gson.Gson;
 import javafx.application.Platform;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Player relative to a match
+ * Player relative To a match
  */
 public class Player extends SocketHandler {
 
@@ -24,7 +23,7 @@ public class Player extends SocketHandler {
     public final int id;
 
     /**
-     * Username choose from
+     * Username choose From
      */
     public final String username;
 
@@ -57,7 +56,7 @@ public class Player extends SocketHandler {
     public ArrayList<Territory> getTerritories() { return territories; }
 
     /**
-     * Player's mission
+     * Player's Mission
      */
     private transient volatile Mission mission;
 
@@ -103,7 +102,7 @@ public class Player extends SocketHandler {
             try {
                 while ((incoming = receive.readLine()) != null) {
 
-                    // Connection closing requested from client
+                    // Connection closing requested From client
                     if(incoming.equals("End")){
                         Platform.runLater(() -> closeConnection(false));
                         return;
@@ -122,8 +121,12 @@ public class Player extends SocketHandler {
             }catch (Exception e){
                 // Handle loss of connection
                 System.err.println("Player-" + id + ": Connection lost");
+                break;
             }
         }
+
+        if(listen)
+            Platform.runLater(() -> closeConnection(false));
     }
 
     /**
@@ -146,7 +149,7 @@ public class Player extends SocketHandler {
     }
 
     /**
-     * Setup player to participate a match
+     * Setup player To participate a match
      *
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
@@ -161,7 +164,7 @@ public class Player extends SocketHandler {
     }
 
     /**
-     * Setup player to witness a running match
+     * Setup player To witness a running match
      *
      * @param MatchId Match id the player is watching
      */
@@ -171,7 +174,7 @@ public class Player extends SocketHandler {
     }
 
     /**
-     * Reset match fields and bring player back to lobby
+     * Reset match fields and bring player back To lobby
      */
     synchronized void exitMatch() {
         matchId.set(-1);
@@ -179,37 +182,6 @@ public class Player extends SocketHandler {
         color = null;
         territories = new ArrayList<>();
         mission = null;
-    }
-
-    /**
-     * Send a message to the client
-     *
-     * @param Type Type of message
-     * @param MessageObj Object of specified type
-     */
-    protected void SendMessage(MessageType Type, Object MessageObj) {
-
-        // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
-
-        synchronized (send) {
-            send.println(packet);
-        }
-
-        System.out.println("Player-" + id + ": Sent -> " + packet);
-    }
-
-    /**
-     * Send passed string directly
-     *
-     * @param packet String to send to the client
-     */
-    protected void RouteMessage(String packet) {
-        synchronized (send) {
-            send.println(packet);
-        }
-
-        System.out.println("Player-" + id + ": Sent -> " + packet);
     }
 
     @Override

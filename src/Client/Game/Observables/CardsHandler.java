@@ -12,11 +12,12 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 
 import java.util.ArrayList;
 
@@ -30,7 +31,9 @@ public class CardsHandler {
      */
     private final JFXDialog cardsDialog = new JFXDialog();
 
-    public JFXDialog getCardsDialog() { return cardsDialog; }
+    public void setCardsButton(Button CardsBtn) {
+        CardsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(cardsDialog));
+    }
 
     /**
      * Cards container
@@ -47,7 +50,7 @@ public class CardsHandler {
      */
     private final ArrayList<Territories> selected = new ArrayList<>();
 
-    public CardsHandler(StackPane DialogContainer) {
+    public CardsHandler() {
 
         /* Container setup */
         container.setSpacing(15.0f);
@@ -79,6 +82,7 @@ public class CardsHandler {
             synchronized (selected){
                 selected.notify();
             }
+            cardsDialog.close();
         });
         redeemBtn.setDisable(true);
 
@@ -89,17 +93,17 @@ public class CardsHandler {
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
         cardsDialog.setContent(dl);
-
-        if(Platform.isFxApplicationThread())
-            cardsDialog.setDialogContainer(DialogContainer);
-        else
-            Platform.runLater(() -> cardsDialog.setDialogContainer(DialogContainer));
+        cardsDialog.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, evt -> {
+            synchronized (selected){
+                selected.notify();
+            }
+        });
     }
 
     /**
      * Initialize card object
      *
-     * @param Territory Territory to use for card initialization
+     * @param Territory Territory To use for card initialization
      * @return Initialized card
      */
     private AnchorPane getCard(Territories Territory) {
@@ -125,17 +129,19 @@ public class CardsHandler {
     }
 
     /**
-     * Ask the user to play a combination
+     * Ask the user To play a combination
      *
-     * @return Message containing combination played from the user
+     * @return Message containing combination played From the user
      */
     public Cards requestCombination() {
         // If cards needed for combination are not present return empty list
         if(container.getChildren().size() < 3)
             return new Cards();
 
-        redeemBtn.setDisable(false);
-        cardsDialog.show();
+        Platform.runLater(() -> {
+            redeemBtn.setDisable(false);
+            Main.showDialog(cardsDialog);
+        });
 
         synchronized (selected) {
             try {
@@ -156,7 +162,7 @@ public class CardsHandler {
                                                       " - three infantry, cavalry or artillery\n" +
                                                       " - two infantry, cavalry, or artillery and one jolly\n" +
                                                       " - one infantry, one cavalry and one artillery\n" +
-                                                      "If you have five cards you must select a combination to redeem.",
+                                                      "If you have five cards you must select a combination To redeem.",
                          "Continue");
 
         synchronized (Main.dialogClosed){
@@ -170,11 +176,16 @@ public class CardsHandler {
     }
 
     /**
-     * Add new card to the list
+     * Add new card To the list
      *
-     * @param Territory Territory relative to the card to add
+     * @param Territory Territory relative To the card To add
      */
     public void addCard(Territories Territory) {
+        if(!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> addCard(Territory));
+            return;
+        }
+
         container.getChildren().add(getCard(Territory));
     }
 }

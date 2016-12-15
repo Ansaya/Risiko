@@ -1,9 +1,8 @@
 package Client.UI;
 
+import Client.Game.GameController;
 import Client.Main;
 import Client.Game.Observables.ObservableUser;
-import Client.Game.ServerTalk;
-import Game.Connection.Chat;
 import Game.Connection.Match;
 import Client.Game.Connection.MessageType;
 import com.jfoenix.controls.*;
@@ -27,60 +26,56 @@ import java.util.ResourceBundle;
 public class LobbyController implements Initializable {
 
     @FXML
-    protected Button matchBtn;
+    private Button matchBtn;
 
-    private ServerTalk server = ServerTalk.getInstance();
-
-    @FXML
-    protected JFXTreeTableView<ObservableUser> lobbyTable;
+    private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
 
     @FXML
-    protected TreeTableColumn<ObservableUser, Integer> idColumn;
+    private JFXTreeTableView<ObservableUser> lobbyTable;
 
     @FXML
-    protected TreeTableColumn<ObservableUser, String> usernameColumn;
+    private TreeTableColumn<ObservableUser, Integer> idColumn;
 
     @FXML
-    protected Label lobbyCount;
+    private TreeTableColumn<ObservableUser, String> usernameColumn;
 
     @FXML
-    protected JFXTextField searchField;
+    private Label lobbyCount;
 
     @FXML
-    protected JFXButton deselectAllBtn;
+    private JFXTextField searchField;
+
+    @FXML
+    private JFXButton deselectAllBtn;
 
     /* Chat fields */
     @FXML
-    protected ScrollPane chatSP;
+    private ScrollPane chatSP;
 
     @FXML
-    protected VBox chatContainer;
+    private VBox chatContainer;
 
     @FXML
-    protected TextField chatMessage;
+    private TextField chatMessage;
 
     @FXML
-    protected Button chatSendBtn;
+    private Button chatSendBtn;
 
     @FXML
-    protected JFXBadge chatBadge;
+    private JFXBadge chatBadge;
 
     /**
      * Lambda for chat message sending
      */
     private EventHandler sendMessage = (evt) -> {
         if(!chatMessage.getText().trim().equals(""))
-            server.SendMessage(MessageType.Chat, new Chat<>(server.getUser(), chatMessage.getText().trim()));
+            GameController.getInstance().SendChat(chatMessage.getText().trim());
 
         chatMessage.clear();
     };
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        /* Chat setup */
-        this.server.setChatUpdate(chatSP, chatContainer);
-        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
-        chatMessage.setOnAction(sendMessage);
 
         matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
             // Get selected users
@@ -93,34 +88,38 @@ public class LobbyController implements Initializable {
             }
 
             // Populate user list for the match
-            ArrayList<ObservableUser> players = new ArrayList<>();
+            final ArrayList<ObservableUser> players = new ArrayList<>();
             selected.forEach((t) -> players.add(t.getValue()));
-            players.add(server.getUser());
+            players.add(GameController.getInstance().getUser());
 
             // Send match request to the server
-            server.SendMessage(MessageType.Match, new Match<>(players));
+            GameController.getInstance().SendMessage(MessageType.Match, new Match<>(players));
 
-            // ServerTalk will open match view when match confirmation is received from the server
+            // GameController will open match view when match confirmation is received from the server
         });
 
         /* Lobby view setup */
         idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
 
-        final RecursiveTreeItem<ObservableUser> rootItem = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
         lobbyTable.getColumns().setAll(idColumn, usernameColumn);
-        lobbyTable.setRoot(rootItem);
+        lobbyTable.setRoot(usersRoot);
         lobbyTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         // Bind user counter
-        rootItem.getChildren().addListener((ListChangeListener.Change<? extends TreeItem<ObservableUser>> c) -> lobbyCount.setText("( " + rootItem.getChildren().size() + " )"));
+        usersRoot.getChildren().addListener((ListChangeListener.Change<? extends TreeItem<ObservableUser>> c) -> lobbyCount.setText("( " + usersRoot.getChildren().size() + " )"));
 
         // Bind search field
         searchField.textProperty().addListener((o,oldVal,newVal)-> {
             System.out.println("Search: " + newVal);
-            rootItem.setPredicate((u) -> (u.getValue().id.get()+"").contains(newVal) || u.getValue().username.get().contains(newVal));
+            usersRoot.setPredicate((u) -> (u.getValue().id.get()+"").contains(newVal) || u.getValue().username.get().contains(newVal));
         });
+    }
 
-        this.server.setUsersUpdate(rootItem.getChildren());
+    public void setGameController() {
+        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
+        chatMessage.setOnAction(sendMessage);
+        GameController.getInstance().setChatUpdate(chatSP, chatContainer);
+        GameController.getInstance().setUsersUpdate(usersRoot.getChildren());
     }
 }

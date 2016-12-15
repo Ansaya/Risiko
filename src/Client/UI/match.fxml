@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane fx:id="parent" minHeight="600.0" minWidth="1067.0" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.MatchController">
+<StackPane minHeight="600.0" minWidth="1067.0" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.MatchController">
     <AnchorPane>
 
         <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="360.0" AnchorPane.topAnchor="10.0">
@@ -243,7 +243,7 @@
                </columns></JFXTreeTableView>
             <HBox fillHeight="false" prefHeight="40.0" prefWidth="200.0" spacing="20.0" VBox.vgrow="NEVER">
                <children>
-                  <JFXButton fx:id="endTurnBtn" buttonType="RAISED" prefWidth="125.0" ripplerFill="#da0000" style="-fx-background-color: red;" text="End Turn">
+                  <JFXButton fx:id="endTurnBtn" buttonType="RAISED" ripplerFill="#da0000" style="-fx-background-color: red;" text="End Turn">
                      <font>
                         <Font name="Trebuchet MS" size="14.0" />
                      </font>
@@ -253,7 +253,7 @@
                   </JFXButton>
                   <Label fx:id="newArmiesLabel" alignment="CENTER" prefHeight="25.0" text="Available armies: ">
                      <font>
-                        <Font name="Trebuchet MS" size="18.0" />
+                        <Font name="Trebuchet MS" size="16.0" />
                      </font>
                   </Label>
                </children>

@@ -1,5 +1,6 @@
 package Server.Game;
 
+import Server.Game.Connection.MessageType;
 import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,6 +33,8 @@ public abstract class SocketHandler implements Runnable {
      */
     final transient Gson gson = new Gson();
 
+    private final transient String name;
+
     /**
      * To be used in run() method
      */
@@ -49,6 +52,7 @@ public abstract class SocketHandler implements Runnable {
      */
     SocketHandler(Socket Connection, String Name) {
         this.connection = Connection;
+        this.name = Name;
 
         BufferedReader br = null;
         PrintWriter pw = null;
@@ -66,12 +70,13 @@ public abstract class SocketHandler implements Runnable {
         this.listen = true;
         _instance = new Thread(this);
         if(Name != null)
-            _instance.setName(Name);
+            _instance.setName(name);
         _instance.start();
     }
 
     SocketHandler() {
         connection = null;
+        name = null;
         receive = null;
         send = null;
         _instance = null;
@@ -90,4 +95,35 @@ public abstract class SocketHandler implements Runnable {
 
     @Override
     public abstract void run();
+
+    /**
+     * Send a message To the client
+     *
+     * @param Type Type of message
+     * @param MessageObj Object of specified type
+     */
+    protected void SendMessage(MessageType Type, Object MessageObj) {
+
+        // Build packet string as MessageType-SerializedObject
+        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
+
+        synchronized (send) {
+            send.println(packet);
+        }
+
+        System.out.println(name + ": Sent -> " + packet);
+    }
+
+    /**
+     * Send passed string directly
+     *
+     * @param packet String To send To the client
+     */
+    protected void RouteMessage(String packet) {
+        synchronized (send) {
+            send.println(packet);
+        }
+
+        System.out.println(name + ": Sent -> " + packet);
+    }
 }

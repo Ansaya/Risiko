@@ -4,17 +4,16 @@
     -fx-scale-shape: false;
 }
 
-.territory {
-    -fx-stroke: black;
-    -fx-stroke-width: 1px;
-}
-
-.territory:hover {
-    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.25), 50, 1.0, 0, 0);
-}
-
 .selected {
-    -fx-effect: innershadow(gaussian, rgba(245, 115, 0, 0.54), 4, 1.0, 0, 0);
+    -fx-effect: innershadow(gaussian, rgba(245, 115, 0, 0.55), 5, 1.0, 0, 0);
+}
+
+.selected-atk {
+    -fx-effect: innershadow(gaussian, rgba(245, 58, 0, 0.55), 5, 1.0, 0, 0);
+}
+
+.selected-def {
+    -fx-effect: innershadow(gaussian, rgba(0, 61, 255, 0.55), 5, 1.0, 0, 0);
 }
 
 .card-selected {
@@ -34,16 +33,16 @@
     -fx-background-color:#44B449;
 }
 
-.animated-option-button-* {
+.animated-option-button* {
     -fx-font-size: 10px;
     -fx-font-weight: bold;
     -fx-font-family: Trebuchet MS;
     -fx-pref-width:35px;
     -fx-background-radius:17.5px;
     -fx-pref-height:35px;
-    -fx-text-fill:white shadow(gaussian, rgba(0,0,0,0.25), 4, 1.0, 0, 0);
+    -fx-text-fill:white shadow(gaussian, rgba(0,0,0,0.20), 3, 1.0, 0, 0);
     -fx-border-color:WHITE;
-    -fx-border-radius: 15px;
+    -fx-border-radius: 17.5px;
     -fx-border-width: 2px;
 }
 

@@ -7,7 +7,7 @@ import java.util.Arrays;
 import static Game.Map.Territories.*;
 
 /**
- * Continents' list from earth map
+ * Continents' list From earth map
  */
 public enum Continent {
     NorthAmerica("#d0ad00", Alaska, Alberta, CentralAmerica, WesternUnitedStates, Greenland, NorthwestTerritory, Ontario, Quebec, EasternUnitedStates),
@@ -31,10 +31,10 @@ public enum Continent {
     }
 
     /**
-     * Check if passed territories list contains complete continent to assign bonus Armies
+     * Check if passed territories list contains complete continent To assign bonus Armies
      *
      * @param Territories Player's territories
-     * @return int Bonus Armies to be assigned
+     * @return int Bonus Armies To be assigned
      */
     public static int bonusArmies(ArrayList<Territory> Territories) {
 
@@ -83,7 +83,7 @@ public enum Continent {
 
         // Increment continent counter for each Territory in the array
         for (Territory t: Territories) {
-            switch (t.territory.continent){
+            switch (t.Territory.continent){
                 case NorthAmerica:
                     nordAmerica++;
                     break;
@@ -109,7 +109,7 @@ public enum Continent {
 
         ArrayList<Continent> dominated = new ArrayList<>();
 
-        // If all territories are present add continent to the output array
+        // If all territories are present add continent To the output array
         if(nordAmerica == 9)
             dominated.add(NorthAmerica);
         if (sudAmerica == 4)

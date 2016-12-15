@@ -5,22 +5,18 @@ package Game.Connection;
  */
 public class SpecialMoving<T> {
 
-    public final T from;
+    public final T From;
 
-    public final T to;
+    public final T To;
 
     /**
-     * Server initializer. Calculate possible number of Armies to be moved to newly conquered Territory
+     * Send updated armies after battle to ask user to move other armies to new territory
      *
-     * @param successfulBattle Successful attack made from the player
+     * @param From Attacker territory To move armies From
+     * @param To Conquered territory To move armies To
      */
-    public SpecialMoving(Battle<T> successfulBattle) {
-        this.from = successfulBattle.from;
-        this.to = successfulBattle.to;
-    }
-
-    public SpecialMoving(T FromUpdated, T ToUpdated) {
-        this.from = FromUpdated;
-        this.to = ToUpdated;
+    public SpecialMoving(T From, T To) {
+        this.From = From;
+        this.To = To;
     }
 }

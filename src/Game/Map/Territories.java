@@ -142,7 +142,7 @@ public enum Territories {
     }
 
     /**
-     * Initializer to add adjacent territories
+     * Initializer To add adjacent territories
      *
      * @param Territories List of adjacent territories
      */
@@ -153,7 +153,7 @@ public enum Territories {
     /**
      * Check if this and the passed Territory are adjacent
      *
-     * @param Territories Territories to check adjoining with
+     * @param Territories Territories To check adjoining with
      * @return True if the two territories are adjacent, false otherwise.
      */
     public boolean isAdjacent(Territories Territories) {

@@ -16,7 +16,7 @@ public class DeckMission implements Deck<Mission> {
     public DeckMission() { Shuffle(); }
 
     /**
-     * Get a mission to be assigned to a player
+     * Get a mission To be assigned To a player
      *
      * @return Mission from deck.
      */

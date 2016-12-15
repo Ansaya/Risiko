@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Match object to manage game turns in a dedicated thread
+ * Match object To manage game turns in a dedicated thread
  */
 public class Match extends MessageReceiver<MessageType> {
 
@@ -64,7 +64,7 @@ public class Match extends MessageReceiver<MessageType> {
      */
     public Match(int Id, ArrayList<Player> Players) {
         if(Players.size() < 2 || Players.size() > 6)
-            throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", Players.size()));
+            throw new UnsupportedOperationException(String.format("Not possible To start playing with %d users.", Players.size()));
 
         // Set current match id
         this.id = Id;
@@ -72,16 +72,29 @@ public class Match extends MessageReceiver<MessageType> {
         // Setup Players
         final Color[] colors = Color.values();
         final ArrayList<Mission> missions = new ArrayList<>(Arrays.asList(Mission.values()));
+        // Remove destroy missions relative to unused armies
+        missions.removeIf(m -> {
+            if(m.Type == Mission.MissionType.Destroy){
+                return m.Army.ordinal() > Players.size();
+            }
+            return false;
+        });
         final Random rnd = new Random();
         final AtomicInteger i = new AtomicInteger(0);
         Players.forEach(p -> {
-            // Initialize player with color, match id and mission
-            p.initMatch(colors[i.getAndIncrement()], this.id, missions.remove(rnd.nextInt(missions.size() - 1)));
+            // Initialize player with color, match id and Mission
+            Mission mission = missions.remove(rnd.nextInt(missions.size() - 1));
+            // If mission is to destroy an army not present return 24 territories as specified in original game mission
+            if(mission.Type == Mission.MissionType.Destroy)
+                if(mission.Army.ordinal() > Players.size())
+                    mission = Mission.Territory24;
+
+            p.initMatch(colors[i.getAndIncrement()], this.id, mission);
             players.put(p.id, p);
             playersOrder.add(p.id);
         });
 
-        // Send all players initial setup containing all players and mission
+        // Send all players initial setup containing all players and Mission
         players.forEach((id, player) -> player.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players, player.getMission())));
 
         // Setup and start match message receiver
@@ -94,7 +107,7 @@ public class Match extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Stop current match thread and returns Players to GameController
+     * Stop current match thread and returns Players To GameController
      */
     void terminate() {
         currentTurn.endTurn();
@@ -117,16 +130,16 @@ public class Match extends MessageReceiver<MessageType> {
             currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
         });
 
-        messageHandlers.put(MessageType.Chat, (message) -> routeAll(message));
+        messageHandlers.put(MessageType.Chat, this::routeAll);
 
         messageHandlers.put(MessageType.GameState, (message) -> {
             final GameState<Player> gameState = (new Gson()).fromJson(message.Json, message.Type.getType());
 
             switch (gameState.state){
-                case Abandoned: // Message received from user
+                case Abandoned: // Message received From user
                     final Player p = players.get(message.PlayerId);
 
-                    // Winner null in Abandoned game state means player has closed the application, so no need to return to lobby
+                    // Winner null in Abandoned game state means player has closed the application, so no need To return To lobby
                     if(gameState.winner == null)
                         players.remove(message.PlayerId);
 
@@ -136,41 +149,39 @@ public class Match extends MessageReceiver<MessageType> {
                         message.PlayerId = this.id;
                         GameController.getInstance().setIncoming(message);
                     }
-                    else { // Else return player to lobby
+                    else { // Else return player To lobby
                         if(players.remove(p.id, p))
                             GameController.getInstance().returnPlayer(p);
                     }
 
                     break;
-                case Winner:    // Message received from turn instance
+                case Winner:    // Message received From turn instance
                     routeAll(message);
                     message.PlayerId = this.id;
                     GameController.getInstance().setIncoming(message);
                     break;
-                case Defeated:  // Message received from turn instance
+                case Defeated:  // Message received From turn instance
                     final Player defeated = players.get(gameState.winner.id);
 
-                    // Report defeat to user
+                    // Report defeat To user
                     defeated.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
 
-                    // Pass user to witness mode
+                    // Pass user To witness mode
                     defeated.exitMatch();
                     defeated.witnessMatch(this.id);
                     break;
             }
         });
 
-        defaultHandler = (message) -> {
-            // Any other message is routed to current turn to handle game progress
-            this.currentTurn.setIncoming(message);
-        };
+        // Any other message is routed to current turn to handle game progress
+        defaultHandler = (message) -> currentTurn.setIncoming(message);
     }
 
-    void sendAll(MessageType Type, Object Message) {
+    private void sendAll(MessageType Type, Object Message) {
         players.forEach((id, p) -> p.SendMessage(Type, Message));
     }
 
-    void routeAll(Message Message) {
+    private void routeAll(Message Message) {
         players.forEach((id, p) -> p.RouteMessage(Message.Type + "#" + Message.Json));
     }
 
@@ -178,7 +189,7 @@ public class Match extends MessageReceiver<MessageType> {
      * Get next player in turn orders
      *
      * @param lastPlaying Last player who played
-     * @return Player who has to play now
+     * @return Player who has To play now
      */
     private Player nextPlaying(Player lastPlaying) {
         if(lastPlaying == null)
@@ -195,10 +206,10 @@ public class Match extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Check if specified player has completed his mission
+     * Check if specified player has completed his Mission
      *
-     * @param Player Player to check mission for
-     * @return True if mission accomplished, false if not
+     * @param Player Player To check Mission for
+     * @return True if Mission accomplished, false if not
      */
     private boolean checkMission(Player Player) {
         final Mission mission = Player.getMission();
@@ -208,10 +219,14 @@ public class Match extends MessageReceiver<MessageType> {
         switch (mission.Type){
             case Conquer:
                 final ArrayList<Territories> ToConquer = mission.getToConquer();
-                ToConquer.removeIf(t -> Player.getTerritories().contains(t));
+                Player.getTerritories().forEach(t -> ToConquer.removeIf(te -> te == t.Territory));
                 return ToConquer.isEmpty();
             case Destroy:
-                return !players.containsValue(mission.Army);
+                for (Player p:players.values()) {
+                    if(p.getColor() == mission.Army)
+                        return false;
+                }
+                return true;
             case Number:
                 if(Player.getTerritories().size() >= mission.Number) {
                     if (mission == Mission.Territory18Two) {
@@ -225,7 +240,7 @@ public class Match extends MessageReceiver<MessageType> {
                 return false;
             case Special:
                 final ArrayList<Territories> toConquer = mission.getToConquer();
-                toConquer.removeIf(t -> Player.getTerritories().contains(t));
+                Player.getTerritories().forEach(t -> toConquer.removeIf(te -> te == t.Territory));
                 return toConquer.isEmpty() && Continent.dominatedContinents(Player.getTerritories()).size() >= mission.Number;
         }
 
@@ -254,9 +269,9 @@ public class Match extends MessageReceiver<MessageType> {
         private final ArrayList<Message> incoming = new ArrayList<>();
 
         /**
-         * Add new message to turn queue
+         * Add new message To turn queue
          *
-         * @param Message Message to add
+         * @param Message Message To add
          */
         void setIncoming(Message Message) {
             synchronized (incoming){
@@ -277,7 +292,7 @@ public class Match extends MessageReceiver<MessageType> {
          *
          * @param Match Match where this turn is taking place
          * @param Current Player who will play this turn
-         * @param isSetup If set to true starts from territories choice
+         * @param isSetup If set To true starts From territories choice
          */
         public Turn(Match Match, Player Current, boolean isSetup) {
             this.match = Match;
@@ -298,16 +313,19 @@ public class Match extends MessageReceiver<MessageType> {
          */
         void endTurn() {
             try {
-                _instance.interrupt();
+                //_instance.interrupt();
+                synchronized (incoming){
+                    incoming.notify();
+                }
                 _instance.join();
             } catch (Exception e) {}
         }
 
         /**
-         * Waits for requested message from specified user and returns it deserialized
+         * Waits for requested message From specified user and returns it deserialized
          *
          * @param Type Type of message expected
-         * @param PlayerId Player who the message is expected from. If set to -1 get message from any player
+         * @param PlayerId Player who the message is expected From. If set To -1 get message From any player
          * @return Deserialized message
          */
         private <T> T waitMessage(MessageType Type, int PlayerId) {
@@ -315,12 +333,15 @@ public class Match extends MessageReceiver<MessageType> {
 
             // While correct message isn't received discard other messages
             while (true) {
-                if(incoming.size() == 0)
+                if(incoming.isEmpty())
                     try {
                         synchronized (incoming) {
                             incoming.wait();
                         }
                     } catch (Exception e) {}
+
+                if(incoming.isEmpty())
+                    return null;
 
                 received = incoming.get(0);
                 incoming.remove(0);
@@ -338,7 +359,7 @@ public class Match extends MessageReceiver<MessageType> {
         }
 
         /**
-         * Waits for requested message from current user and returns it deserialized
+         * Waits for requested message From current user and returns it deserialized
          *
          * @param Type Type of message expected
          * @return Deserialized message
@@ -347,12 +368,96 @@ public class Match extends MessageReceiver<MessageType> {
             return waitMessage(Type, playing.id);
         }
 
+
+        /**
+         * Takes care of initial Armies distribution and territories choosing turns
+         */
+        private void Setup(boolean twoOnly) {
+            // Setup
+            Player last = null;
+
+            // Create AI player without socket
+            final Player ai = Player.getAI(this.match.id, Color.BLUE);
+
+            // Save last player id To trigger ai choice during initial phase
+            int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
+            final ArrayList<Territories> toGo = new ArrayList<>(Arrays.asList(Territories.values()));
+            toGo.remove(Territories.Jolly1);
+            toGo.remove(Territories.Jolly2);
+
+            /* Territories choice */
+
+            while (toGo.size() > 0){
+                // Send next player positioning message with one army
+                (last = match.nextPlaying(last)).SendMessage(MessageType.Positioning, new Positioning(1));
+
+                // Get chosen Territory
+                MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
+                if(update == null)
+                    return;
+
+                // Update game map
+                Territory toUpdate = match.gameMap.territories.get(update.updated.get(0).Territory);
+                toUpdate.addArmies(1);
+                toUpdate.setOwner(last);
+
+                // Remove it From remaining territories
+                toGo.remove(toUpdate.Territory);
+
+                // Send update To all Players
+                match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
+
+                // At the end of the row chose one for AI if only two players are in match
+                if(twoOnly && last.id == lastId){
+                    // Get random territory from remaining
+                    toUpdate = match.gameMap.territories.get(toGo.get((new Random()).nextInt(toGo.size())));
+                    toUpdate.addArmies(3);
+                    toUpdate.setOwner(ai);
+                    toGo.remove(toUpdate.Territory);
+                    match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
+                }
+            }
+
+            /* Armies displacement */
+
+            // Generate initial Armies for each player
+            final int startingArmies = 50 - (5 * playersOrder.size());
+
+            // Send player initial Armies
+            playersOrder.forEach(pId -> {
+                Player p = match.players.get(pId);
+
+                // Calculate remaining Armies To send                 (    total      -   already placed Armies   )
+                p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
+            });
+
+            // Wait for all Players To return initial displacement
+            ArrayList<Territory> finalUpdate = new ArrayList<>();
+            for(int i = playersOrder.size(); i > 0; i--){
+                MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
+                if(u == null)
+                    return;
+
+                u.updated.forEach(t -> {
+                    Territory tr = match.gameMap.territories.get(t.Territory);
+                    tr.addArmies(t.NewArmies);
+                    finalUpdate.add(tr);
+                });
+            }
+
+            // Send global initial displacement To all Players
+            sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
+
+            // Notify end of setup when completed
+            match.setIncoming(lastId, MessageType.Turn, "");
+        }
+
         /**
          * Define battle result based on dice throwing and send map update
          *
          * @param Battle Battle message
          */
-        private void Battle(Battle<Territory> Battle) {
+        private boolean Battle(Battle<Territory> Battle) {
             /* Battle phase */
             // Setup die
             final Random die = new Random(System.nanoTime());
@@ -376,208 +481,150 @@ public class Match extends MessageReceiver<MessageType> {
 
             int lostAtk = 0, lostDef = 0;
 
-            // Compare couples of dice to assign victory
-            for (int i = 0; i < Battle.defArmies; i++) {
+            final int maxDice = Battle.atkArmies > Battle.defArmies ? Battle.defArmies : Battle.atkArmies;
+
+            // Compare couples of dice To assign victory
+            for (int i = 0; i < maxDice; i++) {
                 if(defDice.get(i) >= atkDice.get(i))
                     lostAtk++;
                 else
                     lostDef++;
             }
 
-            // Get territories to update from game map
-            final Territory attacker = match.gameMap.territories.get(Battle.from.territory);
-            final Territory defender = match.gameMap.territories.get(Battle.to.territory);
+            // Get territories To update From game map
+            final Territory attacker = match.gameMap.territories.get(Battle.from.Territory);
+            final Territory defender = match.gameMap.territories.get(Battle.to.Territory);
 
-            // Remove defeated Armies from attacker
+            // Remove defeated Armies From attacker
             if(lostAtk > 0)
                 attacker.canRemoveArmies(lostAtk);
 
-            // Remove defeated Armies from defender, else if cannot remove all Armies from
-            // defender Territory change ownership and add necessary Armies
+            // Remove defeated Armies From defender, else if cannot remove all Armies From
+            // defender Territory change ownership and add move armies From attacker territory
             if(!defender.canRemoveArmies(lostDef)) {
                 // If player has no more territories, notify defeat to match object
-                if(defender.owner.getTerritories().size() == 1)
-                    match.setIncoming(defender.owner.id,
+                if(defender.getOwner().getTerritories().size() == 1 && defender.getOwner().id != -1)
+                    match.setIncoming(defender.getOwner().id,
                                       MessageType.GameState,
-                                      gson.toJson(new GameState<>(StateType.Defeated, defender.owner), MessageType.GameState.getType()));
+                                      gson.toJson(new GameState<>(StateType.Defeated, defender.getOwner()), MessageType.GameState.getType()));
 
-                // Update conquered Territory information
-                defender.owner = match.players.get(Battle.from.owner.id);
+                // Move armies to attacker to conquered territory and update owner
+                attacker.canRemoveArmies(atkDice.size());
+                defender.setOwner(attacker.getOwner());
                 defender.addArmies(atkDice.size() - defDice.size());
             }
             /* Battle phase end */
 
             /* Update */
-            // If attacker hasn't conquered the Territory or no Armies can be moved to it complete battle
-            if(lostAtk != 0 || attacker.getArmies() == 1) {
-                // Create map update after battle result
-                final MapUpdate<Territory> result = new MapUpdate<>(attacker);
-                if(lostDef != 0)
-                    result.updated.add(defender);
-
-                // Send update to all Players
+            final MapUpdate<Territory> result = new MapUpdate<>(attacker, defender);
+            // If attacker hasn't conquered the territory or no armies can be moved to it complete battle
+            if(!defender.getOwner().equals(attacker.getOwner()) || attacker.getArmies() == 1) {
+                // Send update to all players
                 match.sendAll(MessageType.MapUpdate, result);
-                return;
+                return true;
             }
 
-            // Else if there are some Armies which can be moved to new Territory
+            // Else if there are some armies which can be moved to new territory
             // send special move to current player and wait for response
-            playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(Battle));
+            playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(attacker, defender));
             final SpecialMoving<Territory> update = waitMessage(MessageType.SpecialMoving, playing.id);
 
+            if(update == null)
+                return false;
+
             // If no other move is performed complete battle
-            if(update.from == null)
-                return;
+            // else if armies have been moved update game map
+            if(update.From != null)
+                if(attacker.canRemoveArmies(update.To.NewArmies))
+                    defender.addArmies(update.To.NewArmies);
 
-            // Else if Armies have been moved update game map
-            attacker.canRemoveArmies(update.to.newArmies);
-            defender.addArmies(update.to.newArmies);
+            // Send new placement to all players
+            match.sendAll(MessageType.MapUpdate, result);
 
-            // Send new placement to all Players
-            match.sendAll(MessageType.MapUpdate, new MapUpdate<>(attacker, defender));
-        }
-
-        /**
-         * Takes care of initial Armies distribution and territories choosing turns
-         */
-        private void Setup(boolean twoOnly) {
-            // Setup
-            Player last = null;
-
-            // Create AI player without socket
-            final Player ai = Player.getAI(this.match.id, Color.BLUE);
-
-            // Save last player id to trigger ai choice during initial phase
-            int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
-            final ArrayList<Territories> toGo = new ArrayList<>(Arrays.asList(Territories.values()));
-            toGo.remove(Territories.Jolly1);
-            toGo.remove(Territories.Jolly2);
-
-            /* Territories choice */
-
-            while (toGo.size() > 0){
-               // Send next player positioning message with one army
-               (last = match.nextPlaying(last)).SendMessage(MessageType.Positioning, new Positioning(1));
-
-                // Get chosen Territory
-                MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
-
-                // Update game map
-                Territory toUpdate = match.gameMap.territories.get(update.updated.get(0).territory);
-                toUpdate.addArmies(1);
-                toUpdate.owner = match.players.get(last.id);
-
-                // Remove it from remaining territories
-                toGo.remove(toUpdate.territory);
-
-                // Send update to all Players
-                match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
-
-                // At the end of the row chose one for ai if only two Players are in match
-                if(twoOnly && last.id == lastId){
-                    // Get random Territory from remaining territories
-                    toUpdate = match.gameMap.territories.get(toGo.get((new Random()).nextInt(toGo.size())));
-                    toUpdate.addArmies(3);
-                    toUpdate.owner = ai;
-                    toGo.remove(toUpdate.territory);
-                    match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
-                }
-            }
-
-            /* Armies displacement */
-
-            // Generate initial Armies for each player
-            final int startingArmies = 50 - (5 * playersOrder.size());
-
-            // Send player initial Armies
-            playersOrder.forEach(pId -> {
-                Player p = match.players.get(pId);
-
-                // Calculate remaining Armies to send                 (    total      -   already placed Armies   )
-                p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
-            });
-
-            // Wait for all Players to return initial displacement
-            ArrayList<Territory> finalUpdate = new ArrayList<>();
-            for(int i = playersOrder.size(); i > 0; i--){
-                MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
-                u.updated.forEach(t -> {
-                    Territory tr = match.gameMap.territories.get(t.territory);
-                    tr.addArmies(t.newArmies);
-                    finalUpdate.add(tr);
-                });
-            }
-
-            // Send global initial displacement to all Players
-            sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
-
-            // Notify end of setup when completed
-            match.setIncoming(lastId, MessageType.Turn, "");
+            return true;
         }
 
         @Override
         public void run() {
             /* Positioning phase */
-            // Ask for a card combination to get more Armies
+            // Ask for a card combination To get more Armies
             playing.SendMessage(MessageType.Cards, new Cards());
 
             // Calculate standard Armies reinforcement
             int newArmies = (playing.getTerritories().size() / 3) >= 3 ? (playing.getTerritories().size() / 3) : 3;
 
-            // Extra Armies due to continent ownership
+            // Extra Armies due To continent ownership
             newArmies += Continent.bonusArmies(playing.getTerritories());
 
-            // Wait for Cards message to return from user
+            // Wait for Cards message To return From user
             final Cards redeemed = waitMessage(MessageType.Cards);
+            if(redeemed == null)
+                return;
 
             // If there is a combination check for validity
             if(redeemed.combination.size() != 0)
                 newArmies += match.cards.isCombinationValid(true, redeemed.combination);
 
-            // Send new Armies to player
+            // Send new Armies To player
             playing.SendMessage(MessageType.Positioning, new Positioning(newArmies));
 
-            // Wait to get new Armies displacement over player's territories
+            // Wait To get new Armies displacement over player's territories
             final MapUpdate<Territory> newPlacement = waitMessage(MessageType.MapUpdate);
+            if(newPlacement == null)
+                return;
 
             // Update Armies number in game map
-            newPlacement.updated.forEach((t) -> match.gameMap.territories.get(t.territory).addArmies(t.newArmies));
+            newPlacement.updated.forEach((t) -> {
+                match.gameMap.territories.get(t.Territory).addArmies(t.NewArmies);
+                t.addArmies(t.NewArmies);
+                t.NewArmies = 0;
+            });
 
-            // Send update to all Players
+            // Send update To all Players
             match.sendAll(MessageType.MapUpdate, newPlacement);
             /* Positioning phase end */
 
             /* Attacking phase */
-            // Ask player to attack
+            // Ask player To attack
             playing.SendMessage(MessageType.Battle, new Battle<Player>(null, null, 0));
 
             final int beforeAtkTerritories = playing.getTerritories().size();
 
-            // Wait for all attack messages from player
+            // Wait for all attack messages From player
             while (true) {
-                // Get attack message from player
+                // Get attack message From player
                 Battle<Territory> newBattle = waitMessage(MessageType.Battle);
+                if(newBattle == null)
+                    return;
 
                 // If Armies are zero end attack phase
                 if(newBattle.atkArmies == 0)
                     break;
 
-                // If more than one army is present on defender Territory ask player how many he want to use
+                // If more than one army is present on defender Territory ask player how many he want To use
                 if(newBattle.to.getArmies() > 1) {
                     // Get defender player id
-                    int defenderId = newBattle.to.owner.id;
+                    int defenderId = newBattle.to.getOwner().id;
 
-                    // Send defender the attack message
-                    match.players.get(defenderId).SendMessage(MessageType.Battle, newBattle);
+                    // If attacking AI territory use maximum number of defending armies
+                    if(defenderId == -1)
+                        newBattle.defArmies = 2;
+                    else { // Else ask player
+                        // Send defender the attack message
+                        match.players.get(defenderId).SendMessage(MessageType.Battle, newBattle);
 
-                    // Wait for response
-                    newBattle = waitMessage(MessageType.Battle, defenderId);
+                        // Wait for response
+                        newBattle = waitMessage(MessageType.Battle, defenderId);
+                        if(newBattle == null)
+                            return;
+                    }
                 }
 
                 // Perform battle
-                Battle(newBattle);
+                if(!Battle(newBattle))
+                    return;
 
-                // After each battle check if mission completed
+                // After each battle check if Mission completed
                 if(match.checkMission(playing)){
                     // If player wins notify match object and return
                     match.setIncoming(playing.id,
@@ -591,11 +638,19 @@ public class Match extends MessageReceiver<MessageType> {
             if(beforeAtkTerritories < playing.getTerritories().size())
                 playing.SendMessage(MessageType.Cards, new Cards(match.cards.next()));
 
-            // Implement end turn moving
-            final MapUpdate<Territory> endMove = waitMessage(MessageType.MapUpdate);
+            // Send empty positioning to request final move
+            playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(null, null));
+            final SpecialMoving<Territory> endMove = waitMessage(MessageType.SpecialMoving);
+            if(endMove == null)
+                return;
 
-            if(!endMove.updated.isEmpty()){
-                match.sendAll(MessageType.MapUpdate, endMove);
+            // If final move is performed update map and players
+            if(endMove.From != null){
+                Territory to = null, from;
+                if((from = match.gameMap.territories.get(endMove.From.Territory)).canRemoveArmies(endMove.To.NewArmies))
+                    (to = match.gameMap.territories.get(endMove.To.Territory)).addArmies(endMove.To.NewArmies);
+
+                match.sendAll(MessageType.MapUpdate, new MapUpdate<>(from, to));
             }
 
             // Notify end of turn when completed

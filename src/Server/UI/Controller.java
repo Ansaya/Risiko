@@ -22,6 +22,10 @@ public class Controller implements Initializable {
     @FXML
     private TextArea consoleView;
 
+    private final PrintStream stdOut = System.out;
+
+    private final PrintStream stdErr = System.err;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         consoleView.setEditable(false);
@@ -30,6 +34,14 @@ public class Controller implements Initializable {
 
         System.setOut(p);
         System.setErr(p);
+    }
+
+    @Override
+    public void finalize() throws Throwable {
+        System.setOut(stdOut);
+        System.setErr(stdErr);
+
+        super.finalize();
     }
 
     private static class Console extends OutputStream {

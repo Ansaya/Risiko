@@ -28,11 +28,11 @@ public class DeckTerritory implements Deck<Territories> {
     }
 
     /**
-     * Reset deck to original size, index and bonus, then shuffles cards inside the deck
+     * Reset deck To original size, index and bonus, then shuffles cards inside the deck
      */
     @Override
     public void Shuffle() {
-        System.out.println("Executed from thread " + Thread.currentThread().getId());
+        System.out.println("Executed From thread " + Thread.currentThread().getId());
 
         deck = new ArrayList<>(Arrays.asList(Territories.values()));
         bonus.set(4);
@@ -41,7 +41,7 @@ public class DeckTerritory implements Deck<Territories> {
     }
 
     /**
-     * Get next card from the deck
+     * Remove and return next card from the deck
      *
      * @return Card from deck
      */
@@ -50,15 +50,13 @@ public class DeckTerritory implements Deck<Territories> {
         if(deck.size() == 0)
             Shuffle();
 
-        Territories currentCard = deck.get(0);
-        deck.remove(0);
-        return currentCard;
+        return deck.remove(0);
     }
 
     /**
      * Check if card combination is valid
      *
-     * @param use If combination is redeemed push cards to the bottom of current deck
+     * @param use If combination is redeemed push cards To the bottom of current deck
      * @param Cards Three cards list
      * @return Number of bonus Armies if combination is valid, zero otherwise
      */
@@ -71,7 +69,7 @@ public class DeckTerritory implements Deck<Territories> {
             // If player redeems combination
             if(use) {
 
-                // Increment bonus Armies by 2 till 12 then from 15 by 5 each time
+                // Increment bonus Armies by 2 till 12 then From 15 by 5 each time
                 if(bonus.get() < 12)
                     bonus.getAndAdd(2);
                 else {
@@ -79,7 +77,7 @@ public class DeckTerritory implements Deck<Territories> {
                     bonus.getAndAdd(5);
                 }
 
-                // Add redeemed cards to the end of the deck
+                // Add redeemed cards To the end of the deck
                 this.deck.addAll(this.deck.size() - 1, Cards);
             }
 

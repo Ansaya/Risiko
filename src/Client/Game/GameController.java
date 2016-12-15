@@ -31,15 +31,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Handle communication with the server
  */
-public class ServerTalk extends MessageReceiver<MessageType> implements Runnable {
+public class GameController extends MessageReceiver<MessageType> implements Runnable {
 
-    private static ServerTalk _instance = new ServerTalk();
+    private static GameController _instance = new GameController();
 
-    public static ServerTalk getInstance() { return _instance; }
+    public static GameController getInstance() { return _instance; }
+
+    private final String serverAddress = "house.flow3rhouse.com";
 
     /* Connection section */
     /**
-     * Connection to the server
+     * Connection To the server
      */
     private Socket connection;
 
@@ -81,10 +83,10 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     private Builder<Label> chatEntryBuilder;
 
     /**
-     * Set where to add incoming chats
+     * Set where To add incoming chats
      *
      * @param Scrollable Scrollable parent of chat container
-     * @param ToUpdate Chat container to add new chats into
+     * @param ToUpdate Chat container To add new chats into
      */
     public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
         this.chatScrollable = Scrollable;
@@ -103,27 +105,38 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     public ObservableUser getUser() { return this.user; }
 
     /**
-     * List of users in lobby
+     * List of userList in lobby
      */
-    private volatile ObservableList<TreeItem<ObservableUser>> users;
+    private volatile ObservableList<TreeItem<ObservableUser>> userList;
 
     /**
-     * Set where to add lobby users when in lobby or match users when playing
+     * Set where To add lobby userList when in lobby or match userList when playing
      *
-     * @param ToUpdate Observable list linked to UI
+     * @param ToUpdate Observable list linked To UI
      */
     public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
-        this.users = ToUpdate;
+        this.userList = ToUpdate;
     }
 
     /* User section end */
 
-    private final Thread _threadInstance = new Thread(this, "ServerTalk-SocketHandler");
+    /* UI Handlers */
+    private volatile MapHandler mapHandler;
+
+    public void setMapHandler(MapHandler MapHandler){ this.mapHandler = MapHandler; }
+
+    private volatile CardsHandler cardsHandler;
+
+    public void setCardsHandler(CardsHandler CardsHandler){ this.cardsHandler = CardsHandler; }
+
+    /* UI Handlers end */
+
+    private final Thread _threadInstance = new Thread(this, "GameController-SocketHandler");
 
     /**
      * Initializer for all message handlers
      */
-    private ServerTalk() {
+    private GameController() {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
         gsonBuilder.registerTypeAdapter(StringProperty.class, new StringPropertySerializer());
@@ -140,7 +153,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             sender.setText(chat.sender.username.get());
             text.setText(chat.message);
 
-            // If message is from this client display it on opposite side of chat view
+            // If message is From this client display it on opposite side of chat view
             if(chat.sender.equals(this.user)){
                 sender.setAlignment(Pos.TOP_RIGHT);
                 text.setAlignment(Pos.TOP_RIGHT);
@@ -151,9 +164,9 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                 text.setTextFill(chat.sender.color.hexColor);
             }
 
-            // Update chat from ui thread
+            // Update chat From ui thread
             Platform.runLater(() -> {
-                // If message is from same sender as before, avoid to write sender again
+                // If message is From same sender as before, avoid To write sender again
                 if(this.lastSenderId.get() != chat.sender.id.get())
                     this.chatContainer.getChildren().add(sender);
 
@@ -161,128 +174,138 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
 
                 this.chatContainer.getChildren().add(text);
 
-                // Scroll container to end
+                // Scroll container To end
                 this.chatScrollable.setVvalue(1.0f);
             });
         });
 
-        // Handler for users in lobby
+        // Handler for userList in lobby
         messageHandlers.put(MessageType.Lobby, (message) -> {
-            System.out.println("ServerTalk: Lobby message: " + message.Json);
+            System.out.println("GameController: Lobby message: " + message.Json);
             final Lobby<ObservableUser> lobbyUsers = gson.fromJson(message.Json, MessageType.Lobby.getType());
 
-            // Update users in lobby
+            // Update userList in lobby
             Platform.runLater(() -> {
-                this.users.removeIf(t -> lobbyUsers.toRemove.removeIf(tl -> tl.equals(t.getValue())));
+                lobbyUsers.toRemove.forEach(u -> userList.removeIf(ul -> ul.getValue().equals(u)));
 
-                lobbyUsers.toAdd.forEach((u) -> {
+                lobbyUsers.toAdd.forEach(u -> {
                     if(!u.equals(this.user))
-                        users.add(new TreeItem<>(u));
+                        userList.add(new TreeItem<>(u));
                 });
 
-                System.out.println("Lobby updated");
+                synchronized (lobbyUsers){
+                    lobbyUsers.notify();
+                }
             });
+
+            synchronized (lobbyUsers){
+                try {
+                    lobbyUsers.wait();
+                } catch (Exception e) {}
+            }
 
         });
 
         // Handler for match initialization
         messageHandlers.put(MessageType.Match, (message) -> {
-            System.out.println("ServerTalk: Match message: " + message.Json);
+            System.out.println("GameController: Match message: " + message.Json);
             final Match<ObservableUser> match = gson.fromJson(message.Json, MessageType.Match.getType());
 
-            UIHandler.Mission = match.Mission;
-
             // Launch match screen
-            Platform.runLater(() -> {
-                Main.toMatch();
-                synchronized (match){
-                    match.notify();
-                }
-            });
+            Platform.runLater(Main::toMatch);
 
-            // Wait for screen to load and new user list reference to be set
+            // Wait for screen To load and new user list reference To be set
             try {
-                synchronized (match) {
-                    match.wait();
+                synchronized (Main.inMatch) {
+                    Main.inMatch.wait();
                 }
             } catch (Exception e) {}
 
-            System.out.println("ServerTalk: Match screen loaded and chat field updated.");
+            System.out.println("GameController: Match screen loaded and chat field updated.");
 
-            // Load users in player's list
+            mapHandler.Mission = match.Mission;
+
+            // Load userList in player's list
             Platform.runLater(() -> match.Players.forEach((u) -> {
                     if(u.equals(this.user))
                         this.user.color = u.color;
 
-                    this.users.add(new TreeItem<>(u));
+                    this.userList.add(new TreeItem<>(u));
                 })
             );
         });
 
         // Handler for positioning message
         messageHandlers.put(MessageType.Positioning, message -> {
-            System.out.println("ServerTalk: Positioning message: " + message.Json);
+            System.out.println("GameController: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
 
-            SendMessage(MessageType.MapUpdate, UIHandler.positionArmies(pos.newArmies));
+            if(!Main.inMatch.get()) {
+                synchronized (Main.inMatch) {
+                    try {
+                        Main.inMatch.wait();
+                    } catch (Exception e) {}
+                }
+            }
+
+            SendMessage(MessageType.MapUpdate, mapHandler.positionArmies(pos.newArmies));
         });
 
         // Handler for map updates
         messageHandlers.put(MessageType.MapUpdate, (message) -> {
-            System.out.println("ServerTalk: MapUpdate message: " + message.Json);
-            UIHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType()));
+            System.out.println("GameController: MapUpdate message: " + message.Json);
+            mapHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType()));
         });
 
         // Handler for card messages
         messageHandlers.put(MessageType.Cards, (message) -> {
             final Cards cards = gson.fromJson(message.Json, MessageType.Cards.getType());
 
-            // If message is not empty add the card to user's list
+            // If message is not empty add the card To user's list
             if(!cards.combination.isEmpty()) {
-                // Add card to user local cards
-                UIHandler.CardsHandler.addCard(cards.combination.get(0));
+                // Add card To user local cards
+                cardsHandler.addCard(cards.combination.get(0));
 
                 // Notify user
                 Main.showDialog("Territories cards",
-                                  "You received " + cards.combination.get(0).name() + " card!",
+                                  "You received " + cards.combination.get(0).toString() + " card!",
                                 "Continue");
                 return;
             }
 
-            // Else ask user to play a combination of cards
-            // Return response to server
-            SendMessage(MessageType.Cards, UIHandler.CardsHandler.requestCombination());
+            // Else ask user To play a combination of cards
+            // Return response To server
+            SendMessage(MessageType.Cards, cardsHandler.requestCombination());
         });
 
         // Handler for attacked Territory
         messageHandlers.put(MessageType.Battle, (message) -> {
-            System.out.println("ServerTalk: Battle message: " + message.Json);
+            System.out.println("GameController: Battle message: " + message.Json);
             final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());
 
             if(battle.from == null){
-                UIHandler.attackPhase();
+                mapHandler.attackPhase();
                 return;
             }
 
             // Else player is under attack
-            // Request defense Armies to player and update message
-            // Send response to server
-            SendMessage(MessageType.Battle, UIHandler.requestDefense(battle));
+            // Request defense Armies To player and update message
+            // Send response To server
+            SendMessage(MessageType.Battle, mapHandler.requestDefense(battle));
         });
 
         // Handler for special move
         messageHandlers.put(MessageType.SpecialMoving, (message) -> {
-            System.out.println("ServerTalk: Special moving message: " + message.Json);
-            // Request user to move Armies and send response to server
-            SendMessage(MessageType.SpecialMoving, UIHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
+            System.out.println("GameController: Special moving message: " + message.Json);
+            // Request user To move Armies and send response To server
+            SendMessage(MessageType.SpecialMoving, mapHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
         });
 
         // Handler for game state changes
         messageHandlers.put(MessageType.GameState, (message) -> {
-            System.out.println("ServerTalk: GameState message: " + message.Json);
-            // If a GameState message is received than match is no longer valid, so go back to lobby
+            System.out.println("GameController: GameState message: " + message.Json);
+            // If a GameState message is received than match is no longer valid, so go back To lobby
             Main.toLobby();
-            UIHandler.Reset();
             user.territories.set(0);
             user.color = null;
 
@@ -295,7 +318,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                    else
                        Main.showDialog("Game state message",
                                         "You lost this match. The winner is " + gameState.winner.username.get(),
-                                        "Return to lobby");
+                                        "Close");
                    break;
                case Abandoned:
                    Main.showDialog("Game state message", "Player " + gameState.winner.username.get() + " left the game.", "Close");
@@ -318,11 +341,11 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     /**
      * Setup and start connection with the server
      *
-     * @param Username Username choose from user
+     * @param Username Username choose From user
      */
     public void InitConnection(String Username) throws Exception {
         try {
-            this.connection = new Socket("localhost", 5757);
+            this.connection = new Socket(serverAddress, 5757);
             this.receive = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             this.send = new PrintWriter(connection.getOutputStream(), true);
             this.listen = true;
@@ -330,8 +353,8 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
             throw new Exception("Cannot connect with the server");
         }
 
-        // Try connecting to server
-        // Send username to the server
+        // Try connecting To server
+        // Send username To the server
         this.send.println(Username);
 
         String incoming = receive.readLine();
@@ -346,7 +369,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         System.out.println("Got id " + user.id.get() + " from server.");
 
         // If connection is successfully established start listening and receiving
-        startListen("ServerTalk-MessageReceiver");
+        startListen("GameController-MessageReceiver");
         _threadInstance.start();
     }
 
@@ -357,26 +380,28 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         if(!listen)
             return;
 
-        this.listen = false;
+        listen = false;
 
-        // Send close connection notification to server
+        // Send close connection notification To server
         if(fromClient)
             send.println("End");
 
-        this.stopListen();
+        stopListen();
 
         // Stop thread
         try {
-            this.connection.close();
-            this._threadInstance.join();
+            connection.close();
+            _threadInstance.join();
         } catch (Exception e) {}
 
         // If finalizing exit
-        if(fromClient)
+        if(fromClient) {
+            System.out.println("Client finalized");
             return;
+        }
 
         // Else reset object for new connection attempt
-        _instance = new ServerTalk();
+        _instance = new GameController();
 
         Main.toLogin();
 
@@ -384,11 +409,11 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
     }
 
     /**
-     * Leave current match and go back to lobby
+     * Leave current match and go back To lobby
      */
     public void AbortMatch() {
         // If player is not in a match return
-        if(!UIHandler.goAhead.get())
+        if(!Main.inMatch.get())
             return;
 
         SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));
@@ -401,7 +426,7 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         // Incoming message buffer
         String Packet;
 
-        // Listen to the server until necessary
+        // Listen To the server until necessary
         while (listen) {
 
             try {
@@ -411,28 +436,34 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
                         return;
                     }
 
-                    System.out.println("ServerTalk: Received: " + Packet);
+                    System.out.println("GameController: Received <- " + Packet);
 
                     String[] info = Packet.split("[#]");
 
                     this.setIncoming(0, MessageType.valueOf(info[0]), info[1]);
                 }
 
-            }catch (IOException e) {}
+            }catch (Exception e) {
+                System.err.println("GamerController: Server connection lost");
+                break;
+            }
         }
+
+        if(listen)
+            Platform.runLater(() -> StopConnection(false));
+    }
+
+    public void SendChat(String Text) {
+        SendMessage(MessageType.Chat, new Chat<>(user, Text));
     }
 
     /**
-     * Send a message to the server
+     * Send a message To the server
      *
      * @param Type Type of message
      * @param MessageObj Object of specified type
      */
     public void SendMessage(MessageType Type, Object MessageObj) {
-        if(connection.isClosed()) {
-            Platform.runLater(() -> StopConnection(false));
-            return;
-        }
 
         // Build packet string as MessageType#SerializedObject
         String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
@@ -440,23 +471,19 @@ public class ServerTalk extends MessageReceiver<MessageType> implements Runnable
         synchronized (send) {
             send.println(packet);
         }
-        System.out.println("ServerTalk: Sent to server: " + packet);
+        System.out.println("GameController: Sent -> " + packet);
     }
 
     /**
      * Send passed string directly
      *
-     * @param packet String to send to the client
+     * @param packet String To send To the client
      */
     private void RouteMessage(String packet) {
-        if(connection.isClosed()) {
-            Platform.runLater(() -> StopConnection(false));
-            return;
-        }
 
         synchronized (send) {
             send.println(packet);
         }
-        System.out.println("Sent to server: " + packet);
+        System.out.println("Sent To server: " + packet);
     }
 }

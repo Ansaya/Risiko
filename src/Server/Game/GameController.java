@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Main controller to manage matches and user lobby
+ * Main controller To manage matches and user lobby
  */
 public class GameController extends MessageReceiver<MessageType> {
 
@@ -38,7 +38,7 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Users waiting to play
+     * Users waiting To play
      */
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
@@ -52,7 +52,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
             final Game.Connection.Match<Player> requested = (new Gson()).fromJson(message.Json, MessageType.Match.getType());
-            System.out.println("Game controller: New match request from " + message.PlayerId);
+            System.out.println("Game controller: New match request From " + message.PlayerId);
 
             final ArrayList<Player> toAdd = new ArrayList<>();
             requested.Players.forEach((u) -> {
@@ -65,7 +65,7 @@ public class GameController extends MessageReceiver<MessageType> {
             matches.put(newMatchId, new Match(newMatchId, toAdd));
         });
 
-        // Handler for GameState message received from match (always used to finalize match)
+        // Handler for GameState message received From match (always used To finalize match)
         messageHandlers.put(MessageType.GameState, (message) -> endMatch(message.PlayerId));
     }
 
@@ -89,7 +89,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
         final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
 
-        // Send end message to matches Players and close connection
+        // Send end message To matches Players and close connection
         matches.forEach((matchId, m) -> endMatch(matchId));
 
         // Send end message and close connection of lobby Players
@@ -99,13 +99,13 @@ public class GameController extends MessageReceiver<MessageType> {
             p.closeConnection(true);
         });
 
-        System.out.println("Game controller: All users released. Ready to join.");
+        System.out.println("Game controller: All users released. Ready To join.");
     }
 
     /**
-     * Add a new user to the lobby
+     * Add a new user To the lobby
      *
-     * @param Connection Connection relative to the user
+     * @param Connection Connection relative To the user
      */
     public void addPlayer(int Id, String Username, Socket Connection) {
 
@@ -123,13 +123,13 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * User gets back from match to lobby
+     * User gets back From match To lobby
      *
-     * @param Player User to set back to lobby
+     * @param Player User To set back To lobby
      */
     public void returnPlayer(Player Player) {
 
-        System.out.println("Game controller: Player " + Player.username + " got back from match.");
+        System.out.println("Game controller: Player " + Player.username + " got back From match.");
 
         // Notify all Players for new player
         lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
@@ -141,9 +141,9 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * User is disconnecting from game
+     * User is disconnecting From game
      *
-     * @param PlayerId Player to remove from lobby
+     * @param PlayerId Player To remove From lobby
      */
     void releasePlayer(int PlayerId) {
         final Player leaving = lobby.get(PlayerId);
@@ -152,9 +152,9 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * End specified match and removes it from match list
+     * End specified match and removes it From match list
      *
-     * @param MatchId Match to remove
+     * @param MatchId Match To remove
      */
     private void endMatch(int MatchId) {
         matches.get(MatchId).terminate();

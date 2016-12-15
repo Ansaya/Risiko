@@ -1,7 +1,7 @@
 package Client.UI;
 
+import Client.Game.GameController;
 import Client.Main;
-import Client.Game.ServerTalk;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -32,7 +32,7 @@ public class LoginController implements Initializable {
      */
     private void ToLobby() {
         try {
-            ServerTalk.getInstance().InitConnection(usernameField.getText());
+            GameController.getInstance().InitConnection(usernameField.getText());
         } catch (Exception e) {
             Main.showDialog("Connection error", e.getMessage(), "Close");
             return;

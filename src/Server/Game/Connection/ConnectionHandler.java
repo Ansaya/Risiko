@@ -44,7 +44,7 @@ public class ConnectionHandler implements Runnable {
                 return;
             }
 
-            // If username is valid confirm login to client and go ahead
+            // If username is valid confirm login To client and go ahead
             id = playerCounter.getAndIncrement();
             (new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class ConnectionHandler implements Runnable {
 
         System.out.println("Connection handler: New user connected.");
         GameController.getInstance().addPlayer(id, username, newConn);
-        System.out.println("Connection handler: User passed to game controller.");
+        System.out.println("Connection handler: User passed To game controller.");
         synchronized (welcomers) {
             welcomers.notify();
         }
@@ -71,16 +71,18 @@ public class ConnectionHandler implements Runnable {
 
                 welcomers.get(0).join();
                 welcomers.remove(0);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                if(!listen)
+                    break;
+            }
         }
     }, "ConnectionHandler-Joiner");
 
     private ConnectionHandler() {}
 
-    public synchronized void Listen(int Port) {
-        if(reception.isAlive()){
+    public void Listen(int Port) {
+        if(listen)
             terminate();
-        }
 
         try {
             this.server = new ServerSocket(Port);
@@ -94,13 +96,15 @@ public class ConnectionHandler implements Runnable {
         reception.start();
     }
 
-    public synchronized void terminate() {
+    public void terminate() {
         try {
             listen = false;
             server.close();
             reception.join();
             while (!welcomers.isEmpty()) {}
-            welcomers.notify();
+            synchronized (welcomers) {
+                welcomers.notify();
+            }
             joiner.join();
         } catch (Exception e) {}
 
@@ -118,7 +122,10 @@ public class ConnectionHandler implements Runnable {
                 welcomers.add(welcome);
                 welcome.start();
 
-            } catch (IOException e) {}
+            } catch (Exception e) {
+                if(!listen)
+                    break;
+            }
         }
     }
 }

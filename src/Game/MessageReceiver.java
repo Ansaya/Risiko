@@ -2,7 +2,6 @@ package Game;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -10,7 +9,7 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver<T> implements Runnable {
 
-    private final AtomicBoolean listen = new AtomicBoolean(false);
+    private volatile boolean listen = false;
 
     protected final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
 
@@ -21,27 +20,34 @@ public abstract class MessageReceiver<T> implements Runnable {
     private final Thread _instance = new Thread(this);
 
     protected void startListen(String Name) {
-        listen.set(true);
+        listen = true;
         _instance.setName(Name);
         _instance.start();
     }
 
     protected void stopListen() {
-        if(!listen.get())
+        if(!listen)
             return;
 
-        listen.set(false);
+        listen = false;
+
+        activeActions.forEach(a -> {
+            try {
+                a.join();
+            } catch (Exception e) {}
+        });
 
         try{
-            while (!activeActions.isEmpty()){}
-            _instance.interrupt();
+            synchronized (activeActions) {
+                activeActions.notify();
+            }
             _instance.join();
         }catch (Exception e){}
     }
 
     /**
-     * Start new thread to process the message
-     * @param PlayerId Player from whom the message was received
+     * Start new thread To process the message
+     * @param PlayerId Player From whom the message was received
      * @param Type Message type
      * @param Incoming Json string received
      */
@@ -50,9 +56,9 @@ public abstract class MessageReceiver<T> implements Runnable {
     }
 
     /**
-     * Start new thread to process the message
+     * Start new thread To process the message
      *
-     * @param Message Message to be processed
+     * @param Message Message To be processed
      */
     public void setIncoming(Message Message) {
         Thread action = null;
@@ -72,7 +78,7 @@ public abstract class MessageReceiver<T> implements Runnable {
                 }
             });
 
-        action.setName(_instance.getName() + "-Message handler");
+        action.setName(_instance.getName() + "-" + Message.Type.toString() + " handler");
 
         activeActions.add(action);
 
@@ -80,7 +86,7 @@ public abstract class MessageReceiver<T> implements Runnable {
     }
 
     /**
-     * Wait for a new packet to come. Returns when a notification on queue is caught
+     * Wait for a new packet To come. Returns when a notification on queue is caught
      */
     private void waitIncoming() {
         try {
@@ -92,18 +98,19 @@ public abstract class MessageReceiver<T> implements Runnable {
 
     @Override
     public void run() {
-        while (listen.get()) {
+        while (listen) {
 
             try {
                 // If queue is empty wait for notification of new packet
                 if(activeActions.isEmpty())
                     waitIncoming();
 
-                activeActions.get(0).join();
+                activeActions.remove(0).join();
 
-                activeActions.remove(0);
-
-            }catch (Exception e) {}
+            }catch (Exception e) {
+                if(!listen)
+                    break;
+            }
         }
     }
 

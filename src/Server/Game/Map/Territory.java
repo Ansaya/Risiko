@@ -2,60 +2,68 @@ package Server.Game.Map;
 
 import Game.Map.Territories;
 import Server.Game.Player;
+import javafx.application.Platform;
 
 /**
  * Instance of a Territory on the map
  */
 public class Territory {
 
-    public final Territories territory;
+    public final Territories Territory;
 
     /**
      * Armies placed on this Territory
      */
-    private volatile int armies = 0;
+    private volatile int Armies = 0;
 
-    public int getArmies() { return armies; }
+    public int getArmies() { return Armies; }
 
-    public volatile int newArmies = 0;
+    public volatile int NewArmies = 0;
 
-    public volatile Player owner = null;
+    private volatile Player owner = null;
+
+    public void setOwner(Player Owner) {
+        owner = Owner;
+        Owner.getTerritories().add(this);
+    }
+
+    public Player getOwner() { return owner; }
 
     public Territory(Territories Territory) {
-        territory = Territory;
+        this.Territory = Territory;
     }
 
     /**
-     * Add Armies to this Territory
+     * Add Armies To this Territory
      *
-     * @param toAdd Armies to add
+     * @param toAdd Armies To add
      */
-    public void addArmies(int toAdd) { armies += toAdd; }
+    public void addArmies(int toAdd) { Armies += toAdd; }
 
     /**
-     * Removes Armies from this Territory if is possible
+     * Removes Armies From this Territory if is possible
      *
-     * @param toRemove Armies to remove
+     * @param toRemove Armies To remove
      * @return True if Armies have been removed, false if cannot remove requested number of Armies
      */
     public boolean canRemoveArmies(int toRemove) {
-        if(toRemove >= this.armies)
+        if(toRemove >= this.Armies)
             return false;
 
-        this.armies -= toRemove;
+        this.Armies -= toRemove;
         return true;
     }
 
     @Override
     public String toString() {
-        return territory.toString();
+        return Territory.toString();
     }
 
     @Override
     public boolean equals(Object other) {
         if(other instanceof Territory)
-            return ((Territory)other).territory == this.territory;
+            return ((Territory)other).Territory == this.Territory;
 
-        return other instanceof Territories && other == this.territory;
+        return other instanceof Territories && other == this.Territory;
     }
 }
