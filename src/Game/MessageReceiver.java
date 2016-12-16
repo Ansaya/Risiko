@@ -1,13 +1,12 @@
 package Game;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
 /**
  * Can receive messages
  */
-public abstract class MessageReceiver<T> implements Runnable {
+public abstract class MessageReceiver<T> {
 
     private volatile boolean listen = false;
 
@@ -15,39 +14,24 @@ public abstract class MessageReceiver<T> implements Runnable {
 
     protected Consumer<Message> defaultHandler = null;
 
-    private final ArrayList<Thread> activeActions = new ArrayList<>();
+    private final String name;
 
-    private final Thread _instance = new Thread(this);
-
-    protected void startListen(String Name) {
-        listen = true;
-        _instance.setName(Name);
-        _instance.start();
+    public MessageReceiver(String Name) {
+        this.name = Name;
     }
 
-    protected void stopListen() {
-        if(!listen)
-            return;
+    public void startListen(){
+        listen = true;
+    }
 
+    public void stopListen() {
         listen = false;
-
-        activeActions.forEach(a -> {
-            try {
-                a.join();
-            } catch (Exception e) {}
-        });
-
-        try{
-            synchronized (activeActions) {
-                activeActions.notify();
-            }
-            _instance.join();
-        }catch (Exception e){}
     }
 
     /**
-     * Start new thread To process the message
-     * @param PlayerId Player From whom the message was received
+     * Start new thread to process the message
+     *
+     * @param PlayerId Player who sent the message
      * @param Type Message type
      * @param Incoming Json string received
      */
@@ -56,62 +40,27 @@ public abstract class MessageReceiver<T> implements Runnable {
     }
 
     /**
-     * Start new thread To process the message
+     * Start new thread to process the message
      *
-     * @param Message Message To be processed
+     * @param Message Message to be processed
      */
     public void setIncoming(Message Message) {
+        if(!listen)
+            return;
+
         Thread action = null;
 
         if(messageHandlers.containsKey(Message.Type))
-            action = new Thread(() -> {
-                messageHandlers.get(Message.Type).accept(Message);
-                synchronized (activeActions){
-                    activeActions.notify();
-                }
-            });
+            action = new Thread(() -> messageHandlers.get(Message.Type).accept(Message));
         else if(defaultHandler != null)
-            action = new Thread(() -> {
-                defaultHandler.accept(Message);
-                synchronized (activeActions){
-                    activeActions.notify();
-                }
-            });
+            action = new Thread(() ->  defaultHandler.accept(Message));
 
-        action.setName(_instance.getName() + "-" + Message.Type.toString() + " handler");
+        if(action == null)
+            return;
 
-        activeActions.add(action);
-
+        action.setName(name + "-" + Message.Type.toString() + " handler");
+        action.setDaemon(true);
         action.start();
-    }
-
-    /**
-     * Wait for a new packet To come. Returns when a notification on queue is caught
-     */
-    private void waitIncoming() {
-        try {
-            synchronized (activeActions) {
-                activeActions.wait();
-            }
-        } catch (Exception e) {}
-    }
-
-    @Override
-    public void run() {
-        while (listen) {
-
-            try {
-                // If queue is empty wait for notification of new packet
-                if(activeActions.isEmpty())
-                    waitIncoming();
-
-                activeActions.remove(0).join();
-
-            }catch (Exception e) {
-                if(!listen)
-                    break;
-            }
-        }
     }
 
     public class Message {

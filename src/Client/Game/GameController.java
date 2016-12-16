@@ -7,7 +7,6 @@ import Game.Connection.Serializer.IntegerPropertySerializer;
 import Game.Connection.Serializer.StringPropertySerializer;
 import Client.Game.Observables.*;
 import Game.Connection.*;
-import Game.Map.*;
 import Game.MessageReceiver;
 import Client.Game.Connection.MessageType;
 import Game.StateType;
@@ -139,6 +138,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
      * Initializer for all message handlers
      */
     private GameController() {
+        super("GameController");
+
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
         gsonBuilder.registerTypeAdapter(StringProperty.class, new StringPropertySerializer());
@@ -375,7 +376,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         System.out.println("Got id " + user.id.get() + " from server.");
 
         // If connection is successfully established start listening and receiving
-        startListen("GameController-MessageReceiver");
+        startListen();
         _threadInstance.start();
     }
 

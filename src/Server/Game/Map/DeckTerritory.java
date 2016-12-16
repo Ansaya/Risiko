@@ -3,20 +3,12 @@ package Server.Game.Map;
 import Game.Map.Card;
 import Game.Map.Territories;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represent a deck of territories cards and two jolly
  */
-public class DeckTerritory implements Deck<Territories> {
-
-    /**
-     * Represents the cards' deck
-     */
-    private ArrayList<Territories> deck;
+public class DeckTerritory extends Deck<Territories> {
 
     /**
      * Current bonus Armies counter
@@ -24,33 +16,17 @@ public class DeckTerritory implements Deck<Territories> {
     private final AtomicInteger bonus = new AtomicInteger(4);
 
     public DeckTerritory() {
-        Shuffle();
+        super(Territories.class);
+        shuffle();
     }
 
     /**
      * Reset deck To original size, index and bonus, then shuffles cards inside the deck
      */
     @Override
-    public void Shuffle() {
-        System.out.println("Executed From thread " + Thread.currentThread().getId());
-
-        deck = new ArrayList<>(Arrays.asList(Territories.values()));
+    public void shuffle() {
+        super.shuffle();
         bonus.set(4);
-
-        Collections.shuffle(deck, new Random(System.nanoTime()));
-    }
-
-    /**
-     * Remove and return next card from the deck
-     *
-     * @return Card from deck
-     */
-    @Override
-    public Territories next() {
-        if(deck.size() == 0)
-            Shuffle();
-
-        return deck.remove(0);
     }
 
     /**
@@ -78,7 +54,7 @@ public class DeckTerritory implements Deck<Territories> {
                 }
 
                 // Add redeemed cards To the end of the deck
-                this.deck.addAll(this.deck.size() - 1, Cards);
+                Cards.forEach(this::setBack);
             }
 
         return armies;

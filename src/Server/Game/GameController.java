@@ -43,6 +43,7 @@ public class GameController extends MessageReceiver<MessageType> {
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
     private GameController() {
+        super("GameController");
 
         // Handler for incoming chat messages routing
         messageHandlers.put(MessageType.Chat, (message) -> {
@@ -74,7 +75,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     public void init() {
         // Start message receiver
-        this.startListen("GameController");
+        this.startListen();
 
         System.out.println("Game controller: Message receiver up and running.");
     }

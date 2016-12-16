@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -26,8 +25,6 @@ public class ConnectionHandler implements Runnable {
 
     private final AtomicInteger playerCounter = new AtomicInteger(0);
 
-    private final ArrayList<Thread> welcomers = new ArrayList<>();
-
     private final Consumer<Socket> welcomeAction = newConn -> {
         String username = "";
         int id = 0;
@@ -38,9 +35,6 @@ public class ConnectionHandler implements Runnable {
             if(username.equals("")){
                 System.err.println("Connection handler: Username can not be null.");
                 (new PrintWriter(newConn.getOutputStream(), true)).println("Username not valid");
-                synchronized (welcomers) {
-                    welcomers.notify();
-                }
                 return;
             }
 
@@ -54,58 +48,34 @@ public class ConnectionHandler implements Runnable {
         System.out.println("Connection handler: New user connected.");
         GameController.getInstance().addPlayer(id, username, newConn);
         System.out.println("Connection handler: User passed To game controller.");
-        synchronized (welcomers) {
-            welcomers.notify();
-        }
     };
 
     private final Thread reception= new Thread(this, "ConnectionHandler-Reception");
 
-    private final Thread joiner= new Thread(() -> {
-        while (listen){
-            try{
-                if(welcomers.isEmpty())
-                    synchronized (welcomers) {
-                        welcomers.wait();
-                    }
-
-                welcomers.get(0).join();
-                welcomers.remove(0);
-            } catch (Exception e) {
-                if(!listen)
-                    break;
-            }
-        }
-    }, "ConnectionHandler-Joiner");
-
     private ConnectionHandler() {}
 
-    public void Listen(int Port) {
+    public void Listen(int port) {
         if(listen)
             terminate();
 
         try {
-            this.server = new ServerSocket(Port);
+            this.server = new ServerSocket(port);
         }
         catch (IOException e){
             System.err.println("Connection handler: Cannot connect");
+            return;
         }
 
         listen = true;
-        joiner.start();
         reception.start();
     }
 
     public void terminate() {
+        listen = false;
+
         try {
-            listen = false;
             server.close();
             reception.join();
-            while (!welcomers.isEmpty()) {}
-            synchronized (welcomers) {
-                welcomers.notify();
-            }
-            joiner.join();
         } catch (Exception e) {}
 
         System.out.println("Connection handler: Terminated.");
@@ -119,7 +89,7 @@ public class ConnectionHandler implements Runnable {
                 final Socket newConn = server.accept();
 
                 Thread welcome = new Thread(() -> welcomeAction.accept(newConn), "ConnectionHandler-Welcomer");
-                welcomers.add(welcome);
+                welcome.setDaemon(true);
                 welcome.start();
 
             } catch (Exception e) {

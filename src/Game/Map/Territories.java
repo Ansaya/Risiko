@@ -97,7 +97,7 @@ public enum Territories {
         // Asia
         Afghanistan.Init(China, India, MiddleEast, Ural, Ukraine);
         China.Init(Afghanistan, India, Mongolia, Siam, Siberia, Ural);
-        India.Init(Afghanistan, China, MiddleEast, Mongolia);
+        India.Init(Afghanistan, China, MiddleEast, Siam);
         Irkutsk.Init(Kamchatka, Mongolia, Siberia, Yakutsk);
         Japan.Init(Kamchatka, Mongolia);
         Kamchatka.Init(Irkutsk, Japan, Mongolia, Yakutsk, Alaska);
