@@ -3,6 +3,7 @@ package Server.Game;
 import Game.Color;
 import Game.Connection.*;
 import Game.Map.*;
+import Game.Map.Mission;
 import Server.Game.Map.DeckTerritory;
 import Server.Game.Map.Map;
 import Game.Connection.Battle;
@@ -95,7 +96,7 @@ public class Match extends MessageReceiver<MessageType> {
         });
 
         // Send all players initial setup containing all players and Mission
-        players.forEach((id, player) -> player.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players, player.getMission())));
+        players.forEach((id, player) -> player.SendMessage(MessageType.Match, new Game.Connection.Match<>(Players)));
 
         // Setup and start match message receiver
         listenersInit();
@@ -423,12 +424,14 @@ public class Match extends MessageReceiver<MessageType> {
             // Generate initial Armies for each player
             final int startingArmies = 50 - (5 * playersOrder.size());
 
-            // Send player initial Armies
+            // Send each player initial armies
             playersOrder.forEach(pId -> {
                 Player p = match.players.get(pId);
 
-                // Calculate remaining Armies To send                 (    total      -   already placed Armies   )
+                // Calculate remaining Armies to send                 (    total      -   already placed Armies   )
                 p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
+                // Send mission to player
+                p.SendMessage(MessageType.Mission, new Game.Connection.Mission(p.getMission()));
             });
 
             // Wait for all Players To return initial displacement
@@ -585,23 +588,23 @@ public class Match extends MessageReceiver<MessageType> {
             /* Positioning phase end */
 
             /* Attacking phase */
-            // Ask player To attack
-            playing.SendMessage(MessageType.Battle, new Battle<Player>(null, null, 0));
+            // Send attack phase begin message
+            playing.SendMessage(MessageType.Battle, new Battle<Territory>(null, null, 0));
 
             final int beforeAtkTerritories = playing.getTerritories().size();
 
-            // Wait for all attack messages From player
+            // Wait for all attack messages from player
             while (true) {
                 // Get attack message From player
                 Battle<Territory> newBattle = waitMessage(MessageType.Battle);
                 if(newBattle == null)
                     return;
 
-                // If Armies are zero end attack phase
+                // If armies are zero end attack phase
                 if(newBattle.atkArmies == 0)
                     break;
 
-                // If more than one army is present on defender Territory ask player how many he want To use
+                // If more than one army is present on defender territory ask player how many he want to use
                 if(newBattle.to.getArmies() > 1) {
                     // Get defender player id
                     int defenderId = newBattle.to.getOwner().id;

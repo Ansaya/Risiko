@@ -30,7 +30,7 @@ public class MapHandler {
     private final GameController gameController = GameController.getInstance();
 
     /**
-     * Button To control phase completion
+     * Button to control phase completion
      */
     private volatile Button endPhaseBtn;
 
@@ -51,10 +51,16 @@ public class MapHandler {
         newArmiesLabel.setVisible(false);
     }
 
-    public volatile Mission Mission;
+    private volatile Mission mission;
+
+    public void setMission(Mission Mission) {
+        mission = Mission;
+
+        Main.showDialog("Mission", "You received your mission to win the game", "Continue");
+    }
 
     private JFXDialog getMissionDialog() {
-        return Main.getDialog("Mission", Mission.Description, "Continue");
+        return Main.getDialog("Mission", mission.Description, "Continue");
     }
 
     public void setMissionButton(Button MissionBtn) {
@@ -120,12 +126,20 @@ public class MapHandler {
      */
     private final IntegerProperty newArmies = new SimpleIntegerProperty(0);
 
+    /**
+     * Increment global armies counter
+     */
     private void addNewArmy() {
         synchronized (newArmies) {
             newArmies.set(newArmies.add(1).get());
         }
     }
 
+    /**
+     * Decrement global armies counter if possible
+     *
+     * @return 1 if counter has been decremented, 0 if not possible to decrement
+     */
     private int removeNewArmy() {
         if(newArmies.get() == 0)
             return 0;
@@ -149,6 +163,11 @@ public class MapHandler {
         });
     }
 
+    /**
+     * Update current map with received information from server
+     *
+     * @param MapUpdate MapUpdate message from server
+     */
     public void updateMap(MapUpdate<ObservableTerritory> MapUpdate) {
         if(!Platform.isFxApplicationThread()){
             Platform.runLater(() -> updateMap(MapUpdate));
@@ -160,7 +179,7 @@ public class MapHandler {
                 ObservableTerritory t = territories.get(u.Territory);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
-                if (!t.getOwner().equals(u.getOwner()))
+                if (!u.getOwner().equals(t.getOwner()))
                     t.setOwner(u.getOwner());
             }
         });
@@ -234,6 +253,10 @@ public class MapHandler {
         return update;
     }
 
+    /**
+     * Handle all events relative to attack phase and send end phase message back to server at the end
+     *
+     */
     public void attackPhase(){
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
@@ -302,9 +325,6 @@ public class MapHandler {
         }
 
         attackPhase.set(false);
-
-        // Report end of attack phase To server
-        gameController.SendMessage(MessageType.Battle, new Battle<>(null, null, 0));
     }
 
     /**
@@ -372,6 +392,11 @@ public class MapHandler {
         return new SpecialMoving<>(from, to);
     }
 
+    /**
+     * Enable positioning controls between two selected territories to perform final movement at the end of turn
+     *
+     * @return Updated territories state after moving
+     */
     private SpecialMoving<ObservableTerritory> endTurnMove() {
         // Enable end phase button
         Platform.runLater(() -> {
@@ -441,12 +466,24 @@ public class MapHandler {
         return new SpecialMoving<>(from, to);
     }
 
+    /**
+     * Display dialog and request player to chose how many armies to use for defense
+     *
+     * @param Battle Battle message received from server
+     * @return Updated battle message to send back to server
+     */
     public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
         Battle.defArmies = territories.get(Battle.to.Territory).requestDefense(Battle);
 
         return Battle;
     }
 
+    /**
+     * Add an army to specified territory from global armies counter
+     *
+     * @param Territory Territory to update
+     * @param IsMoving True if adding directly to Armies field, false to add to NewArmies field
+     */
     private void addArmyTo(ObservableTerritory Territory, boolean IsMoving) {
         System.out.println("User want to add an army to " + Territory.Territory.toString());
 
@@ -496,6 +533,12 @@ public class MapHandler {
         }
     }
 
+    /**
+     * Remove an army to specified terrtory and increment global armies counter
+     *
+     * @param Territory Territory to update
+     * @param IsMoving True if removing directly from Armies field, false to remove from NewArmies field
+     */
     private void removeArmyFrom(ObservableTerritory Territory, boolean IsMoving) {
         System.out.println("User want to remove an army from " + Territory.Territory.toString());
 
@@ -543,6 +586,9 @@ public class MapHandler {
         }
     }
 
+    /**
+     * Instance a selected territory and the selection mode (right/left click)
+     */
     private class SelectedTerritory {
         final boolean IsRightClick;
 

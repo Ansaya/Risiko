@@ -2,10 +2,12 @@ package Client.Game;
 
 import Client.Game.Connection.Serializer.ObservableUserSerializer;
 import Client.Main;
+import Game.Connection.Mission;
 import Game.Connection.Serializer.IntegerPropertySerializer;
 import Game.Connection.Serializer.StringPropertySerializer;
 import Client.Game.Observables.*;
 import Game.Connection.*;
+import Game.Map.*;
 import Game.MessageReceiver;
 import Client.Game.Connection.MessageType;
 import Game.StateType;
@@ -37,7 +39,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     public static GameController getInstance() { return _instance; }
 
-    private final String serverAddress = "house.flow3rhouse.com";
+    private final String serverAddress = "localhost";
 
     /* Connection section */
     /**
@@ -223,8 +225,6 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
             System.out.println("GameController: Match screen loaded and chat field updated.");
 
-            mapHandler.Mission = match.Mission;
-
             // Load userList in player's list
             Platform.runLater(() -> match.Players.forEach((u) -> {
                     if(u.equals(this.user))
@@ -249,6 +249,12 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             }
 
             SendMessage(MessageType.MapUpdate, mapHandler.positionArmies(pos.newArmies));
+        });
+
+        messageHandlers.put(MessageType.Mission, (message) -> {
+            final Mission mission = gson.fromJson(message.Json, MessageType.Mission.getType());
+
+            mapHandler.setMission(mission.Mission);
         });
 
         // Handler for map updates
@@ -284,14 +290,14 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());
 
             if(battle.from == null){
+                // Start attack phase
                 mapHandler.attackPhase();
-                return;
+                // Report end of attack phase to server
+                SendMessage(MessageType.Battle, battle);
             }
-
-            // Else player is under attack
-            // Request defense Armies To player and update message
-            // Send response To server
-            SendMessage(MessageType.Battle, mapHandler.requestDefense(battle));
+            else {// Else player is under attack, than request defense armies and update server
+                SendMessage(MessageType.Battle, mapHandler.requestDefense(battle));
+            }
         });
 
         // Handler for special move

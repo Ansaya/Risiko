@@ -13,10 +13,11 @@ public enum MessageType {
     Chat(new TypeToken<Chat<Player>>(){}.getType()),
     Lobby(new TypeToken<Lobby<Player>>(){}.getType()),
     Match(new TypeToken<Match<Player>>(){}.getType()),
+    Mission(Game.Connection.Mission.class),
     Turn(null),
     Battle(new TypeToken<Battle<Territory>>(){}.getType()),
-    Cards(Cards.class),
-    Positioning(Positioning.class),
+    Cards(Game.Connection.Cards.class),
+    Positioning(Game.Connection.Positioning.class),
     SpecialMoving(new TypeToken<SpecialMoving<Territory>>(){}.getType()),
     MapUpdate(new TypeToken<MapUpdate<Territory>>(){}.getType()),
     GameState(new TypeToken<GameState<Player>>(){}.getType());
