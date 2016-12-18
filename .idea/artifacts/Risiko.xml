@@ -7,6 +7,14 @@
         <option name="description" value="" />
         <option name="height" value="768" />
         <option name="htmlPlaceholderId" value="" />
+        <option name="icons">
+          <JavaFxApplicationIcons>
+            <option name="linuxIcon" value="$PROJECT_DIR$/src/Game/favicon.png" />
+            <option name="macIcon" value="$PROJECT_DIR$/src/Game/favicon.icns" />
+            <option name="windowsIcon" value="$PROJECT_DIR$/src/Game/favicon.ico" />
+          </JavaFxApplicationIcons>
+        </option>
+        <option name="nativeBundle" value="exe" />
         <option name="title" value="Risiko" />
         <option name="vendor" value="" />
         <option name="version" value="" />
@@ -18,6 +26,9 @@
         <element id="module-output" name="Risiko" />
         <element id="library" level="project" name="com.jfoenix:jfoenix:1.0.0" />
         <element id="library" level="project" name="com.google.code.gson:gson:2.7" />
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/Client/META-INF/MANIFEST.MF" />
+        </element>
       </element>
     </root>
   </artifact>

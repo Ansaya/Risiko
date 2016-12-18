@@ -1,5 +1,6 @@
 package Game;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
@@ -10,22 +11,41 @@ public abstract class MessageReceiver<T> {
 
     private volatile boolean listen = false;
 
+    private final ArrayList<Message> queue = new ArrayList<>();
+
     protected final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
 
     protected Consumer<Message> defaultHandler = null;
 
     private final String name;
 
+    private final Thread _instance = new Thread(this::executor);
+
     public MessageReceiver(String Name) {
         this.name = Name;
+        _instance.setName(Name + "-Executor");
     }
 
-    public void startListen(){
+    public void startExecutor(){
+        if(listen)
+            return;
+
         listen = true;
+        _instance.start();
     }
 
-    public void stopListen() {
+    public void stopExecutor() {
+        if(!listen)
+            return;
+
         listen = false;
+        synchronized (queue){
+            queue.notify();
+        }
+
+        try {
+            _instance.join();
+        } catch (Exception e) {}
     }
 
     /**
@@ -45,22 +65,39 @@ public abstract class MessageReceiver<T> {
      * @param Message Message to be processed
      */
     public void setIncoming(Message Message) {
-        if(!listen)
-            return;
+        synchronized (queue){
+            queue.add(Message);
+            queue.notify();
+        }
+    }
 
-        Thread action = null;
+    private void executor() {
+        while (listen) {
+            try {
+                if (queue.isEmpty())
+                    synchronized (queue) { queue.wait(); }
 
-        if(messageHandlers.containsKey(Message.Type))
-            action = new Thread(() -> messageHandlers.get(Message.Type).accept(Message));
-        else if(defaultHandler != null)
-            action = new Thread(() ->  defaultHandler.accept(Message));
+                Message m;
 
-        if(action == null)
-            return;
+                synchronized (queue) {
+                    m = queue.remove(0);
+                }
+                Thread action;
 
-        action.setName(name + "-" + Message.Type.toString() + " handler");
-        action.setDaemon(true);
-        action.start();
+                if (messageHandlers.containsKey(m.Type))
+                    action = new Thread(() -> messageHandlers.get(m.Type).accept(m));
+                else if (defaultHandler != null)
+                    action = new Thread(() -> defaultHandler.accept(m));
+                else
+                    continue;
+
+                action.setName(name + "-" + m.Type.toString() + " handler");
+                action.setDaemon(true);
+                action.start();
+            } catch (Exception e){
+                if(!listen) break;
+            }
+        }
     }
 
     public class Message {

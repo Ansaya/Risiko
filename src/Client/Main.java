@@ -1,8 +1,10 @@
 package Client;
 
 import Client.Game.GameController;
+import Client.Game.Observables.ObservableUser;
 import Client.UI.LobbyController;
 import Client.UI.MatchController;
+import Game.Connection.Match;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -12,11 +14,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main extends Application {
 
@@ -26,11 +28,9 @@ public class Main extends Application {
 
     public static final Object dialogClosed = new Object();
 
-    public static final AtomicBoolean inMatch = new AtomicBoolean(false);
-
-    public static void toMatch() {
+    public static void toMatch(Match<ObservableUser> Match) {
         if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(Main::toMatch);
+            Platform.runLater(() -> toMatch(Match));
             return;
         }
 
@@ -46,20 +46,13 @@ public class Main extends Application {
         }
 
         MatchController mc = loader.getController();
-        mc.setGameController();
-        mc.setCardsHandler();
-        mc.setMapHandler();
+        mc.setGameController(Match.Players);
 
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Match");
         window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
         window.show();
-
-        synchronized (inMatch){
-            inMatch.set(true);
-            inMatch.notifyAll();
-        }
     }
 
     public static void toLobby() {
@@ -161,10 +154,11 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;
+        window.getIcons().add(new Image(Main.class.getResource("icon.png").openStream()));
 
-        toLogin();
+        //toLogin();
 
-        //toMatch();
+        toMatch(new Match<>(null));
     }
 
 

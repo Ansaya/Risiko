@@ -1,7 +1,7 @@
 package Client.Game.Connection.Serializer;
 
 import Client.Game.Observables.ObservableUser;
-import Game.Color;
+import Game.Map.Army.Color;
 import com.google.gson.*;
 import java.lang.reflect.Type;
 

@@ -1,6 +1,6 @@
 package Game.Map;
 
-import Game.Color;
+import Game.Map.Army.Color;
 import java.util.*;
 import static Game.Map.Territories.*;
 
@@ -151,6 +151,6 @@ public enum Mission {
         Conquer,
         Destroy,
         Number,
-        Special;
+        Special
     }
 }

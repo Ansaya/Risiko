@@ -21,216 +21,51 @@
 
         <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="360.0" AnchorPane.topAnchor="10.0">
             <Pane fx:id="mapPane" AnchorPane.leftAnchor="-180.0" AnchorPane.topAnchor="-130.0">
-
-               <Label id="NorthwestTerritory" layoutX="250.0" layoutY="192.0" prefHeight="13.0" prefWidth="96.0" text="Northwest Territory">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font></Label>
-             <Label id="Alaska" layoutX="210.0" layoutY="198.0" prefHeight="13.0" prefWidth="34.0" text="Alaska">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Alberta" layoutX="269.0" layoutY="231.0" prefHeight="13.0" prefWidth="36.0" text="Alberta">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Ontario" layoutX="319.0" layoutY="243.0" prefHeight="13.0" prefWidth="36.0" text="Ontario">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Quebec" layoutX="370.0" layoutY="242.0" prefHeight="13.0" prefWidth="36.0" text="Quebec">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="WesternUnitedStates" layoutX="259.0" layoutY="269.0" prefHeight="36.0" prefWidth="68.0" text="Western United States" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="EasternUnitedStates" layoutX="306.0" layoutY="286.0" prefHeight="43.0" prefWidth="61.0" text="Eastern United States" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Greenland" layoutX="408.0" layoutY="161.0" prefHeight="13.0" prefWidth="50.0" text="Greenland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="CentralAmerica" layoutX="264.0" layoutY="344.0" prefHeight="35.0" prefWidth="61.0" text="Central America" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Venezuela" layoutX="330.0" layoutY="390.0" prefHeight="13.0" prefWidth="49.0" text="Venezuela" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Brazil" layoutX="390.0" layoutY="438.0" prefHeight="13.0" prefWidth="28.0" text="Brazil" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Peru" layoutX="339.0" layoutY="455.0" prefHeight="13.0" prefWidth="28.0" text="Peru" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Argentina" layoutX="348.0" layoutY="510.0" prefHeight="13.0" prefWidth="49.0" text="Argentina" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Iceland" layoutX="472.0" layoutY="216.0" prefHeight="13.0" prefWidth="35.0" text="Iceland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="GreatBritain" layoutX="462.0" layoutY="266.0" prefHeight="32.0" prefWidth="35.0" text="Great Britain" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Ukraine" layoutX="596.0" layoutY="249.0" prefHeight="13.0" prefWidth="36.0" text="Ukraine" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Scandinavia" layoutX="517.0" layoutY="197.0" prefHeight="19.0" prefWidth="75.0" rotate="-48.4" text="Scandinavia" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="NorthernEurope" layoutX="518.0" layoutY="277.0" prefHeight="26.0" prefWidth="50.0" text="Northern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="SouthernEurope" layoutX="524.0" layoutY="328.0" prefHeight="26.0" prefWidth="50.0" text="Southern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="WesternEurope" layoutX="465.0" layoutY="341.0" prefHeight="26.0" prefWidth="50.0" text="Western Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="NorthAfrica" layoutX="490.0" layoutY="417.0" prefHeight="26.0" prefWidth="50.0" text="North Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Egypt" layoutX="557.0" layoutY="400.0" prefHeight="13.0" prefWidth="29.0" text="Egypt" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="EastAfrica" layoutX="593.0" layoutY="442.0" prefHeight="32.0" prefWidth="29.0" text="East Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Congo" layoutX="557.0" layoutY="489.0" prefHeight="13.0" prefWidth="29.0" text="Congo" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="SouthAfrica" layoutX="563.0" layoutY="535.0" prefHeight="39.0" prefWidth="33.0" text="South Africa" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Madagascar" layoutX="613.0" layoutY="546.0" prefHeight="13.0" prefWidth="61.0" rotate="-66.8" text="Madagascar" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="MiddleEast" layoutX="606.0" layoutY="367.0" prefHeight="32.0" prefWidth="42.0" text="Middle East" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="India" layoutX="703.0" layoutY="375.0" prefHeight="13.0" prefWidth="32.0" text="India" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Indonesia" layoutX="762.0" layoutY="474.0" prefHeight="13.0" prefWidth="58.0" text="Indonesia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="NewGuinea" layoutX="824.0" layoutY="460.0" prefHeight="13.0" prefWidth="58.0" text="New Guinea" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="WesternAustralia" layoutX="782.0" layoutY="537.0" prefHeight="32.0" prefWidth="58.0" text="Western Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="EasternAustralia" layoutX="834.0" layoutY="515.0" prefHeight="32.0" prefWidth="58.0" text="Eastern Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Siam" layoutX="757.0" layoutY="394.0" prefHeight="13.0" prefWidth="26.0" text="Siam" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="China" layoutX="757.0" layoutY="340.0" prefHeight="13.0" prefWidth="26.0" text="China" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Mongolia" layoutX="756.0" layoutY="290.0" prefHeight="13.0" prefWidth="48.0" text="Mongolia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Japan" layoutX="835.0" layoutY="297.0" prefHeight="13.0" prefWidth="29.0" text="Japan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Kamchatka" layoutX="812.0" layoutY="181.0" prefHeight="13.0" prefWidth="54.0" text="Kamchatka" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Irkutsk" layoutX="744.0" layoutY="250.0" prefHeight="13.0" prefWidth="39.0" text="Irkutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Yakutsk" layoutX="759.0" layoutY="181.0" prefHeight="13.0" prefWidth="39.0" text="Yakutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Siberia" layoutX="700.0" layoutY="198.0" prefHeight="13.0" prefWidth="39.0" text="Siberia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Ural" layoutX="676.0" layoutY="237.0" prefHeight="13.0" prefWidth="28.0" text="Ural" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
-             <Label id="Afghanistan" layoutX="649.0" layoutY="302.0" prefHeight="13.0" prefWidth="53.0" text="Afghanistan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true">
-                <font>
-                   <Font name="Trebuchet MS" size="10.0" />
-                </font>
-             </Label>
+                <padding>
+                    <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+                </padding>
+                <Label id="NorthwestTerritory" layoutX="250.0" layoutY="192.0" text="Northwest Territory"></Label>
+                <Label id="Alaska" layoutX="210.0" layoutY="198.0" text="Alaska"></Label>
+                <Label id="Alberta" layoutX="269.0" layoutY="231.0" text="Alberta"></Label>
+                <Label id="Ontario" layoutX="319.0" layoutY="248.0" text="Ontario"></Label>
+                <Label id="Quebec" layoutX="370.0" layoutY="241.0" text="Quebec"></Label>
+                <Label id="WesternUnitedStates" layoutX="272.0" layoutY="270.0" prefWidth="42.0" text="Western United States" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="EasternUnitedStates" layoutX="328.0" layoutY="295.0" prefWidth="39.0" text="Eastern United States" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Greenland" layoutX="408.0" layoutY="161.0" text="Greenland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="CentralAmerica" layoutX="260.0" layoutY="345.0" prefWidth="61.0" text="Central America" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Venezuela" layoutX="330.0" layoutY="395.0" text="Venezuela" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Brazil" layoutX="390.0" layoutY="438.0" text="Brazil" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Peru" layoutX="345.0" layoutY="460.0" text="Peru" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Argentina" layoutX="348.0" layoutY="510.0" text="Argentina" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Iceland" layoutX="472.0" layoutY="220.0" text="Iceland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="GreatBritain" layoutX="455.0" layoutY="280.0" prefWidth="49.0" text="Great Britain" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Ukraine" layoutX="596.0" layoutY="260.0" text="Ukraine" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Scandinavia" layoutX="521.0" layoutY="212.0" rotate="-48.4" text="Scandinavia" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="NorthernEurope" layoutX="518.0" layoutY="285.0" prefWidth="50.0" text="Northern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="SouthernEurope" layoutX="524.0" layoutY="320.0" prefWidth="50.0" text="Southern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="WesternEurope" layoutX="460.0" layoutY="345.0" prefWidth="50.0" text="Western Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="NorthAfrica" layoutX="490.0" layoutY="430.0" prefWidth="50.0" text="North Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Egypt" layoutX="545.0" layoutY="400.0" text="Egypt" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="EastAfrica" layoutX="585.0" layoutY="435.0" prefWidth="29.0" text="East Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Congo" layoutX="557.0" layoutY="495.0" text="Congo" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="SouthAfrica" layoutX="557.0" layoutY="530.0" prefHeight="26.0" prefWidth="39.0" text="South Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Madagascar" layoutX="618.0" layoutY="553.0" rotate="-66.8" text="Madagascar" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="MiddleEast" layoutX="605.0" layoutY="385.0" prefWidth="45.0" text="Middle East" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="India" layoutX="703.0" layoutY="375.0" text="India" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Indonesia" layoutX="762.0" layoutY="474.0" text="Indonesia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="NewGuinea" layoutX="824.0" layoutY="460.0" text="New Guinea" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="WesternAustralia" layoutX="782.0" layoutY="535.0" prefWidth="58.0" text="Western Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="EasternAustralia" layoutX="830.0" layoutY="519.0" prefWidth="58.0" text="Eastern Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Siam" layoutX="757.0" layoutY="394.0" text="Siam" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="China" layoutX="735.0" layoutY="330.0" text="China" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Mongolia" layoutX="750.0" layoutY="285.0" text="Mongolia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Japan" layoutX="835.0" layoutY="297.0" text="Japan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Kamchatka" layoutX="812.0" layoutY="181.0" text="Kamchatka" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Irkutsk" layoutX="744.0" layoutY="255.0" text="Irkutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Yakutsk" layoutX="759.0" layoutY="185.0" text="Yakutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Siberia" layoutX="710.0" layoutY="215.0" text="Siberia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Ural" layoutX="671.0" layoutY="220.0" text="Ural" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
+                <Label id="Afghanistan" layoutX="649.0" layoutY="300.0" text="Afghanistan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true"></Label>
             </Pane>
         </AnchorPane>
        <VBox prefWidth="350.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

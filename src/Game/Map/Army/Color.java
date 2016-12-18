@@ -1,4 +1,6 @@
-package Game;
+package Game.Map.Army;
+
+import javafx.scene.image.Image;
 
 /**
  * Armies color list
@@ -13,7 +15,14 @@ public enum Color {
 
     public final javafx.scene.paint.Color hexColor;
 
+    public final Image armyImg;
+
     Color(String HexColor) {
         this.hexColor = javafx.scene.paint.Color.web(HexColor);
+        this.armyImg = new Image(Color.class.getResourceAsStream(this.name().toLowerCase() + ".png"),
+                40.0,
+                40.0,
+                true,
+                true);
     }
 }

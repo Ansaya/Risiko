@@ -61,59 +61,64 @@ public enum Territories {
 
     static {
         // Nord America
-        Alaska.Init(Alberta, NorthwestTerritory, Kamchatka);
-        Alberta.Init(Alaska, EasternUnitedStates, NorthwestTerritory, Ontario, WesternUnitedStates);
-        CentralAmerica.Init(EasternUnitedStates, WesternUnitedStates, Venezuela);
-        EasternUnitedStates.Init(CentralAmerica, Ontario, Quebec, WesternUnitedStates);
-        Greenland.Init(NorthwestTerritory, Ontario, Quebec, Iceland);
-        NorthwestTerritory.Init(Alaska, Alberta, Ontario, Greenland);
-        Ontario.Init(Alberta, EasternUnitedStates, Greenland, NorthwestTerritory, Quebec, WesternUnitedStates);
-        Quebec.Init(EasternUnitedStates, Ontario, NorthwestTerritory, Greenland);
-        WesternUnitedStates.Init(Alberta, CentralAmerica, EasternUnitedStates, Ontario);
+        Alaska.Init(-25.0f,-45.0f,Alberta, NorthwestTerritory, Kamchatka);
+        Alberta.Init(-50.0f,-5.0f,Alaska, EasternUnitedStates, NorthwestTerritory, Ontario, WesternUnitedStates);
+        CentralAmerica.Init(0,-5.0f,EasternUnitedStates, WesternUnitedStates, Venezuela);
+        EasternUnitedStates.Init(-10.0f,10.0f,CentralAmerica, Ontario, Quebec, WesternUnitedStates);
+        Greenland.Init(-15.0f,-10.0f,NorthwestTerritory, Ontario, Quebec, Iceland);
+        NorthwestTerritory.Init(-40.0f,-35.0f,Alaska, Alberta, Ontario, Greenland);
+        Ontario.Init(-15.0f,-45.0f,Alberta, EasternUnitedStates, Greenland, NorthwestTerritory, Quebec, WesternUnitedStates);
+        Quebec.Init(0.0f,-10.0f,EasternUnitedStates, Ontario, NorthwestTerritory, Greenland);
+        WesternUnitedStates.Init(-60.0f,-15.0f,Alberta, CentralAmerica, EasternUnitedStates, Ontario);
 
         // Sud America
-        Argentina.Init(Brazil, Peru);
-        Brazil.Init(Argentina, Peru, Venezuela, NorthAfrica);
-        Peru.Init(Argentina, Brazil, Venezuela);
-        Venezuela.Init(Brazil, Peru, CentralAmerica);
+        Argentina.Init(-35.0f,-10.0f,Brazil, Peru);
+        Brazil.Init(0.0f,-15.0f,Argentina, Peru, Venezuela, NorthAfrica);
+        Peru.Init(-55.0f,-15.0f,Argentina, Brazil, Venezuela);
+        Venezuela.Init(-5.0f,-45.0f,Brazil, Peru, CentralAmerica);
 
         // Europe
-        GreatBritain.Init(Iceland, NorthernEurope, Scandinavia, WesternEurope);
-        Iceland.Init(GreatBritain, Scandinavia, Greenland);
-        NorthernEurope.Init(GreatBritain, Scandinavia, SouthernEurope, Ukraine, WesternEurope);
-        Scandinavia.Init(GreatBritain, Iceland, NorthernEurope, Ukraine);
-        SouthernEurope.Init(NorthernEurope, Ukraine, WesternEurope, NorthAfrica, Egypt, MiddleEast);
-        Ukraine.Init(NorthernEurope, Scandinavia, SouthernEurope, Afghanistan, Ural, MiddleEast);
-        WesternEurope.Init(GreatBritain, NorthernEurope, SouthernEurope, NorthAfrica);
+        GreatBritain.Init(-15.0f,-40.0f,Iceland, NorthernEurope, Scandinavia, WesternEurope);
+        Iceland.Init(-15.0f,-40.0f,GreatBritain, Scandinavia, Greenland);
+        NorthernEurope.Init(-10.0f,-40.0f,GreatBritain, Scandinavia, SouthernEurope, Ukraine, WesternEurope);
+        Scandinavia.Init(-15.0f,-60.0f,GreatBritain, Iceland, NorthernEurope, Ukraine);
+        SouthernEurope.Init(-20.0f,0.0f,NorthernEurope, Ukraine, WesternEurope, NorthAfrica, Egypt, MiddleEast);
+        Ukraine.Init(-25.0f,-50.0f,NorthernEurope, Scandinavia, SouthernEurope, Afghanistan, Ural, MiddleEast);
+        WesternEurope.Init(-20.0f,-40.0f,GreatBritain, NorthernEurope, SouthernEurope, NorthAfrica);
 
         // Afirca
-        Congo.Init(EastAfrica, NorthAfrica, SouthAfrica);
-        EastAfrica.Init(Congo, Egypt, Madagascar, SouthAfrica, MiddleEast, NorthAfrica);
-        Egypt.Init(Congo, EastAfrica, NorthAfrica, SouthernEurope, MiddleEast);
-        Madagascar.Init(EastAfrica, SouthAfrica);
-        NorthAfrica.Init(Congo, EastAfrica, Egypt, SouthernEurope, WesternEurope, Brazil);
-        SouthAfrica.Init(Congo, EastAfrica, Madagascar);
+        Congo.Init(-20.0f,-35.0f,EastAfrica, NorthAfrica, SouthAfrica);
+        EastAfrica.Init(0.0f,-30.0f,Congo, Egypt, Madagascar, SouthAfrica, MiddleEast, NorthAfrica);
+        Egypt.Init(-5.0f,-20.0f,Congo, EastAfrica, NorthAfrica, SouthernEurope, MiddleEast);
+        Madagascar.Init(0,-5.0f,EastAfrica, SouthAfrica);
+        NorthAfrica.Init(-30.0f,-35.0f,Congo, EastAfrica, Egypt, SouthernEurope, WesternEurope, Brazil);
+        SouthAfrica.Init(-25.0f,0.0f,Congo, EastAfrica, Madagascar);
 
         // Asia
-        Afghanistan.Init(China, India, MiddleEast, Ural, Ukraine);
-        China.Init(Afghanistan, India, Mongolia, Siam, Siberia, Ural);
-        India.Init(Afghanistan, China, MiddleEast, Siam);
-        Irkutsk.Init(Kamchatka, Mongolia, Siberia, Yakutsk);
-        Japan.Init(Kamchatka, Mongolia);
-        Kamchatka.Init(Irkutsk, Japan, Mongolia, Yakutsk, Alaska);
-        MiddleEast.Init(Afghanistan, India, EastAfrica, Egypt, SouthernEurope, Ukraine);
-        Mongolia.Init(China, Irkutsk, Japan, Kamchatka, Siberia);
-        Siam.Init(China, India, Indonesia);
-        Siberia.Init(Irkutsk, Mongolia, Ural, Yakutsk);
-        Ural.Init(Afghanistan, China, Siberia, Ukraine);
-        Yakutsk.Init(Irkutsk, Kamchatka, Siberia);
+        Afghanistan.Init(-15.0f,0.0f,China, India, MiddleEast, Ural, Ukraine);
+        China.Init(0.0f,0.0f,Afghanistan, India, Mongolia, Siam, Siberia, Ural);
+        India.Init(-15.0f,-5.0f,Afghanistan, China, MiddleEast, Siam);
+        Irkutsk.Init(-25.0f,-30.0f,Kamchatka, Mongolia, Siberia, Yakutsk);
+        Japan.Init(-10.0f,-40.0f,Kamchatka, Mongolia);
+        Kamchatka.Init(-25.0f,-30.0f,Irkutsk, Japan, Mongolia, Yakutsk, Alaska);
+        MiddleEast.Init(-10.0f,-50.0f,Afghanistan, India, EastAfrica, Egypt, SouthernEurope, Ukraine);
+        Mongolia.Init(0,-5.0f,China, Irkutsk, Japan, Kamchatka, Siberia);
+        Siam.Init(-5.0f,-5.0f,China, India, Indonesia);
+        Siberia.Init(-20.0f,-50.0f,Irkutsk, Mongolia, Ural, Yakutsk);
+        Ural.Init(-20.0f,0.0f,Afghanistan, China, Siberia, Ukraine);
+        Yakutsk.Init(-15.0f,-40.0f,Irkutsk, Kamchatka, Siberia);
 
         // Australia
-        EasternAustralia.Init(NewGuinea, WesternAustralia);
-        Indonesia.Init(NewGuinea, WesternAustralia, Siam);
-        NewGuinea.Init(EasternAustralia, Indonesia, WesternAustralia);
-        WesternAustralia.Init(EasternAustralia, Indonesia, NewGuinea);
+        EasternAustralia.Init(0.0f,-5.0f,NewGuinea, WesternAustralia);
+        Indonesia.Init(-25.0f,0.0f,NewGuinea, WesternAustralia, Siam);
+        NewGuinea.Init(-10.0f,-45.0f,EasternAustralia, Indonesia, WesternAustralia);
+        WesternAustralia.Init(-35.0f,0.0f,EasternAustralia, Indonesia, NewGuinea);
     }
+
+    /**
+     * Connection path between sea adjacent territories
+     */
+    public static final String ConnectionPath = "M 632.25,544.75 L 610,560.25M 624,499 L 632.25,544.75M 836.75,498.625 L 823,462.875 L 823,462.875M 822.36519,510.61313 L 811.05148,502.12785M 823.42585,275.85368 L 846.05326,294.59201M 472,214.5 L 451.5,196.75M 400.25,179.5 L 363.5,187.75 L 363.5,187.75 L 363.5,187.75M 400.25,179.5 L 332.25,229.75M 400.25,179.75 L 384.75,217.25M 475.52931,430.53329 L 449.71991,437.95791M 792.48993,431.77073 L 799.91455,456.69624M 627.55727,431.59395 L 619.42554,444.14509M 490.25,315.125 L 482.75,302.625M 521.5,281.75 L 485.25,253M 498.5,234 L 521.75,247.5M 485.5,253 L 498.5,234";
 
     /**
      * Territories card
@@ -129,6 +134,10 @@ public enum Territories {
      * Territory border as svg path
      */
     public final String svgPath;
+
+    public float armyX;
+
+    public float armyY;
 
     /**
      * Adjacent territories
@@ -146,7 +155,9 @@ public enum Territories {
      *
      * @param Territories List of adjacent territories
      */
-    private void Init(Territories... Territories) {
+    private void Init(float ArmyX, float ArmyY, Territories... Territories) {
+        this.armyX = ArmyX;
+        this.armyY = ArmyY;
         adjacent.addAll(Arrays.asList(Territories));
     }
 

@@ -1,6 +1,6 @@
 package Client.Game.Observables;
 
-import Game.Color;
+import Game.Map.Army.Color;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;

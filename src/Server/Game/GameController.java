@@ -1,6 +1,6 @@
 package Server.Game;
 
-import Game.Color;
+import Game.Map.Army.Color;
 import Game.Connection.Chat;
 import Game.Connection.Lobby;
 import Game.MessageReceiver;
@@ -75,7 +75,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     public void init() {
         // Start message receiver
-        this.startListen();
+        this.startExecutor();
 
         System.out.println("Game controller: Message receiver up and running.");
     }
@@ -85,7 +85,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     public synchronized void terminate() {
         // Stop message receiver
-        this.stopListen();
+        this.stopExecutor();
         System.out.println("Game controller: Message receiver stopped.");
 
         final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");

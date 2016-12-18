@@ -23,6 +23,9 @@ public class Territory {
     private volatile Player owner = null;
 
     public void setOwner(Player Owner) {
+        if(owner != null)
+            owner.getTerritories().remove(this);
+
         owner = Owner;
         Owner.getTerritories().add(this);
     }

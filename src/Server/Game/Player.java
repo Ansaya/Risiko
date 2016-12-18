@@ -1,6 +1,6 @@
 package Server.Game;
 
-import Game.Color;
+import Game.Map.Army.Color;
 import Game.Connection.GameState;
 import Game.StateType;
 import Server.Game.Connection.MessageType;

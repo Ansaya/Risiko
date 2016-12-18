@@ -2,19 +2,24 @@ package Client.UI;
 
 import Client.Game.GameController;
 import Client.Game.Observables.*;
+import Game.Connection.Chat;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.transform.Scale;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Match view controller
@@ -23,7 +28,7 @@ public class MatchController implements Initializable {
 
     private double mapRatio = 725.0f / 480.0f;
 
-    private final CardsHandler cardsHandler = new CardsHandler();
+    private CardsHandler cardsHandler;
 
     /* Chat fields */
     @FXML
@@ -40,6 +45,8 @@ public class MatchController implements Initializable {
 
     @FXML
     private JFXBadge chatBadge;
+
+    private final AtomicInteger lastSenderId = new AtomicInteger(-1);
 
     /**
      * Lambda for chat message sending
@@ -139,23 +146,90 @@ public class MatchController implements Initializable {
         playersList.setRoot(usersRoot);
     }
 
-    public void setMapHandler() {
-        mapHandler = new MapHandler(mapPane);
-        GameController.getInstance().setMapHandler(mapHandler);
+    private void setMapHandler(ArrayList<ObservableUser> UsersList) {
+        if(UsersList != null) {
+            final ObservableUser current = GameController.getInstance().getUser();
+            UsersList.forEach(u -> {
+                if (u.equals(current))
+                    current.color = u.color;
+
+                usersRoot.getChildren().add(new TreeItem<>(u));
+            });
+        }
+        mapHandler = new MapHandler(mapPane, UsersList);
         mapHandler.setArmiesLabel(newArmiesLabel);
         mapHandler.setMissionButton(missionBtn);
         mapHandler.setPhaseButton(endTurnBtn);
     }
 
-    public void setCardsHandler() {
+    private void setCardsHandler() {
+        cardsHandler = new CardsHandler();
         cardsHandler.setCardsButton(cardsBtn);
-        GameController.getInstance().setCardsHandler(cardsHandler);
     }
 
-    public void setGameController() {
+    public void setGameController(ArrayList<ObservableUser> UsersList) {
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
         chatMessage.setOnAction(sendMessage);
-        GameController.getInstance().setChatUpdate(chatSP, chatContainer);
-        GameController.getInstance().setUsersUpdate(usersRoot.getChildren());
+        GameController.getInstance().setChatEntry(this::addChatEntry);
+        setMapHandler(UsersList);
+        GameController.getInstance().setMapHandler(mapHandler);
+        setCardsHandler();
+        GameController.getInstance().setCardsHandler(cardsHandler);
+        GameController.getInstance().startExecutor();
+    }
+
+    private void addChatEntry(Chat<ObservableUser> Chat) {
+        final Label sender = getChatEntry();
+        final Label text = getChatEntry();
+
+        sender.setText(Chat.sender.username.get());
+        text.setText(Chat.message);
+
+        // If message is From this client display it on opposite side of chat view
+        if(Chat.sender.equals(GameController.getInstance().getUser())){
+            sender.setAlignment(Pos.TOP_RIGHT);
+            text.setAlignment(Pos.TOP_RIGHT);
+        }
+
+        if(Chat.sender.color != null) {
+            sender.setTextFill(Chat.sender.color.hexColor);
+            text.setTextFill(Chat.sender.color.hexColor);
+        }
+
+        if(!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> {
+                // If message is from same sender as before, avoid writing sender again
+                if (lastSenderId.get() != Chat.sender.id.get())
+                    chatContainer.getChildren().add(sender);
+
+                lastSenderId.set(Chat.sender.id.get());
+
+                chatContainer.getChildren().add(text);
+
+                // Scroll container to end
+                chatSP.setVvalue(1.0f);
+            });
+            return;
+        }
+
+        // If message is from same sender as before, avoid writing sender again
+        if(lastSenderId.get() != Chat.sender.id.get())
+            chatContainer.getChildren().add(sender);
+
+        lastSenderId.set(Chat.sender.id.get());
+
+        chatContainer.getChildren().add(text);
+
+        // Scroll container to end
+        chatSP.setVvalue(1.0f);
+    }
+
+    private Label getChatEntry() {
+        final Label chatEntry = new Label();
+        chatEntry.prefWidth(228.0f);
+        chatEntry.getStyleClass().add("chat");
+        chatEntry.setWrapText(true);
+
+        return chatEntry;
     }
 }

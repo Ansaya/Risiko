@@ -15,19 +15,13 @@ import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TreeItem;
-import javafx.scene.layout.VBox;
-import javafx.util.Builder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Handle communication with the server
@@ -63,37 +57,15 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     /* Connection section end */
 
     /* Chat section */
-    /**
-     * Username associated with last chat message received
-     */
-    private final AtomicInteger lastSenderId = new AtomicInteger(-1);
+
+    private volatile Consumer<Chat<ObservableUser>> addChatEntry = null;
 
     /**
-     * ScrollPane containing chatContainer VBox
-     */
-    private volatile ScrollPane chatScrollable;
-
-    /**
-     * Container of chat entries
-     */
-    private volatile VBox chatContainer;
-
-    /**
-     * Builder for new chat entries
-     */
-    private Builder<Label> chatEntryBuilder;
-
-    /**
-     * Set where To add incoming chats
+     * Set method reference to add new message to chatbos in UI
      *
-     * @param Scrollable Scrollable parent of chat container
-     * @param ToUpdate Chat container To add new chats into
+     * @param AddChatEntry Method reference
      */
-    public void setChatUpdate(ScrollPane Scrollable, VBox ToUpdate) {
-        this.chatScrollable = Scrollable;
-        this.chatContainer = ToUpdate;
-        lastSenderId.set(-1);
-    }
+    public void setChatEntry(Consumer<Chat<ObservableUser>> AddChatEntry) { addChatEntry = AddChatEntry; }
 
     /* Chat section end */
 
@@ -105,26 +77,25 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     public ObservableUser getUser() { return this.user; }
 
-    /**
-     * List of userList in lobby
-     */
-    private volatile ObservableList<TreeItem<ObservableUser>> userList;
+    private volatile Consumer<Lobby<ObservableUser>> updateUsers = null;
 
     /**
-     * Set where To add lobby userList when in lobby or match userList when playing
+     * Set method reference to update users list in UI
      *
-     * @param ToUpdate Observable list linked To UI
+     * @param UpdateUsers Method reference
      */
-    public void setUsersUpdate(ObservableList<TreeItem<ObservableUser>> ToUpdate) {
-        this.userList = ToUpdate;
-    }
+    public void setUpdateUsers(Consumer<Lobby<ObservableUser>> UpdateUsers) { updateUsers = UpdateUsers; }
 
     /* User section end */
 
     /* UI Handlers */
+    private volatile boolean inMatch = false;
+
     private volatile MapHandler mapHandler;
 
-    public void setMapHandler(MapHandler MapHandler){ this.mapHandler = MapHandler; }
+    public void setMapHandler(MapHandler MapHandler){
+        this.mapHandler = MapHandler;
+    }
 
     private volatile CardsHandler cardsHandler;
 
@@ -150,63 +121,15 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         messageHandlers.put(MessageType.Chat, (message) -> {
             // Get chat object
             final Chat<ObservableUser> chat = gson.fromJson(message.Json, MessageType.Chat.getType());
-            final Label sender = chatEntryBuilder.build();
-            final Label text = chatEntryBuilder.build();
 
-            sender.setText(chat.sender.username.get());
-            text.setText(chat.message);
-
-            // If message is From this client display it on opposite side of chat view
-            if(chat.sender.equals(this.user)){
-                sender.setAlignment(Pos.TOP_RIGHT);
-                text.setAlignment(Pos.TOP_RIGHT);
-            }
-
-            if(chat.sender.color != null) {
-                sender.setTextFill(chat.sender.color.hexColor);
-                text.setTextFill(chat.sender.color.hexColor);
-            }
-
-            // Update chat From ui thread
-            Platform.runLater(() -> {
-                // If message is From same sender as before, avoid To write sender again
-                if(this.lastSenderId.get() != chat.sender.id.get())
-                    this.chatContainer.getChildren().add(sender);
-
-                this.lastSenderId.set(chat.sender.id.get());
-
-                this.chatContainer.getChildren().add(text);
-
-                // Scroll container To end
-                this.chatScrollable.setVvalue(1.0f);
-            });
+            addChatEntry.accept(chat);
         });
 
         // Handler for userList in lobby
         messageHandlers.put(MessageType.Lobby, (message) -> {
             System.out.println("GameController: Lobby message: " + message.Json);
             final Lobby<ObservableUser> lobbyUsers = gson.fromJson(message.Json, MessageType.Lobby.getType());
-
-            // Update userList in lobby
-            Platform.runLater(() -> {
-                lobbyUsers.toRemove.forEach(u -> userList.removeIf(ul -> ul.getValue().equals(u)));
-
-                lobbyUsers.toAdd.forEach(u -> {
-                    if(!u.equals(this.user))
-                        userList.add(new TreeItem<>(u));
-                });
-
-                synchronized (lobbyUsers){
-                    lobbyUsers.notify();
-                }
-            });
-
-            synchronized (lobbyUsers){
-                try {
-                    lobbyUsers.wait();
-                } catch (Exception e) {}
-            }
-
+            updateUsers.accept(lobbyUsers);
         });
 
         // Handler for match initialization
@@ -214,40 +137,15 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             System.out.println("GameController: Match message: " + message.Json);
             final Match<ObservableUser> match = gson.fromJson(message.Json, MessageType.Match.getType());
 
-            // Launch match screen
-            Platform.runLater(Main::toMatch);
-
-            // Wait for screen To load and new user list reference To be set
-            try {
-                synchronized (Main.inMatch) {
-                    Main.inMatch.wait();
-                }
-            } catch (Exception e) {}
-
-            System.out.println("GameController: Match screen loaded and chat field updated.");
-
-            // Load userList in player's list
-            Platform.runLater(() -> match.Players.forEach((u) -> {
-                    if(u.equals(this.user))
-                        this.user.color = u.color;
-
-                    this.userList.add(new TreeItem<>(u));
-                })
-            );
+            stopExecutor();
+            Main.toMatch(match);
+            inMatch = true;
         });
 
         // Handler for positioning message
         messageHandlers.put(MessageType.Positioning, message -> {
             System.out.println("GameController: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
-
-            if(!Main.inMatch.get()) {
-                synchronized (Main.inMatch) {
-                    try {
-                        Main.inMatch.wait();
-                    } catch (Exception e) {}
-                }
-            }
 
             SendMessage(MessageType.MapUpdate, mapHandler.positionArmies(pos.newArmies));
         });
@@ -304,7 +202,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         // Handler for special move
         messageHandlers.put(MessageType.SpecialMoving, (message) -> {
             System.out.println("GameController: Special moving message: " + message.Json);
-            // Request user To move Armies and send response To server
+            // Request user To move Armies and send response to server
             SendMessage(MessageType.SpecialMoving, mapHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
         });
 
@@ -315,6 +213,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             Main.toLobby();
             user.territories.set(0);
             user.color = null;
+            mapHandler = null;
+            cardsHandler = null;
 
            final GameState<ObservableUser> gameState = gson.fromJson(message.Json, MessageType.GameState.getType());
 
@@ -332,17 +232,6 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                    break;
            }
         });
-
-
-        // Setup builder for chat entries
-        this.chatEntryBuilder = () -> {
-            Label chatEntry = new Label();
-            chatEntry.prefWidth(228.0f);
-            chatEntry.getStyleClass().add("chat");
-            chatEntry.setWrapText(true);
-
-            return chatEntry;
-        };
     }
 
     /**
@@ -376,7 +265,6 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         System.out.println("Got id " + user.id.get() + " from server.");
 
         // If connection is successfully established start listening and receiving
-        startListen();
         _threadInstance.start();
     }
 
@@ -393,7 +281,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         if(fromClient)
             send.println("End");
 
-        stopListen();
+        stopExecutor();
 
         // Stop thread
         try {
@@ -420,7 +308,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
      */
     public void AbortMatch() {
         // If player is not in a match return
-        if(!Main.inMatch.get())
+        if(!inMatch)
             return;
 
         SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));

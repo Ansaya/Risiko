@@ -1,6 +1,6 @@
 package Server.Game;
 
-import Game.Color;
+import Game.Map.Army.Color;
 import Game.Connection.*;
 import Game.Map.*;
 import Game.Map.Mission;
@@ -68,7 +68,7 @@ public class Match extends MessageReceiver<MessageType> {
         super("Match-" + Id);
 
         if(Players.size() < 2 || Players.size() > 6)
-            throw new UnsupportedOperationException(String.format("Not possible To start playing with %d users.", Players.size()));
+            throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", Players.size()));
 
         // Set current match id
         this.id = Id;
@@ -87,6 +87,13 @@ public class Match extends MessageReceiver<MessageType> {
             playersOrder.add(p.id);
         });
 
+        Player AI = null;
+
+        if(Players.size() == 2) {
+            AI = Player.getAI(id, deckColor.next());
+            Players.add(AI);
+        }
+
         // Send all players initial setup containing all players and Mission
         players.forEach((id, player) -> {
             // If mission is to destroy an army not present assign 24 territories mission
@@ -98,11 +105,11 @@ public class Match extends MessageReceiver<MessageType> {
 
         // Setup and start match message receiver
         listenersInit();
-        startListen();
+        startExecutor();
 
         // Start first setup turn
         System.out.println("Match " + this.id + ": Started game with " + players.size() + " Players.");
-        this.currentTurn = new Turn(this, Players.size() == 2 ? Player.getAI(id, deckColor.next()) : null, true);
+        this.currentTurn = new Turn(this, AI, true);
     }
 
     /**
@@ -110,7 +117,7 @@ public class Match extends MessageReceiver<MessageType> {
      */
     void terminate() {
         currentTurn.endTurn();
-        stopListen();
+        stopExecutor();
 
         players.forEach((id, p) -> {
             p.exitMatch();

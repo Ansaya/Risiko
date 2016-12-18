@@ -17,6 +17,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,12 +63,14 @@ public class MapHandler {
     }
 
     private JFXDialog getMissionDialog() {
-        return Main.getDialog("Mission", mission.Description, "Continue");
+        return Main.getDialog("Mission", mission != null ? mission.Description : "Mission not yet received.", "Continue");
     }
 
     public void setMissionButton(Button MissionBtn) {
         MissionBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(getMissionDialog()));
     }
+
+    private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
     /**
      * Territories displayed in mapPane
@@ -104,8 +109,11 @@ public class MapHandler {
 
     private SelectedTerritory waitSelected(ObservableUser Owner, boolean Exclude) {
         SelectedTerritory st;
-        while ((st = waitSelected())  != null){
-            if((st.Selected.getOwner() == Owner) ^ Exclude)
+        if(Owner == null)
+            Owner = new ObservableUser(-100, "NullUser", null);
+
+        while ((st = waitSelected()) != null){
+            if(Owner.equals(st.Selected.getOwner()) ^ Exclude)
                 return st;
         }
 
@@ -151,9 +159,16 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(Pane MapPane) {
+    public MapHandler(Pane MapPane, ArrayList<ObservableUser> UsersList) {
 
         ObservableTerritory.setMapPane(MapPane);
+        final SVGPath connections = new SVGPath();
+        connections.setContent(Territories.ConnectionPath);
+        connections.setStroke(Color.BLACK);
+        MapPane.getChildren().add(connections);
+
+        if(UsersList != null)
+            UsersList.forEach(u -> usersList.put(u.id.get(), u));
 
         MapPane.getChildren().forEach(l -> {
             if(l instanceof Label) {
@@ -179,8 +194,8 @@ public class MapHandler {
                 ObservableTerritory t = territories.get(u.Territory);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
-                if (!u.getOwner().equals(t.getOwner()))
-                    t.setOwner(u.getOwner());
+                if (!t.getOwner().equals(u.getOwner()))
+                    t.setOwner(usersList.get(u.getOwner().id.get()));
             }
         });
 
@@ -353,7 +368,7 @@ public class MapHandler {
                 from.Armies.set(1);
                 from.NewArmies.set(SpecialMoving.From.Armies.get() - 1);
                 to.Armies.set(SpecialMoving.To.Armies.get());
-                to.setOwner(from.getOwner());
+                to.setOwner(usersList.get(from.getOwner().id.get()));
             }
         });
 
@@ -528,7 +543,7 @@ public class MapHandler {
 
         // If owner is null then we are in setup phase, so update owner and end phase after choice
         if(Territory.NewArmies.get() != 0 && Territory.getOwner() == null) {
-            Territory.setOwner(gameController.getUser());
+            Territory.setOwner(usersList.get(gameController.getUser().id.get()));
             canSelect = false;
         }
     }
