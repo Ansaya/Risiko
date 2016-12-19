@@ -1,4 +1,6 @@
-package Game.Map;
+package Game.Map.Territories;
+
+import Game.Map.RealWorldMap;
 
 import java.util.ArrayList;
 
@@ -17,14 +19,14 @@ public enum Card {
      * @param Cards Three cards list
      * @return True if combination is valid, false if not
      */
-    public static boolean isCombinationValid(ArrayList<Territories> Cards) {
+    public static boolean isCombinationValid(ArrayList<RealWorldMap> Cards) {
         if(Cards.size() != 3)
             return false;
 
         int infantry = 0, cavalry = 0, artillery = 0, jolly = 0;
 
         // Increment respective counter for each card
-        for (Territories t: Cards) {
+        for (RealWorldMap t: Cards) {
             switch (t.card){
                 case Infantry:
                     infantry++;

@@ -2,7 +2,7 @@ package Game.Map;
 
 import Game.Map.Army.Color;
 import java.util.*;
-import static Game.Map.Territories.*;
+import static Game.Map.RealWorldMap.*;
 
 /**
  * List of missions for earth map
@@ -105,9 +105,9 @@ public enum Mission {
 
     public final String Description;
 
-    private final ArrayList<Territories> ToConquer;
+    private final ArrayList<RealWorldMap> ToConquer;
 
-    public ArrayList<Territories> getToConquer() { return ToConquer.getClass().cast(ToConquer.clone()); }
+    public ArrayList<RealWorldMap> getToConquer() { return ToConquer.getClass().cast(ToConquer.clone()); }
 
     public final Integer Number;
 
@@ -115,7 +115,7 @@ public enum Mission {
 
     public final MissionType Type;
 
-    Mission(String Description, Territories... ToConquer) {
+    Mission(String Description, RealWorldMap... ToConquer) {
         this.Description = Description;
         this.ToConquer = new ArrayList<>(Arrays.asList(ToConquer));
         this.Number = ToConquer.length;
@@ -139,7 +139,7 @@ public enum Mission {
         this.Type = MissionType.Destroy;
     }
 
-    Mission(String Description, Integer Continents, Territories... ToConquer) {
+    Mission(String Description, Integer Continents, RealWorldMap... ToConquer) {
         this.Description = Description;
         this.ToConquer = new ArrayList<>(Arrays.asList(ToConquer));
         this.Number = Continents;

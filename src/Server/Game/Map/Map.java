@@ -1,6 +1,6 @@
 package Server.Game.Map;
 
-import Game.Map.Territories;
+import Game.Map.RealWorldMap;
 import java.util.HashMap;
 
 /**
@@ -8,15 +8,15 @@ import java.util.HashMap;
  */
 public class Map {
 
-    private final HashMap<Territories, Territory> territories = new HashMap<>();
+    private final HashMap<RealWorldMap, Territory> territories = new HashMap<>();
 
-    public Territory getTerritory(Territories Territory) {
+    public Territory getTerritory(RealWorldMap Territory) {
         return territories.get(Territory);
     }
 
     public Map() {
-        for (Territories t: Territories.values()) {
-            if(t == Territories.Jolly1 || t == Territories.Jolly2)
+        for (RealWorldMap t: RealWorldMap.values()) {
+            if(t == RealWorldMap.Jolly1 || t == RealWorldMap.Jolly2)
                 continue;
 
             territories.put(t, new Territory(t));

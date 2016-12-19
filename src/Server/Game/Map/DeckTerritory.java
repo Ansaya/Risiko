@@ -1,14 +1,15 @@
 package Server.Game.Map;
 
-import Game.Map.Card;
-import Game.Map.Territories;
+import Game.Map.Territories.Card;
+import Game.Map.RealWorldMap;
+
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represent a deck of territories cards and two jolly
  */
-public class DeckTerritory extends Deck<Territories> {
+public class DeckTerritory extends Deck<RealWorldMap> {
 
     /**
      * Current bonus Armies counter
@@ -16,7 +17,7 @@ public class DeckTerritory extends Deck<Territories> {
     private final AtomicInteger bonus = new AtomicInteger(4);
 
     public DeckTerritory() {
-        super(Territories.class);
+        super(RealWorldMap.class);
         shuffle();
     }
 
@@ -36,7 +37,7 @@ public class DeckTerritory extends Deck<Territories> {
      * @param Cards Three cards list
      * @return Number of bonus Armies if combination is valid, zero otherwise
      */
-    public int isCombinationValid(boolean use, ArrayList<Territories> Cards) {
+    public int isCombinationValid(boolean use, ArrayList<RealWorldMap> Cards) {
         if(!Card.isCombinationValid(Cards))
             return 0;
 

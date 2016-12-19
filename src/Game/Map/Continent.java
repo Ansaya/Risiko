@@ -4,7 +4,7 @@ import Server.Game.Map.Territory;
 import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import static Game.Map.Territories.*;
+import static Game.Map.RealWorldMap.*;
 
 /**
  * Continents' list From earth map
@@ -20,11 +20,11 @@ public enum Continent {
     public final Color hexColor;
 
     /**
-     * Continent's territories
+     * Area's territories
      */
-    private final ArrayList<Territories> territories = new ArrayList<>();
+    private final ArrayList<RealWorldMap> territories = new ArrayList<>();
 
-    Continent(String HexColor, Territories... Territories) {
+    Continent(String HexColor, RealWorldMap... Territories) {
         this.hexColor = Color.web(HexColor);
 
         this.territories.addAll(Arrays.asList(Territories));
@@ -38,7 +38,7 @@ public enum Continent {
      */
     public static int bonusArmies(ArrayList<Territory> Territories) {
 
-        // Complete continents' list in the Territories array
+        // Complete continents' list in the RealWorldMap array
         ArrayList<Continent> dominated = dominatedContinents(Territories);
 
         int bonus = 0;

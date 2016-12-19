@@ -3,8 +3,8 @@ package Client.Game.Observables;
 import Client.Main;
 import Client.UI.MatchController;
 import Game.Connection.Cards;
-import Game.Map.Card;
-import Game.Map.Territories;
+import Game.Map.Territories.Card;
+import Game.Map.RealWorldMap;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -48,7 +48,7 @@ public class CardsHandler {
     /**
      * List of selected cards
      */
-    private final ArrayList<Territories> selected = new ArrayList<>();
+    private final ArrayList<RealWorldMap> selected = new ArrayList<>();
 
     public CardsHandler() {
 
@@ -76,7 +76,7 @@ public class CardsHandler {
             redeemBtn.setDisable(true);
             container.getChildren().forEach(card -> {
                 if(card.getStyleClass().remove("card-selected"))
-                    selected.add(Territories.valueOf(card.getId()));
+                    selected.add(RealWorldMap.valueOf(card.getId()));
             });
 
             synchronized (selected){
@@ -88,7 +88,7 @@ public class CardsHandler {
 
         /* Layout setup */
         final JFXDialogLayout dl = new JFXDialogLayout();
-        dl.setHeading(new Label("     Territories cards"));
+        dl.setHeading(new Label("     RealWorldMap cards"));
         dl.setBody(container);
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
@@ -106,7 +106,7 @@ public class CardsHandler {
      * @param Territory Territory To use for card initialization
      * @return Initialized card
      */
-    private AnchorPane getCard(Territories Territory) {
+    private AnchorPane getCard(RealWorldMap Territory) {
 
         final String img = MatchController.class.getResource("Cards/" + Territory.name() + ".jpg").toExternalForm();
         final AnchorPane card = new AnchorPane();
@@ -180,7 +180,7 @@ public class CardsHandler {
      *
      * @param Territory Territory relative To the card To add
      */
-    public void addCard(Territories Territory) {
+    public void addCard(RealWorldMap Territory) {
         if(!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> addCard(Territory));
             return;

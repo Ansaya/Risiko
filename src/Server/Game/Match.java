@@ -224,7 +224,7 @@ public class Match extends MessageReceiver<MessageType> {
 
         switch (mission.Type){
             case Conquer:
-                final ArrayList<Territories> ToConquer = mission.getToConquer();
+                final ArrayList<RealWorldMap> ToConquer = mission.getToConquer();
                 Player.getTerritories().forEach(t -> ToConquer.removeIf(te -> te == t.Territory));
                 return ToConquer.isEmpty();
             case Destroy:
@@ -245,7 +245,7 @@ public class Match extends MessageReceiver<MessageType> {
                 }
                 return false;
             case Special:
-                final ArrayList<Territories> toConquer = mission.getToConquer();
+                final ArrayList<RealWorldMap> toConquer = mission.getToConquer();
                 Player.getTerritories().forEach(t -> toConquer.removeIf(te -> te == t.Territory));
                 return toConquer.isEmpty() && Continent.dominatedContinents(Player.getTerritories()).size() >= mission.Number;
         }
@@ -383,11 +383,11 @@ public class Match extends MessageReceiver<MessageType> {
 
             // Save last player id To trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
-            final ArrayList<Territories> toGo = new ArrayList<>(Arrays.asList(Territories.values()));
-            toGo.remove(Territories.Jolly1);
-            toGo.remove(Territories.Jolly2);
+            final ArrayList<RealWorldMap> toGo = new ArrayList<>(Arrays.asList(RealWorldMap.values()));
+            toGo.remove(RealWorldMap.Jolly1);
+            toGo.remove(RealWorldMap.Jolly2);
 
-            /* Territories choice */
+            /* RealWorldMap choice */
 
             while (toGo.size() > 0){
                 // Send next player positioning message with one army

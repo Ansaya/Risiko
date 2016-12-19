@@ -2,7 +2,7 @@ package Client.Game.Observables;
 
 import Client.Main;
 import Game.Connection.Battle;
-import Game.Map.Territories;
+import Game.Map.Territories.Territory;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
 import javafx.animation.Interpolator;
@@ -25,16 +25,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
-
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Observable Territory class
  */
-public class ObservableTerritory {
-
-    public final Territories Territory;
+public class ObservableTerritory extends Game.Map.Territories.Territory<ObservableUser> {
 
     private static Pane mapPane;
 
@@ -77,6 +74,7 @@ public class ObservableTerritory {
      *
      * @param Owner New owner of this Territory
      */
+    @Override
     public void setOwner(ObservableUser Owner) {
         synchronized (owner.territories){
             owner.territories.set(owner.territories.subtract(1).get());
@@ -94,28 +92,26 @@ public class ObservableTerritory {
             Platform.runLater(() -> svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0)));
     }
 
-    public ObservableUser getOwner() { return owner; }
-
     /**
      * Instance of map Territory with reference To UI Territory
      *
      * @param Territory Territory associated To this object
      * @param Label Label for this Territory in UI
      */
-    public ObservableTerritory(MapHandler MapHandler, Territories Territory, Label Label) {
-        this.Territory = Territory;
+    public ObservableTerritory(MapHandler MapHandler, Territory Territory, Label Label) {
+        super(Territory);
         this.label = Label;
         label.setText(Territory.toString().toUpperCase());
         label.setFont(new Font("Trebuchet MS", 8.5));
         label.setMouseTransparent(true);    // Set label mouse transparent To avoid selection issues
-        svgTerritory.setContent(this.Territory.svgPath);
+        svgTerritory.setContent(Territory.SvgPath);
         svgTerritory.setStroke(Color.BLACK);
         svgTerritory.setStrokeWidth(1.5f);
-        svgTerritory.setFill(this.Territory.continent.hexColor);
+        svgTerritory.setFill(Territory.Area.Color);
         // Add event handler for selection
         svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(this, evt.getButton().equals(MouseButton.SECONDARY)));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(Territory.continent.hexColor.darker()));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(Territory.continent.hexColor));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(Territory.Area.Color.darker()));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(Territory.Area.Color));
 
         /* Main badge construction */
         final Label l = new Label();
@@ -133,8 +129,8 @@ public class ObservableTerritory {
         final StackPane sp = new StackPane(armyImg, l);
         sp.prefWidth(40.0f);
         sp.prefHeight(40.0f);
-        sp.setLayoutX(getCenterX(svgTerritory) + Territory.armyX);
-        sp.setLayoutY(getCenterY(svgTerritory) + Territory.armyY);
+        sp.setLayoutX(getCenterX(svgTerritory) + Territory.ArmyX);
+        sp.setLayoutY(getCenterY(svgTerritory) + Territory.ArmyY);
 
         Platform.runLater(() -> {
             mapPane.getChildren().addAll(svgTerritory, sp);
@@ -317,15 +313,12 @@ public class ObservableTerritory {
 
     @Override
     public String toString() {
-        return Territory.toString();
+        return super.toString();
     }
 
     @Override
     public boolean equals(Object other) {
-        if(other instanceof ObservableTerritory)
-            return ((ObservableTerritory)other).Territory == this.Territory;
-
-        return other instanceof Territories && other == this.Territory;
+        return super.equals(other);
     }
 
     public enum SelectionType {

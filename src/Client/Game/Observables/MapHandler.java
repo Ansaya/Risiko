@@ -7,7 +7,7 @@ import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
 import Game.Connection.SpecialMoving;
 import Game.Map.Mission;
-import Game.Map.Territories;
+import Game.Map.RealWorldMap;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -73,9 +73,9 @@ public class MapHandler {
     private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
     /**
-     * Territories displayed in mapPane
+     * RealWorldMap displayed in mapPane
      */
-    public final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
+    public final HashMap<RealWorldMap, ObservableTerritory> territories = new HashMap<>();
 
     private final ArrayList<SelectedTerritory> selectedQueue = new ArrayList<>();
 
@@ -163,7 +163,7 @@ public class MapHandler {
 
         ObservableTerritory.setMapPane(MapPane);
         final SVGPath connections = new SVGPath();
-        connections.setContent(Territories.ConnectionPath);
+        connections.setContent(RealWorldMap.ConnectionPath);
         connections.setStroke(Color.BLACK);
         MapPane.getChildren().add(connections);
 
@@ -172,7 +172,7 @@ public class MapHandler {
 
         MapPane.getChildren().forEach(l -> {
             if(l instanceof Label) {
-                Territories t = Territories.valueOf(l.getId());
+                RealWorldMap t = RealWorldMap.valueOf(l.getId());
                 territories.put(t, new ObservableTerritory(this, t, (Label)l));
             }
         });

@@ -1,15 +1,11 @@
 package Server.Game.Map;
 
-import Game.Map.Territories;
 import Server.Game.Player;
-import javafx.application.Platform;
 
 /**
  * Instance of a Territory on the map
  */
-public class Territory {
-
-    public final Territories Territory;
+public class Territory extends Game.Map.Territories.Territory<Player> {
 
     /**
      * Armies placed on this Territory
@@ -30,10 +26,8 @@ public class Territory {
         Owner.getTerritories().add(this);
     }
 
-    public Player getOwner() { return owner; }
-
-    public Territory(Territories Territory) {
-        this.Territory = Territory;
+    public Territory(Game.Map.Territories.Territory Territory) {
+        super(Territory);
     }
 
     /**
@@ -59,14 +53,11 @@ public class Territory {
 
     @Override
     public String toString() {
-        return Territory.toString();
+        return super.toString();
     }
 
     @Override
     public boolean equals(Object other) {
-        if(other instanceof Territory)
-            return ((Territory)other).Territory == this.Territory;
-
-        return other instanceof Territories && other == this.Territory;
+        return super.equals(other);
     }
 }
