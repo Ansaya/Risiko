@@ -11,7 +11,6 @@ import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Map.Territory;
 import com.google.gson.*;
-
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -267,7 +266,7 @@ public class Match extends MessageReceiver<MessageType> {
             this.match = Match;
             this.playing = Current;
 
-            this.gson = getGsonBuilder(match.map.getGsonBuilder(null)).create();
+            this.gson = getGsonBuilder(null).create();
 
             if(isSetup)
                 this._instance = new Thread(() -> Setup(Current));
@@ -627,6 +626,7 @@ public class Match extends MessageReceiver<MessageType> {
             builder = new GsonBuilder();
 
         builder.registerTypeAdapter(Player.class, new PlayerDeserializer(this));
+        builder.registerTypeAdapter(Territory.class, new TerritoryDeserializer(this.map));
 
         return builder;
     }
@@ -642,6 +642,26 @@ public class Match extends MessageReceiver<MessageType> {
         @Override
         public Player deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return match.players.get(json.getAsJsonObject().get("id").getAsInt());
+        }
+    }
+
+    private class TerritoryDeserializer implements JsonDeserializer<Territory> {
+
+        private final Map<Territory> map;
+
+        public TerritoryDeserializer(Map<Territory> Map) {
+            this.map = Map;
+        }
+
+        @Override
+        public Territory deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            final JsonObject jt = json.getAsJsonObject();
+            final Territory t = map.getTerritory(jt.get("Name").getAsString());
+            if(jt.has("NewArmies"))
+                t.NewArmies = jt.get("NewArmies").getAsInt();
+
+            return map.getTerritory(json.getAsJsonObject().get("Name").getAsString());
         }
     }
 }
