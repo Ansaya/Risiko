@@ -5,7 +5,7 @@ import Server.Game.Player;
 /**
  * Instance of a Territory on the map
  */
-public class Territory extends Game.Map.Territories.Territory<Player> {
+public class Territory extends Game.Map.Territory<Player> {
 
     /**
      * Armies placed on this Territory
@@ -18,16 +18,13 @@ public class Territory extends Game.Map.Territories.Territory<Player> {
 
     private volatile Player owner = null;
 
+    @Override
     public void setOwner(Player Owner) {
         if(owner != null)
             owner.getTerritories().remove(this);
 
         owner = Owner;
         Owner.getTerritories().add(this);
-    }
-
-    public Territory(Game.Map.Territories.Territory Territory) {
-        super(Territory);
     }
 
     /**
@@ -49,15 +46,5 @@ public class Territory extends Game.Map.Territories.Territory<Player> {
 
         this.Armies -= toRemove;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return super.equals(other);
     }
 }

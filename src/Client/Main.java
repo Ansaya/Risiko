@@ -5,8 +5,6 @@ import Client.Game.Observables.ObservableUser;
 import Client.UI.LobbyController;
 import Client.UI.MatchController;
 import Game.Connection.Match;
-import Game.Map.RealWorldMap;
-import com.google.gson.Gson;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -165,12 +163,7 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
-        //launch(args);
-
-        Gson gson = new Gson();
-        String territory = gson.toJson(RealWorldMap.Afghanistan);
-
-
+        launch(args);
     }
 
     @Override

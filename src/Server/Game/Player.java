@@ -1,10 +1,10 @@
 package Server.Game;
 
 import Game.Map.Army.Color;
+import Game.Map.Mission;
 import Game.Connection.GameState;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
-import Game.Map.Mission;
 import Server.Game.Map.Territory;
 import javafx.application.Platform;
 import java.net.Socket;
@@ -15,12 +15,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Player relative To a match
  */
-public class Player extends SocketHandler {
+public class Player extends SocketHandler implements Game.Player {
 
     /**
      * Player's unique id
      */
     public final int id;
+
+    @Override
+    public int getId() {
+        return id;
+    }
 
     /**
      * Username choose From

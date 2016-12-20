@@ -6,8 +6,8 @@ import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
 import Game.Connection.SpecialMoving;
+import Game.Map.Map;
 import Game.Map.Mission;
-import Game.Map.RealWorldMap;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -72,10 +72,7 @@ public class MapHandler {
 
     private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
-    /**
-     * RealWorldMap displayed in mapPane
-     */
-    public final HashMap<RealWorldMap, ObservableTerritory> territories = new HashMap<>();
+    public final Map<ObservableTerritory> map;
 
     private final ArrayList<SelectedTerritory> selectedQueue = new ArrayList<>();
 
@@ -159,11 +156,17 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(Pane MapPane, ArrayList<ObservableUser> UsersList) {
+    public MapHandler(String MapName, Pane MapPane, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+
+        try {
+            map = new Map<>(MapName, ObservableTerritory.class);
+        } catch (NoSuchFieldException e) {
+            throw new ClassNotFoundException("Can not load requested map.");
+        }
 
         ObservableTerritory.setMapPane(MapPane);
         final SVGPath connections = new SVGPath();
-        connections.setContent(RealWorldMap.ConnectionPath);
+        connections.setContent(map.connectionsPath);
         connections.setStroke(Color.BLACK);
         MapPane.getChildren().add(connections);
 
@@ -171,10 +174,7 @@ public class MapHandler {
             UsersList.forEach(u -> usersList.put(u.id.get(), u));
 
         MapPane.getChildren().forEach(l -> {
-            if(l instanceof Label) {
-                RealWorldMap t = RealWorldMap.valueOf(l.getId());
-                territories.put(t, new ObservableTerritory(this, t, (Label)l));
-            }
+            if(l instanceof Label) map.getTerritory(l.getId()).initTerritory(this, (Label)l);
         });
     }
 
@@ -190,8 +190,8 @@ public class MapHandler {
         }
 
         MapUpdate.updated.forEach((u) -> {
-            synchronized (territories) {
-                ObservableTerritory t = territories.get(u.Territory);
+            synchronized (map) {
+                ObservableTerritory t = map.getTerritory(u.Name);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
                 if (!t.getOwner().equals(u.getOwner()))
@@ -258,10 +258,10 @@ public class MapHandler {
 
         // Check for updated territories
         final MapUpdate<ObservableTerritory> update = new MapUpdate<>();
-        territories.forEach((territory, obTerritory) -> {
+        map.getTerritories().forEach(territory -> {
             // Add Territory To update only if modified
-            if(obTerritory.NewArmies.get() != 0)
-                update.updated.add(obTerritory);
+            if(territory.NewArmies.get() != 0)
+                update.updated.add(territory);
         });
 
         // Return update message To be sent back To the server
@@ -303,7 +303,7 @@ public class MapHandler {
             attacker.select(Attack);
 
             // If territories are not adjacent show error
-            if(!defender.Territory.isAdjacent(attacker.Territory)){
+            if(!defender.isAdjacent(attacker)){
                 Main.showDialog("Attack error", "You can't start battle between two non adjacent territories.", "Continue");
             }
             else if(attacker.Armies.get() == 1){ // If not enough armies are present show error
@@ -359,12 +359,12 @@ public class MapHandler {
         });
 
         // Get territories from local map
-        final ObservableTerritory from = territories.get(SpecialMoving.From.Territory);
-        final ObservableTerritory to = territories.get(SpecialMoving.To.Territory);
+        final ObservableTerritory from = map.getTerritory(SpecialMoving.From.Name);
+        final ObservableTerritory to = map.getTerritory(SpecialMoving.To.Name);
 
         // Update territories to after battle state
         Platform.runLater(() -> {
-            synchronized (territories) {
+            synchronized (map) {
                 from.Armies.set(1);
                 from.NewArmies.set(SpecialMoving.From.Armies.get() - 1);
                 to.Armies.set(SpecialMoving.To.Armies.get());
@@ -441,7 +441,7 @@ public class MapHandler {
             from.select(Normal);
 
             // Show errors if territories are not adjacent or from territory has only one army
-            if(!from.Territory.isAdjacent(to.Territory)) {
+            if(!from.isAdjacent(to)) {
                 Main.showDialog("Moving error", "You can't move armies between two non adjacent territories.", "Continue");
             }
             else if (from.Armies.get() == 1){
@@ -488,7 +488,7 @@ public class MapHandler {
      * @return Updated battle message to send back to server
      */
     public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
-        Battle.defArmies = territories.get(Battle.to.Territory).requestDefense(Battle);
+        Battle.defArmies = map.getTerritory(Battle.to.Name).requestDefense(Battle);
 
         return Battle;
     }
@@ -500,7 +500,7 @@ public class MapHandler {
      * @param IsMoving True if adding directly to Armies field, false to add to NewArmies field
      */
     private void addArmyTo(ObservableTerritory Territory, boolean IsMoving) {
-        System.out.println("User want to add an army to " + Territory.Territory.toString());
+        System.out.println("User want to add an army to " + Territory.toString());
 
         // If no armies can be moved return
         if(newArmies.get() == 0)
@@ -555,7 +555,7 @@ public class MapHandler {
      * @param IsMoving True if removing directly from Armies field, false to remove from NewArmies field
      */
     private void removeArmyFrom(ObservableTerritory Territory, boolean IsMoving) {
-        System.out.println("User want to remove an army from " + Territory.Territory.toString());
+        System.out.println("User want to remove an army from " + Territory.toString());
 
         if(IsMoving){
             // If no army can be moved return

@@ -3,8 +3,8 @@ package Client.Game.Observables;
 import Client.Main;
 import Client.UI.MatchController;
 import Game.Connection.Cards;
+import Game.Map.Card;
 import Game.Map.Territories.Card;
-import Game.Map.RealWorldMap;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -48,7 +48,7 @@ public class CardsHandler {
     /**
      * List of selected cards
      */
-    private final ArrayList<RealWorldMap> selected = new ArrayList<>();
+    private final ArrayList<Card> selected = new ArrayList<>();
 
     public CardsHandler() {
 
@@ -103,12 +103,12 @@ public class CardsHandler {
     /**
      * Initialize card object
      *
-     * @param Territory Territory To use for card initialization
+     * @param Card Card to initialize
      * @return Initialized card
      */
-    private AnchorPane getCard(RealWorldMap Territory) {
+    private AnchorPane getCard(Card Card) {
 
-        final String img = MatchController.class.getResource("Cards/" + Territory.name() + ".jpg").toExternalForm();
+        final String img = MatchController.class.getResource("Cards/" + Card.Name + ".jpg").toExternalForm();
         final AnchorPane card = new AnchorPane();
         card.setPrefSize(137.0f, 212.0f);
         card.setStyle("-fx-background-image: url('" + img + "');" +

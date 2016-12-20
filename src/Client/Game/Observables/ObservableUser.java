@@ -1,6 +1,7 @@
 package Client.Game.Observables;
 
 import Game.Map.Army.Color;
+import Game.Player;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -10,7 +11,7 @@ import javafx.beans.property.StringProperty;
 /**
  * Observable class of simplified user
  */
-public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
+public class ObservableUser extends RecursiveTreeObject<ObservableUser> implements Player {
     public final IntegerProperty id = new SimpleIntegerProperty(-1);
 
     public final StringProperty username = new SimpleStringProperty("");
@@ -29,5 +30,15 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> {
     @Override
     public boolean equals(Object other) {
         return other instanceof  ObservableUser && this.id.get() == ((ObservableUser)other).id.get();
+    }
+
+    @Override
+    public int getId() {
+        return id.get();
+    }
+
+    @Override
+    public Color getColor() {
+        return color;
     }
 }

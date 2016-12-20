@@ -2,7 +2,7 @@ package Client.Game.Observables;
 
 import Client.Main;
 import Game.Connection.Battle;
-import Game.Map.Territories.Territory;
+import Game.Map.Territory;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
 import javafx.animation.Interpolator;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Observable Territory class
  */
-public class ObservableTerritory extends Game.Map.Territories.Territory<ObservableUser> {
+public class ObservableTerritory extends Territory<ObservableUser> {
 
     private static Pane mapPane;
 
@@ -50,7 +50,7 @@ public class ObservableTerritory extends Game.Map.Territories.Territory<Observab
     /**
      * Label containing Territory name
      */
-    private final transient Label label;
+    private volatile transient Label label;
 
     /**
      * Armies currently placed on the Territory
@@ -95,23 +95,22 @@ public class ObservableTerritory extends Game.Map.Territories.Territory<Observab
     /**
      * Instance of map Territory with reference To UI Territory
      *
-     * @param Territory Territory associated To this object
+     * @param MapHandler Map handler for this territory
      * @param Label Label for this Territory in UI
      */
-    public ObservableTerritory(MapHandler MapHandler, Territory Territory, Label Label) {
-        super(Territory);
+    public void initTerritory(MapHandler MapHandler, Label Label) {
         this.label = Label;
-        label.setText(Territory.toString().toUpperCase());
+        label.setText(this.Name.toUpperCase());
         label.setFont(new Font("Trebuchet MS", 8.5));
         label.setMouseTransparent(true);    // Set label mouse transparent To avoid selection issues
-        svgTerritory.setContent(Territory.SvgPath);
+        svgTerritory.setContent(this.SvgPath);
         svgTerritory.setStroke(Color.BLACK);
         svgTerritory.setStrokeWidth(1.5f);
-        svgTerritory.setFill(Territory.Area.Color);
+        svgTerritory.setFill(this.Area.Color);
         // Add event handler for selection
         svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(this, evt.getButton().equals(MouseButton.SECONDARY)));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(Territory.Area.Color.darker()));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(Territory.Area.Color));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(this.Area.Color.darker()));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(this.Area.Color));
 
         /* Main badge construction */
         final Label l = new Label();
@@ -129,8 +128,8 @@ public class ObservableTerritory extends Game.Map.Territories.Territory<Observab
         final StackPane sp = new StackPane(armyImg, l);
         sp.prefWidth(40.0f);
         sp.prefHeight(40.0f);
-        sp.setLayoutX(getCenterX(svgTerritory) + Territory.ArmyX);
-        sp.setLayoutY(getCenterY(svgTerritory) + Territory.ArmyY);
+        sp.setLayoutX(getCenterX(svgTerritory) + this.ArmyX);
+        sp.setLayoutY(getCenterY(svgTerritory) + this.ArmyY);
 
         Platform.runLater(() -> {
             mapPane.getChildren().addAll(svgTerritory, sp);
@@ -309,16 +308,6 @@ public class ObservableTerritory extends Game.Map.Territories.Territory<Observab
      */
     private double getCenterY(Node node) {
         return node.getBoundsInParent().getMinY() + (node.getBoundsInLocal().getHeight() / 2);
-    }
-
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return super.equals(other);
     }
 
     public enum SelectionType {

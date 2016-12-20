@@ -1,6 +1,6 @@
 package Game.Connection;
 
-import Game.Map.RealWorldMap;
+import Game.Map.Card;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,13 +10,13 @@ import java.util.Arrays;
  */
 public class Cards {
 
-    public final ArrayList<RealWorldMap> combination = new ArrayList<>();
+    public final ArrayList<Card> combination = new ArrayList<>();
 
-    public Cards(RealWorldMap... Cards) {
+    public Cards(Card... Cards) {
         combination.addAll(Arrays.asList(Cards));
     }
 
-    public Cards(ArrayList<RealWorldMap> Cards) {
+    public Cards(ArrayList<Card> Cards) {
         combination.addAll(Cards);
     }
 }

@@ -1,4 +1,4 @@
-package Game.Map.Territories;
+package Game.Map;
 
 import javafx.scene.paint.Color;
 import java.util.ArrayList;
@@ -11,11 +11,26 @@ public class Area {
 
     public final Color Color;
 
-    private final ArrayList<Territory> territories = new ArrayList<>();
+    public final int BonusArmies;
 
-    public Area(String Name, String hexColor) {
+    public final ArrayList<Territory> territories;
+
+    public Area(String Name, String hexColor, int BonusArmies) {
         this.Name = Name;
         this.Color = javafx.scene.paint.Color.web(hexColor);
+        this.BonusArmies = BonusArmies;
+        territories = null;
+    }
+
+    public int getOwnerId() {
+        int id = territories.get(0).getOwner().getId();
+
+        for (Territory t: territories) {
+            if(t.getOwner().getId() != id)
+                return -1;
+        }
+
+        return id;
     }
 
     @Override
