@@ -146,7 +146,7 @@ public class MatchController implements Initializable {
         playersList.setRoot(usersRoot);
     }
 
-    private void setMapHandler(ArrayList<ObservableUser> UsersList) {
+    private void setMapHandler(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
         if(UsersList != null) {
             final ObservableUser current = GameController.getInstance().getUser();
             UsersList.forEach(u -> {
@@ -156,24 +156,24 @@ public class MatchController implements Initializable {
                 usersRoot.getChildren().add(new TreeItem<>(u));
             });
         }
-        mapHandler = new MapHandler(mapPane, UsersList);
+        mapHandler = new MapHandler(MapName, mapPane, UsersList);
         mapHandler.setArmiesLabel(newArmiesLabel);
         mapHandler.setMissionButton(missionBtn);
         mapHandler.setPhaseButton(endTurnBtn);
     }
 
-    private void setCardsHandler() {
-        cardsHandler = new CardsHandler();
+    private void setCardsHandler(String MapName) {
+        cardsHandler = new CardsHandler(MapName);
         cardsHandler.setCardsButton(cardsBtn);
     }
 
-    public void setGameController(ArrayList<ObservableUser> UsersList) {
+    public void setGameController(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
         chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
         chatMessage.setOnAction(sendMessage);
         GameController.getInstance().setChatEntry(this::addChatEntry);
-        setMapHandler(UsersList);
+        setMapHandler(MapName, UsersList);
         GameController.getInstance().setMapHandler(mapHandler);
-        setCardsHandler();
+        setCardsHandler(MapName);
         GameController.getInstance().setCardsHandler(cardsHandler);
         GameController.getInstance().startExecutor();
     }

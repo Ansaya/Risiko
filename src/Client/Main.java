@@ -46,7 +46,12 @@ public class Main extends Application {
         }
 
         MatchController mc = loader.getController();
-        mc.setGameController(Match.Players);
+        try {
+            mc.setGameController("RealWorldMap", Match.Players);
+        } catch (ClassNotFoundException e) {
+            showDialog("Loading error", "There has been an error loading the map", "Continue");
+            return;
+        }
 
         parent = (StackPane) root;
 
@@ -156,9 +161,9 @@ public class Main extends Application {
         window = primaryStage;
         window.getIcons().add(new Image(Main.class.getResource("icon.png").openStream()));
 
-        //toLogin();
+        toLogin();
 
-        toMatch(new Match<>(null));
+        //toMatch(new Match<>(null));
     }
 
 

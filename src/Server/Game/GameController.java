@@ -5,7 +5,8 @@ import Game.Connection.Chat;
 import Game.Connection.Lobby;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
-import com.google.gson.Gson;
+import com.google.gson.*;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,8 @@ public class GameController extends MessageReceiver<MessageType> {
     private static GameController _instance = new GameController();
 
     public static GameController getInstance() { return _instance; }
+
+    private final Gson gson;
 
     /**
      * Currently playing matches' list
@@ -45,6 +48,8 @@ public class GameController extends MessageReceiver<MessageType> {
     private GameController() {
         super("GameController");
 
+        gson = getGsonBuilder(null).create();
+
         // Handler for incoming chat messages routing
         messageHandlers.put(MessageType.Chat, (message) -> {
             this.lobby.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json));
@@ -52,18 +57,27 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
-            final Game.Connection.Match<Player> requested = (new Gson()).fromJson(message.Json, MessageType.Match.getType());
+            final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
             System.out.println("Game controller: New match request From " + message.PlayerId);
 
-            final ArrayList<Player> toAdd = new ArrayList<>();
-            requested.Players.forEach((u) -> {
-                toAdd.add(lobby.get(u.id));
-                releasePlayer(u.id);
+            final int newMatchId = Match.counter.getAndIncrement();
+            Match newMatch;
+            try {
+                newMatch = new Match(Match.counter.getAndIncrement(), "RealWorldMap");
+            } catch (ClassNotFoundException e){
+                System.err.println("Can not create new match");
+                return;
+            }
+
+            matches.put(newMatchId, newMatch);
+
+            requested.Players.forEach(u -> {
+                releasePlayer(u);
+                newMatch.addPlayer(u);
             });
 
-            System.out.println("Game controller: Launch new match with " + toAdd.size() + " Players.");
-            final int newMatchId = Match.counter.getAndIncrement();
-            matches.put(newMatchId, new Match(newMatchId, toAdd));
+            newMatch.initMatch();
+            System.out.println("Game controller: Launch new match with " + requested.Players.size() + " players.");
         });
 
         // Handler for GameState message received From match (always used To finalize match)
@@ -152,6 +166,11 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, leaving)));
     }
 
+    void releasePlayer(Player Player) {
+        lobby.remove(Player.id);
+        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
+    }
+
     /**
      * End specified match and removes it From match list
      *
@@ -161,5 +180,29 @@ public class GameController extends MessageReceiver<MessageType> {
         matches.get(MatchId).terminate();
         System.out.println("Game controller: Terminating match " + MatchId);
         matches.remove(MatchId);
+    }
+
+    private GsonBuilder getGsonBuilder(GsonBuilder builder){
+        if(builder == null)
+            builder = new GsonBuilder();
+
+        builder.registerTypeAdapter(Player.class, new PlayerDeserializer(this));
+
+        return builder;
+    }
+
+    private class PlayerDeserializer implements JsonDeserializer<Player> {
+
+        private final GameController gc;
+
+        public PlayerDeserializer(GameController GC){
+            this.gc = GC;
+        }
+
+
+        @Override
+        public Player deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return gc.lobby.get(json.getAsJsonObject().get("id").getAsInt());
+        }
     }
 }

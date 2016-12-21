@@ -32,6 +32,10 @@ public class Match extends MessageReceiver<MessageType> {
 
     public HashMap<Integer, Player> getPlayers() { return players; }
 
+    public void addPlayer(Player Player) {
+        players.put(Player.id, Player);
+    }
+
     /**
      * Contains playing Players' id only
      */
@@ -184,7 +188,7 @@ public class Match extends MessageReceiver<MessageType> {
         });
 
         // Any other message is routed to current turn to handle game progress
-        defaultHandler = (message) -> currentTurn.setIncoming(message);
+        defaultHandler = message -> currentTurn.setIncoming(message);
     }
 
     private void sendAll(MessageType Type, Object Message) {

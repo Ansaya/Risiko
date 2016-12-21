@@ -1,10 +1,8 @@
 package Client.Game.Observables;
 
 import Client.Main;
-import Client.UI.MatchController;
 import Game.Connection.Cards;
 import Game.Map.Card;
-import Game.Map.Territories.Card;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -18,13 +16,14 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-
 import java.util.ArrayList;
 
 /**
  * Handler for cards in UI
  */
 public class CardsHandler {
+
+    private final String mapName;
 
     /**
      * Dialog containing cards UI objects
@@ -50,7 +49,9 @@ public class CardsHandler {
      */
     private final ArrayList<Card> selected = new ArrayList<>();
 
-    public CardsHandler() {
+    public CardsHandler(String MapName) {
+
+        this.mapName = MapName;
 
         /* Container setup */
         container.setSpacing(15.0f);
@@ -72,18 +73,7 @@ public class CardsHandler {
         /* Redeem cards button setup */
         redeemBtn.setButtonType(JFXButton.ButtonType.RAISED);
         redeemBtn.setStyle("-fx-background-color: red");
-        redeemBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
-            redeemBtn.setDisable(true);
-            container.getChildren().forEach(card -> {
-                if(card.getStyleClass().remove("card-selected"))
-                    selected.add(RealWorldMap.valueOf(card.getId()));
-            });
-
-            synchronized (selected){
-                selected.notify();
-            }
-            cardsDialog.close();
-        });
+        redeemBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> cardsDialog.close());
         redeemBtn.setDisable(true);
 
         /* Layout setup */
@@ -108,7 +98,7 @@ public class CardsHandler {
      */
     private AnchorPane getCard(Card Card) {
 
-        final String img = MatchController.class.getResource("Cards/" + Card.Name + ".jpg").toExternalForm();
+        final String img = Card.class.getResource(mapName + "/Cards/" + Card.Name + ".jpg").toExternalForm();
         final AnchorPane card = new AnchorPane();
         card.setPrefSize(137.0f, 212.0f);
         card.setStyle("-fx-background-image: url('" + img + "');" +
@@ -116,13 +106,16 @@ public class CardsHandler {
                 "-fx-background-repeat: no-repeat;" +
                 "-fx-background-size: 137 212;");
 
-        card.setId(Territory.name());
-
         card.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
             Node source = (Node) evt.getSource();
 
-            if(!source.getStyleClass().remove("card-selected"))
+            if(!source.getStyleClass().remove("card-selected")) {
                 source.getStyleClass().add("card-selected");
+                selected.add(Card);
+            }
+            else {
+                selected.remove(Card);
+            }
         });
 
         return card;
@@ -137,6 +130,8 @@ public class CardsHandler {
         // If cards needed for combination are not present return empty list
         if(container.getChildren().size() < 3)
             return new Cards();
+
+        selected.clear();
 
         Platform.runLater(() -> {
             redeemBtn.setDisable(false);
@@ -178,14 +173,14 @@ public class CardsHandler {
     /**
      * Add new card To the list
      *
-     * @param Territory Territory relative To the card To add
+     * @param Card Card to add
      */
-    public void addCard(RealWorldMap Territory) {
+    public void addCard(Card Card) {
         if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> addCard(Territory));
+            Platform.runLater(() -> addCard(Card));
             return;
         }
 
-        container.getChildren().add(getCard(Territory));
+        container.getChildren().add(getCard(Card));
     }
 }

@@ -48,7 +48,7 @@ public class Map<T extends Territory<? extends Player>> {
         this.territories = new HashMap<>();
 
         if(map.has("connectionsPath"))
-            connectionsPath = map.get("connectionPath").getAsString();
+            connectionsPath = map.get("connectionsPath").getAsString();
         else
             connectionsPath = "";
 
