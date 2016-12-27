@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver<T> {
 
-    private volatile boolean listen = false;
+    private volatile boolean execute = false;
 
     private final ArrayList<Message> queue = new ArrayList<>();
 
@@ -19,26 +19,28 @@ public abstract class MessageReceiver<T> {
 
     private final String name;
 
-    private final Thread _instance = new Thread(this::executor);
+    private volatile Thread _instance;
 
     public MessageReceiver(String Name) {
         this.name = Name;
-        _instance.setName(Name + "-Executor");
     }
 
     public void startExecutor(){
-        if(listen)
+        System.out.println(name + ": Executor start request.");
+        if(execute)
             return;
 
-        listen = true;
+        execute = true;
+        _instance = new Thread(this::executor, name + "-Executor");
         _instance.start();
     }
 
     public void stopExecutor() {
-        if(!listen)
+        System.out.println(name + ": Executor stop request.");
+        if(!execute)
             return;
 
-        listen = false;
+        execute = false;
         synchronized (queue){
             queue.notify();
         }
@@ -72,7 +74,7 @@ public abstract class MessageReceiver<T> {
     }
 
     private void executor() {
-        while (listen) {
+        while (execute) {
             try {
                 if (queue.isEmpty())
                     synchronized (queue) { queue.wait(); }
@@ -95,9 +97,10 @@ public abstract class MessageReceiver<T> {
                 action.setDaemon(true);
                 action.start();
             } catch (Exception e){
-                if(!listen) break;
+                if(!execute) break;
             }
         }
+        System.out.println(name + ": Executor stopped.");
     }
 
     public class Message {

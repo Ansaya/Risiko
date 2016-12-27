@@ -74,7 +74,6 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      *
      * @param Owner New owner of this Territory
      */
-    @Override
     public void setOwner(ObservableUser Owner) {
         synchronized (owner.territories){
             owner.territories.set(owner.territories.subtract(1).get());
@@ -86,11 +85,18 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             owner.territories.set(owner.territories.add(1).get());
         }
 
-        if(Platform.isFxApplicationThread())
+        if(Platform.isFxApplicationThread()) {
             svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0));
+            armyImg.setImage(owner.color.armyImg);
+        }
         else
-            Platform.runLater(() -> svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0)));
+            Platform.runLater(() -> {
+                svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0));
+                armyImg.setImage(owner.color.armyImg);
+            });
     }
+
+    public ObservableUser getOwner() { return owner; }
 
     /**
      * Instance of map Territory with reference To UI Territory
@@ -120,7 +126,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         l.setAlignment(Pos.BOTTOM_RIGHT);
         l.setPrefHeight(40.0f);
         l.setPrefWidth(40.0f);
-        armyImg.setImage(Game.Map.Army.Color.PURPLE.armyImg);
+        //armyImg.setImage(Game.Map.Army.Color.PURPLE.armyImg);
         armyImg.setSmooth(true);
         armyImg.setCache(true);
         armyImg.setPreserveRatio(true);
@@ -130,6 +136,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         sp.prefHeight(40.0f);
         sp.setLayoutX(getCenterX(svgTerritory) + this.ArmyX);
         sp.setLayoutY(getCenterY(svgTerritory) + this.ArmyY);
+        sp.setMouseTransparent(true);
 
         Platform.runLater(() -> {
             mapPane.getChildren().addAll(svgTerritory, sp);

@@ -19,7 +19,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,6 +72,8 @@ public class MapHandler {
     private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
     public final Map<ObservableTerritory> map;
+
+    private final ObservableUser nullUser = new ObservableUser(-100, "NullUser", null);
 
     private final ArrayList<SelectedTerritory> selectedQueue = new ArrayList<>();
 
@@ -506,20 +507,25 @@ public class MapHandler {
         if(newArmies.get() == 0)
             return;
 
+        final Object wait = new Object();
+
         if(IsMoving){
             // Else perform movement
             Platform.runLater(() -> {
                 synchronized (Territory.Armies){
                     Territory.Armies.set(Territory.Armies.add(1).get());
                     removeNewArmy();
-                    Territory.Armies.notify();
+                }
+
+                synchronized (wait){
+                    wait.notify();
                 }
             });
 
             // Wait for FXThread to update values
-            synchronized (Territory.Armies){
+            synchronized (wait){
                 try {
-                    Territory.Armies.wait();
+                    wait.wait();
                 } catch (Exception e) {}
             }
 
@@ -530,19 +536,22 @@ public class MapHandler {
         Platform.runLater(() -> {
             synchronized (Territory.NewArmies){
                 Territory.NewArmies.set(Territory.NewArmies.add(removeNewArmy()).get());
-                Territory.NewArmies.notify();
+            }
+
+            synchronized (wait){
+                wait.notify();
             }
         });
 
         // Wait for FXThread to update values
-        synchronized (Territory.NewArmies){
+        synchronized (wait){
             try {
-                Territory.NewArmies.wait();
+                wait.wait();
             } catch (Exception e) {}
         }
 
         // If owner is null then we are in setup phase, so update owner and end phase after choice
-        if(Territory.NewArmies.get() != 0 && Territory.getOwner() == null) {
+        if(Territory.NewArmies.get() != 0 && Territory.getOwner().equals(nullUser)) {
             Territory.setOwner(usersList.get(gameController.getUser().id.get()));
             canSelect = false;
         }
@@ -557,6 +566,8 @@ public class MapHandler {
     private void removeArmyFrom(ObservableTerritory Territory, boolean IsMoving) {
         System.out.println("User want to remove an army from " + Territory.toString());
 
+        final Object wait = new Object();
+
         if(IsMoving){
             // If no army can be moved return
             if(Territory.Armies.get() == 1)
@@ -567,14 +578,17 @@ public class MapHandler {
                 synchronized (Territory.Armies){
                     Territory.Armies.set(Territory.Armies.subtract(1).get());
                     addNewArmy();
-                    Territory.Armies.notify();
+                }
+
+                synchronized (wait){
+                    wait.notify();
                 }
             });
 
             // Wait for FXThread to update values
-            synchronized (Territory.Armies){
+            synchronized (wait){
                 try {
-                    Territory.Armies.wait();
+                    wait.wait();
                 } catch (Exception e) {}
             }
 
@@ -589,14 +603,17 @@ public class MapHandler {
             synchronized (Territory.NewArmies) {
                 Territory.NewArmies.set(Territory.NewArmies.subtract(1).get());
                 addNewArmy();
-                Territory.NewArmies.notify();
+            }
+
+            synchronized (wait){
+                wait.notify();
             }
         });
 
         // Wait for FXThread to update values
-        synchronized (Territory.NewArmies){
+        synchronized (wait){
             try {
-                Territory.NewArmies.wait();
+                wait.wait();
             } catch (Exception e) {}
         }
     }

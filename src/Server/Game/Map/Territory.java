@@ -18,7 +18,6 @@ public class Territory extends Game.Map.Territory<Player> {
 
     private volatile Player owner = null;
 
-    @Override
     public void setOwner(Player Owner) {
         if(owner != null)
             owner.getTerritories().remove(this);
@@ -26,6 +25,8 @@ public class Territory extends Game.Map.Territory<Player> {
         owner = Owner;
         Owner.getTerritories().add(this);
     }
+
+    public Player getOwner() { return owner; }
 
     /**
      * Add Armies To this Territory

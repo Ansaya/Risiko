@@ -33,7 +33,7 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param MatchId Match's id
      * @return Match with corresponding id. Null if id isn't found
      */
-    public Match getMatch(int MatchId) {
+    public Match getMatch(Integer MatchId) {
         if(matches.containsKey(MatchId))
             return matches.get(MatchId);
 
@@ -60,7 +60,6 @@ public class GameController extends MessageReceiver<MessageType> {
             final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
             System.out.println("Game controller: New match request From " + message.PlayerId);
 
-            final int newMatchId = Match.counter.getAndIncrement();
             Match newMatch;
             try {
                 newMatch = new Match(Match.counter.getAndIncrement(), "RealWorldMap");
@@ -69,7 +68,7 @@ public class GameController extends MessageReceiver<MessageType> {
                 return;
             }
 
-            matches.put(newMatchId, newMatch);
+            matches.put(newMatch.id, newMatch);
 
             requested.Players.forEach(u -> {
                 releasePlayer(u);

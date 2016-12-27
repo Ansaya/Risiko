@@ -18,13 +18,9 @@ public abstract class Territory<T extends Player> {
 
     public final transient float ArmyY;
 
-    private volatile T owner = null;
+    public abstract T getOwner();
 
-    public  T getOwner() { return owner; }
-
-    public void setOwner(T NewOwner) {
-        owner = NewOwner;
-    }
+    public abstract void setOwner(T NewOwner);
 
     private final transient ArrayList<Territory<T>> adjacent;
 

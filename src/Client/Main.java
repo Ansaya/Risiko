@@ -48,7 +48,7 @@ public class Main extends Application {
         MatchController mc = loader.getController();
         try {
             mc.setGameController("RealWorldMap", Match.Players);
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
         }
