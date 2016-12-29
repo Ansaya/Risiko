@@ -5,7 +5,6 @@ import Game.Player;
 import com.google.gson.*;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,7 +30,7 @@ public class Map<T extends Territory<? extends Player>> {
 
     public ArrayList<T> getTerritories() { return new ArrayList<>(territories.values()); }
 
-    public final String connectionsPath;
+    public final String ConnectionsPath;
 
     private final Deck<Mission> missionDeck;
 
@@ -46,12 +45,7 @@ public class Map<T extends Territory<? extends Player>> {
         this.Name = Name;
         this.areas = new HashMap<>();
         this.territories = new HashMap<>();
-
-        if(map.has("connectionsPath"))
-            connectionsPath = map.get("connectionsPath").getAsString();
-        else
-            connectionsPath = "";
-
+        this.ConnectionsPath = "";
         final ArrayList<Mission> missions = new ArrayList<>();
         final ArrayList<Card> cards = new ArrayList<>();
 
@@ -61,15 +55,9 @@ public class Map<T extends Territory<? extends Player>> {
 
         // Gain access to all final/private fields of Territory class
         final Field territoryName = Territory.class.getDeclaredField("Name");
-        final Field territorySvgPath = Territory.class.getDeclaredField("SvgPath");
-        final Field territoryArmyX = Territory.class.getDeclaredField("ArmyX");
-        final Field territoryArmyY = Territory.class.getDeclaredField("ArmyY");
         final Field territoryAdjacent = Territory.class.getDeclaredField("adjacent");
         final Field territoryArea = Territory.class.getDeclaredField("Area");
         territoryName.setAccessible(true);
-        territorySvgPath.setAccessible(true);
-        territoryArmyX.setAccessible(true);
-        territoryArmyY.setAccessible(true);
         territoryAdjacent.setAccessible(true);
         territoryArea.setAccessible(true);
 
@@ -93,27 +81,19 @@ public class Map<T extends Territory<? extends Player>> {
             // Get json territory
             JsonObject jt = t.getAsJsonObject();
             T territory = null;
-            try { territory = TerritoryExtender.newInstance(); } catch (Exception e) {}
+            try { territory = TerritoryExtender.newInstance(); } catch (IllegalAccessException | InstantiationException e) {}
 
             // Initialize all fields available
             try {
                 territoryName.set(territory, jt.get("Name").getAsString());
-                if(jt.has("SvgPath"))
-                    territorySvgPath.set(territory, jt.get("SvgPath").getAsString());
-                if(jt.has("ArmyX"))
-                    territoryArmyX.set(territory, jt.get("ArmyX").getAsFloat());
-                if(jt.has("ArmyY"))
-                    territoryArmyY.set(territory, jt.get("ArmyY").getAsFloat());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            } catch (IllegalAccessException e) {}
 
             // If no svgPath, it is only a card
-            if(territory.SvgPath != null && !territory.SvgPath.equals(""))
+            if(jt.has("SvgPath"))
                 territories.put(territory.Name, territory);
 
             if(jt.has("Card"))
-                cards.add(new Card(territory.Name, Figure.valueOf(jt.get("Card").getAsString())));
+                cards.add(new Card(territory.Name, Figure.valueOf(jt.get("Card").getAsString()), Name));
         });
 
         this.cardDeck = new Deck<>(cards);
@@ -146,7 +126,7 @@ public class Map<T extends Territory<? extends Player>> {
             try {
                 territoryAdjacent.set(territory, adjacent);
                 territoryArea.set(territory, this.areas.get(jt.get("Area").getAsString()));
-            } catch (Exception e) {}
+            } catch (IllegalAccessException e) {}
         });
 
         // Initialize each mission with initialized territories
@@ -170,12 +150,51 @@ public class Map<T extends Territory<? extends Player>> {
                     jm.getAsJsonArray("ToConquer").forEach(t -> toConquer.add(territories.get(t.getAsString())));
                     missionToConquer.set(mission, toConquer);
                 }
-            } catch (Exception e) {}
+            } catch (IllegalAccessException e) {}
 
             missions.add(mission);
         });
 
         this.missionDeck = new Deck<>(missions);
+    }
+
+    public void loadGraphic() throws NoSuchFieldException, IllegalAccessException {
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+
+        final Field connPath = Map.class.getDeclaredField("ConnectionsPath");
+        connPath.setAccessible(true);
+
+        if(map.has("connectionsPath"))
+            connPath.set(this, map.get("connectionsPath").getAsString());
+
+        final Field territorySvgPath = Territory.class.getDeclaredField("SvgPath");
+        final Field territoryArmyX = Territory.class.getDeclaredField("ArmyX");
+        final Field territoryArmyY = Territory.class.getDeclaredField("ArmyY");
+        territorySvgPath.setAccessible(true);
+        territoryArmyX.setAccessible(true);
+        territoryArmyY.setAccessible(true);
+
+        final JsonArray jTerritories = map.getAsJsonArray("territories");
+        jTerritories.forEach(t -> {
+            JsonObject jt = t.getAsJsonObject();
+
+            Territory territory = territories.get(jt.get("Name").getAsString());
+
+            try {
+                if (jt.has("SvgPath"))
+                    territorySvgPath.set(territory, jt.get("SvgPath").getAsString());
+                if (jt.has("ArmyX"))
+                    territoryArmyX.set(territory, jt.get("ArmyX").getAsFloat());
+                if (jt.has("ArmyY"))
+                    territoryArmyY.set(territory, jt.get("ArmyY").getAsFloat());
+            } catch (IllegalAccessException e) {}
+        });
+
+        final Field allCards = Deck.class.getDeclaredField("allCards");
+        allCards.setAccessible(true);
+
+        ArrayList<Card> cards = (ArrayList<Card>) allCards.get(cardDeck);
+        cards.forEach(Card::loadGraphic);
     }
 
     public Card nextCard() { return cardDeck.next(); }

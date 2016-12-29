@@ -161,13 +161,14 @@ public class MapHandler {
 
         try {
             map = new Map<>(MapName, ObservableTerritory.class);
-        } catch (NoSuchFieldException e) {
+            map.loadGraphic();
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ClassNotFoundException("Can not load requested map.");
         }
 
         ObservableTerritory.setMapPane(MapPane);
         final SVGPath connections = new SVGPath();
-        connections.setContent(map.connectionsPath);
+        connections.setContent(map.ConnectionsPath);
         connections.setStroke(Color.BLACK);
         MapPane.getChildren().add(connections);
 

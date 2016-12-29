@@ -10,9 +10,20 @@ public class Card {
 
     public final Figure Figure;
 
-    public Card(String Name, Figure Figure){
+    private String image;
+
+    public String getImage() { return image; }
+
+    private String mapName;
+
+    public Card(String Name, Figure Figure, String MapName){
         this.Name = Name;
         this.Figure = Figure;
+        this.mapName = MapName;
+    }
+
+    public void loadGraphic() {
+        this.image = Card.class.getResource(mapName + "/Cards/" + Name.replaceAll(" ", "") + ".jpg").toExternalForm();
     }
 
     /**
@@ -51,5 +62,10 @@ public class Card {
         // Three same cards         Two same cards plus jolly       Three different cards
         return infantry == 3 || cavalry == 3 || artillery == 3 || (infantry == 1 && cavalry == 1 && artillery == 1) ||
                 ((infantry == 2 || cavalry == 2 || artillery == 2) && jolly == 1);
+    }
+
+    @Override
+    public String toString(){
+        return Name;
     }
 }

@@ -182,7 +182,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             SendMessage(MessageType.Cards, cardsHandler.requestCombination());
         });
 
-        // Handler for attacked Territory
+        // Handler for attacked territory
         messageHandlers.put(MessageType.Battle, (message) -> {
             System.out.println("GameController: Battle message: " + message.Json);
             final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());

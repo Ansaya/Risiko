@@ -52,7 +52,7 @@ public class Match extends MessageReceiver<MessageType> {
     private volatile Turn currentTurn;
 
     /**
-     * Global matches counter (0 not allowed)
+     * Global matches counter
      */
     public static final AtomicInteger counter = new AtomicInteger(0);
 
@@ -101,9 +101,10 @@ public class Match extends MessageReceiver<MessageType> {
             if (player.getMission().Type == Game.Map.Mission.MissionType.Destroy) {
                 boolean change = true;
                 for (Player p: players.values()) {
-                    if(p.getColor() == player.getColor())
+                    if(p.getColor() == player.getMission().Army && !p.equals(player))
                         change = false;
                 }
+
                 if(change)
                     player.getMission().changeToNumber();
             }

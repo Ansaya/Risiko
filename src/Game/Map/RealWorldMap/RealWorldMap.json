@@ -828,41 +828,41 @@
         },
         {
             "Name":"DestroyRed",
-            "Description":"You have to destroy red armies.",
+            "Description":"You have to destroy red armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"RED",
             "Type":"Destroy"
         },
         {
             "Name":"DestroyYellow",
-            "Description":"You have to destroy yellow armies.",
+            "Description":"You have to destroy yellow armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"YELLOW",
             "Type":"Destroy"
         },{
             "Name":"DestroyGreen",
-            "Description":"You have to destroy green armies.",
+            "Description":"You have to destroy green armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"GREEN",
             "Type":"Destroy"
         },
         {
             "Name":"DestroyBlue",
-            "Description":"You have to destroy blue armies.",
+            "Description":"You have to destroy blue armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"BLUE",
             "Type":"Destroy"
         },
         {
             "Name":"DestroyBlack",
-            "Description":"You have to destroy black armies.",
+            "Description":"You have to destroy black armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"BLACK",
             "Type":"Destroy"
         },
         {
             "Name":"DestroyPurple",
-            "Description":"You have to destroy purple armies.",
+            "Description":"You have to destroy purple armies.\r\nIf those arimes aren't present or have been destroyed by another player your mission is to conquer 24 territories.",
             "Number":24,
             "Army":"PURPLE",
             "Type":"Destroy"

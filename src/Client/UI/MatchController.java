@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MatchController implements Initializable {
 
-    private double mapRatio = 725.0f / 480.0f;
+    private double mapRatio = 765.0f / 520.0f;
 
     private CardsHandler cardsHandler;
 
@@ -98,44 +98,8 @@ public class MatchController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         /* Map rescaling */
-        worldMap.widthProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-            double containerRatio = (double) newValue / worldMap.getHeight();
-
-            if(containerRatio < mapRatio){
-                Scale newScale = new Scale();
-                double scaleValue = (double) newValue / 725.0f;
-                newScale.setPivotX(0);
-                newScale.setPivotY(0);
-                newScale.setX(scaleValue);
-                newScale.setY(scaleValue);
-
-                mapPane.getTransforms().clear();
-                mapPane.getTransforms().add(newScale);
-
-                AnchorPane.setLeftAnchor(mapPane, -180.0f * scaleValue);
-                AnchorPane.setTopAnchor(mapPane, -130.0f * scaleValue);
-            }
-
-        });
-
-        worldMap.heightProperty().addListener((ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-            double containerRatio = worldMap.getWidth() / (double) newValue;
-
-            if(containerRatio > mapRatio) {
-                Scale newScale = new Scale();
-                double scaleValue = (double) newValue / 480.0f;
-                newScale.setPivotX(0);
-                newScale.setPivotY(0);
-                newScale.setX(scaleValue);
-                newScale.setY(scaleValue);
-
-                mapPane.getTransforms().clear();
-                mapPane.getTransforms().add(newScale);
-
-                AnchorPane.setLeftAnchor(mapPane, -180.0f * scaleValue);
-                AnchorPane.setTopAnchor(mapPane, -130.0f * scaleValue);
-            }
-        });
+        worldMap.widthProperty().addListener(this::setMapWidth);
+        worldMap.heightProperty().addListener(this::setMapHeight);
 
         /* Players table setup */
         idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
@@ -144,6 +108,39 @@ public class MatchController implements Initializable {
 
         playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(usersRoot);
+    }
+
+    public void updateMapSize(double newWidth, double newHeight){
+        setMapWidth(null, null, newWidth);
+        setMapHeight(null, null, newHeight);
+    }
+
+    private void setMapWidth(ObservableValue<? extends Number> observable, Number oldValue, Number newValue){
+        double containerRatio = (double) newValue / worldMap.getHeight();
+
+        if(containerRatio < mapRatio)
+            updateMap((double) newValue / 765.0f);
+    }
+
+    private void setMapHeight(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        double containerRatio = worldMap.getWidth() / (double) newValue;
+
+        if(containerRatio > mapRatio)
+            updateMap((double) newValue / 520.0f);
+    }
+
+    private void updateMap(double scaleValue) {
+        Scale newScale = new Scale();
+        newScale.setPivotX(0);
+        newScale.setPivotY(0);
+        newScale.setX(scaleValue);
+        newScale.setY(scaleValue);
+
+        mapPane.getTransforms().clear();
+        mapPane.getTransforms().add(newScale);
+
+        AnchorPane.setLeftAnchor(mapPane, -160.0f * scaleValue);
+        AnchorPane.setTopAnchor(mapPane, -110.0f * scaleValue);
     }
 
     private void setMapHandler(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {

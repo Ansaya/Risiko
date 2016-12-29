@@ -56,8 +56,12 @@ public class Main extends Application {
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Match");
-        window.setScene(new Scene(root, window.getWidth(), window.getHeight()));
+        window.setMinWidth(1187.0);
+        window.setMinHeight(620.0);
+        window.setScene(new Scene(root, 1366, 768));
         window.show();
+
+        mc.updateMapSize(1366, 768);
     }
 
     public static void toLobby() {

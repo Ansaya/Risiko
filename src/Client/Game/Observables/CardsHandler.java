@@ -98,10 +98,9 @@ public class CardsHandler {
      */
     private AnchorPane getCard(Card Card) {
 
-        final String img = Card.class.getResource(mapName + "/Cards/" + Card.Name + ".jpg").toExternalForm();
         final AnchorPane card = new AnchorPane();
         card.setPrefSize(137.0f, 212.0f);
-        card.setStyle("-fx-background-image: url('" + img + "');" +
+        card.setStyle("-fx-background-image: url('" + Card.getImage() + "');" +
                 "-fx-background-position: center center;" +
                 "-fx-background-repeat: no-repeat;" +
                 "-fx-background-size: 137 212;");

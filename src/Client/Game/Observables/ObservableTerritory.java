@@ -126,7 +126,8 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         l.setAlignment(Pos.BOTTOM_RIGHT);
         l.setPrefHeight(40.0f);
         l.setPrefWidth(40.0f);
-        //armyImg.setImage(Game.Map.Army.Color.PURPLE.armyImg);
+        l.visibleProperty().bind(Armies.isNotEqualTo(0));
+
         armyImg.setSmooth(true);
         armyImg.setCache(true);
         armyImg.setPreserveRatio(true);

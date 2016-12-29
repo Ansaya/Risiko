@@ -1,7 +1,6 @@
 package Game.Map;
 
 import Game.Map.Army.Color;
-import Game.Player;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
@@ -13,7 +12,7 @@ public class Mission {
 
     public final String Description;
 
-    public final ArrayList<Territory<? extends Player>> ToConquer;
+    public final ArrayList<Territory> ToConquer;
 
     public final Integer Number;
 
