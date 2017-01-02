@@ -4,11 +4,11 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.StackPane?>
 
-
-<StackPane alignment="center" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.60" fx:controller="Server.UI.Controller">
+<StackPane alignment="center" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.UI.Controller">
    <children>
       <AnchorPane minHeight="600.0" minWidth="800.0" prefHeight="600.0" prefWidth="800.0">
          <children>
@@ -18,7 +18,11 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <JFXTreeTableView fx:id="playersTable" prefHeight="299.0" prefWidth="248.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <JFXTreeTableView fx:id="playersTable" showRoot="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <columns>
+                                    <TreeTableColumn fx:id="playerIdColumn" editable="false" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" text="ID" />
+                                    <TreeTableColumn fx:id="playerUsernameColumn" editable="false" maxWidth="600.0" minWidth="100.0" prefWidth="200.0" text="Username" />
+                                 </columns></JFXTreeTableView>
                            </children>
                         </AnchorPane>
                   </content>
@@ -27,7 +31,12 @@
                   <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <JFXTreeTableView fx:id="matchesTable" layoutX="14.0" layoutY="7.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <JFXTreeTableView fx:id="matchesTable" layoutX="14.0" layoutY="7.0" showRoot="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <columns>
+                                    <TreeTableColumn fx:id="matchIdColumn" editable="false" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" text="ID" />
+                                    <TreeTableColumn fx:id="matchUsersColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Users" />
+                                    <TreeTableColumn fx:id="matchGameMapColumn" editable="false" maxWidth="125.0" minWidth="125.0" prefWidth="125.0" resizable="false" text="Game Map" />
+                                 </columns></JFXTreeTableView>
                            </children>
                         </AnchorPane>
                   </content>

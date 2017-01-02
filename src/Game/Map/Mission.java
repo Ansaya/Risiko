@@ -12,11 +12,11 @@ public class Mission {
 
     public final String Description;
 
-    public final ArrayList<Territory> ToConquer;
+    public final transient ArrayList<Territory> ToConquer;
 
-    public final Integer Number;
+    public final transient Integer Number;
 
-    public final Color Army;
+    public final transient Color Army;
 
     public final MissionType Type;
 

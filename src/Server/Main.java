@@ -2,6 +2,7 @@ package Server;
 
 import Server.Game.Connection.ConnectionHandler;
 import Server.Game.GameController;
+import Server.UI.Controller;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,13 +15,17 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.getIcons().add(new Image(Client.Main.class.getResource("icon.png").openStream()));
-        Parent root = FXMLLoader.load(getClass().getResource("UI/main.fxml"));
+
+        FXMLLoader loader = new FXMLLoader();
+        Parent root = loader.load(Main.class.getResource("UI/main.fxml").openStream());
+        Controller c = loader.getController();
+        c.initGameController();
+
         primaryStage.setTitle("Risiko - Server");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();
 
-        // Launch game server
-        GameController.getInstance().init();
+        // Launch connection handler
         ConnectionHandler.getInstance().Listen(5757);
     }
 

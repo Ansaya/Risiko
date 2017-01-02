@@ -6,6 +6,7 @@ import Game.Connection.Lobby;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
+import javafx.scene.control.TreeItem;
 import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param MatchId Match's id
      * @return Match with corresponding id. Null if id isn't found
      */
-    public Match getMatch(Integer MatchId) {
+    Match getMatch(Integer MatchId) {
         if(matches.containsKey(MatchId))
             return matches.get(MatchId);
 
@@ -44,6 +45,10 @@ public class GameController extends MessageReceiver<MessageType> {
      * Users waiting To play
      */
     private final HashMap<Integer, Player> lobby = new HashMap<>();
+
+    private volatile TreeItem<Player> Players = null;
+
+    private volatile TreeItem<Match> Matches = null;
 
     private GameController() {
         super("GameController");
@@ -69,6 +74,7 @@ public class GameController extends MessageReceiver<MessageType> {
             }
 
             matches.put(newMatch.id, newMatch);
+            Matches.getChildren().add(new TreeItem<>(newMatch));
 
             requested.Players.forEach(u -> {
                 releasePlayer(u);
@@ -86,7 +92,11 @@ public class GameController extends MessageReceiver<MessageType> {
     /**
      * Starts game controller
      */
-    public void init() {
+    public void init(TreeItem<Player> Players, TreeItem<Match> Matches) {
+
+        this.Players = Players;
+        this.Matches = Matches;
+
         // Start message receiver
         this.startExecutor();
 
@@ -129,6 +139,7 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(newP, null)));
 
         lobby.put(Id, newP);
+        Players.getChildren().add(new TreeItem<>(newP));
 
         // Notify new player for all Players
         lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
@@ -141,7 +152,7 @@ public class GameController extends MessageReceiver<MessageType> {
      *
      * @param Player User To set back To lobby
      */
-    public void returnPlayer(Player Player) {
+    void returnPlayer(Player Player) {
 
         System.out.println("Game controller: Player " + Player.username + " got back From match.");
 
@@ -160,13 +171,12 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param PlayerId Player To remove From lobby
      */
     void releasePlayer(int PlayerId) {
-        final Player leaving = lobby.get(PlayerId);
-        lobby.remove(PlayerId);
-        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, leaving)));
+        releasePlayer(lobby.get(PlayerId));
     }
 
     void releasePlayer(Player Player) {
         lobby.remove(Player.id);
+        Players.getChildren().removeIf(item -> item.getValue().equals(Player));
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
     }
 
@@ -179,6 +189,7 @@ public class GameController extends MessageReceiver<MessageType> {
         matches.get(MatchId).terminate();
         System.out.println("Game controller: Terminating match " + MatchId);
         matches.remove(MatchId);
+        Matches.getChildren().removeIf(item -> item.getValue().id == MatchId);
     }
 
     private GsonBuilder getGsonBuilder(GsonBuilder builder){

@@ -25,6 +25,8 @@ public class Match extends MessageReceiver<MessageType> {
      */
     public final int id;
 
+    public final String GameMap;
+
     /**
      * Players' list for this match (contains witnesses too)
      */
@@ -62,12 +64,21 @@ public class Match extends MessageReceiver<MessageType> {
 
         // Set current match id
         this.id = Id;
+        this.GameMap = MapName;
 
         try {
             map = new Map<>(MapName, Territory.class);
         } catch (NoSuchFieldException e){
             throw new ClassNotFoundException("Can not find specified map");
         }
+    }
+
+    public Match() {
+        super("Match-ListRoot");
+
+        this.id = -1;
+        this.GameMap = "NONE";
+        map = null;
     }
 
     /**

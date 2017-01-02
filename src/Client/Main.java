@@ -108,7 +108,7 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
-        loader.getController();
+        //loader.getController();
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");

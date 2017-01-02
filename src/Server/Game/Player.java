@@ -94,7 +94,7 @@ public class Player extends SocketHandler implements Game.Player {
      * @param MatchId Match where the AI player is needed
      * @param Color Color of AI on map
      */
-    static Player getAI(int MatchId, Color Color) {
+    public static Player getAI(int MatchId, Color Color) {
         return new Player(MatchId, Color);
     }
 
