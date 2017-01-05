@@ -8,6 +8,7 @@ import Game.Connection.MapUpdate;
 import Game.Connection.SpecialMoving;
 import Game.Map.Map;
 import Game.Map.Mission;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -191,6 +192,8 @@ public class MapHandler {
             return;
         }
 
+        MapUpdate.Sound.play();
+
         MapUpdate.updated.forEach((u) -> {
             synchronized (map) {
                 ObservableTerritory t = map.getTerritory(u.Name);
@@ -200,6 +203,11 @@ public class MapHandler {
                     t.setOwner(usersList.get(u.getOwner().id.get()));
             }
         });
+
+        // If standard armies displacement play relative sound
+        if(MapUpdate.attackDice != null) {
+            // Display dice result somewhere
+        }
 
         if(attackPhase.get())
             synchronized (attackPhase){

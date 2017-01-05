@@ -9,6 +9,7 @@ import Client.Game.Observables.*;
 import Game.Connection.*;
 import Game.MessageReceiver;
 import Client.Game.Connection.MessageType;
+import Game.Sounds.Sounds;
 import Game.StateType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -118,9 +119,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for incoming chat messages
         messageHandlers.put(MessageType.Chat, (message) -> {
-            // Get chat object
             final Chat<ObservableUser> chat = gson.fromJson(message.Json, MessageType.Chat.getType());
-
             addChatEntry.accept(chat);
         });
 
@@ -133,10 +132,10 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for match initialization
         messageHandlers.put(MessageType.Match, (message) -> {
+            stopExecutor();
             System.out.println("GameController: Match message: " + message.Json);
             final Match<ObservableUser> match = gson.fromJson(message.Json, MessageType.Match.getType());
 
-            stopExecutor();
             Main.toMatch(match);
             inMatch = true;
         });
@@ -151,7 +150,6 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         messageHandlers.put(MessageType.Mission, (message) -> {
             final Mission mission = gson.fromJson(message.Json, MessageType.Mission.getType());
-
             mapHandler.setMission(mission.Mission);
         });
 
@@ -207,6 +205,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for game state changes
         messageHandlers.put(MessageType.GameState, (message) -> {
+            stopExecutor();
             System.out.println("GameController: GameState message: " + message.Json);
             // If a GameState message is received than match is no longer valid, so go back To lobby
             Main.toLobby();
@@ -219,12 +218,15 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
            switch (gameState.state){
                case Winner:
-                   if(gameState.winner.equals(user))
+                   if(gameState.winner.equals(user)) {
                        Main.showDialog("Game state message", "You won the match!", "Close");
-                   else
+                       Sounds.Victory.play();
+                   }
+                   else {
                        Main.showDialog("Game state message",
-                                        "You lost this match. The winner is " + gameState.winner.username.get(),
-                                        "Close");
+                               "You lost this match. The winner is " + gameState.winner.username.get(),
+                               "Close");
+                   }
                    break;
                case Abandoned:
                    Main.showDialog("Game state message", "Player " + gameState.winner.username.get() + " left the game.", "Close");

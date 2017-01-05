@@ -147,14 +147,14 @@ public class Player extends SocketHandler implements Game.Player {
                                      MessageType.GameState,
                                      gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
             else
-                GameController.getInstance().releasePlayer(this.id);
+                GameController.getInstance().releasePlayer(this.id, true);
         }
 
         super.closeConnection();
     }
 
     /**
-     * Setup player To participate a match
+     * Setup player to participate a match
      *
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
@@ -169,17 +169,17 @@ public class Player extends SocketHandler implements Game.Player {
     }
 
     /**
-     * Setup player To witness a running match
+     * Add player to match
      *
      * @param MatchId Match id the player is watching
      */
-    synchronized void witnessMatch(int MatchId) {
+    synchronized void enterMatch(int MatchId) {
         matchId.set(MatchId);
         isPlaying.set(false);
     }
 
     /**
-     * Reset match fields and bring player back To lobby
+     * Reset match fields and bring player back to lobby
      */
     synchronized void exitMatch() {
         matchId.set(-1);

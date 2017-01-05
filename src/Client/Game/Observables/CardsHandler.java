@@ -3,6 +3,7 @@ package Client.Game.Observables;
 import Client.Main;
 import Game.Connection.Cards;
 import Game.Map.Card;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -13,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -22,8 +24,6 @@ import java.util.ArrayList;
  * Handler for cards in UI
  */
 public class CardsHandler {
-
-    private final String mapName;
 
     /**
      * Dialog containing cards UI objects
@@ -49,10 +49,7 @@ public class CardsHandler {
      */
     private final ArrayList<Card> selected = new ArrayList<>();
 
-    public CardsHandler(String MapName) {
-
-        this.mapName = MapName;
-
+    public CardsHandler() {
         /* Container setup */
         container.setSpacing(15.0f);
         container.setPadding(new Insets(0, 7.5, 0, 22.5));
@@ -78,7 +75,7 @@ public class CardsHandler {
 
         /* Layout setup */
         final JFXDialogLayout dl = new JFXDialogLayout();
-        dl.setHeading(new Label("     RealWorldMap cards"));
+        dl.setHeading(new Label("     Territories cards"));
         dl.setBody(container);
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
@@ -96,14 +93,14 @@ public class CardsHandler {
      * @param Card Card to initialize
      * @return Initialized card
      */
-    private AnchorPane getCard(Card Card) {
+    private ImageView getCard(Card Card) {
 
-        final AnchorPane card = new AnchorPane();
-        card.setPrefSize(137.0f, 212.0f);
-        card.setStyle("-fx-background-image: url('" + Card.getImage() + "');" +
-                "-fx-background-position: center center;" +
-                "-fx-background-repeat: no-repeat;" +
-                "-fx-background-size: 137 212;");
+        final ImageView card = new ImageView(Card.getImage());
+        card.setPreserveRatio(true);
+        card.setSmooth(true);
+        card.setCache(true);
+        card.setX(137.0f);
+        card.setY(212.0f);
 
         card.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
             Node source = (Node) evt.getSource();
@@ -148,8 +145,10 @@ public class CardsHandler {
             return new Cards();
 
         // If combination is valid return initialized Cards message
-        if(Card.isCombinationValid(selected))
+        if(Card.isCombinationValid(selected)) {
+            Sounds.CardTris.play();
             return new Cards(selected);
+        }
 
         // Else show error dialog and retry
         Main.showDialog("Error message", "Combination are of three cards only:\n" +

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Main controller To manage matches and user lobby
+ * Main controller to manage matches and user lobby
  */
 public class GameController extends MessageReceiver<MessageType> {
 
@@ -42,7 +42,7 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Users waiting To play
+     * Users waiting to play
      */
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
@@ -63,7 +63,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
             final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
-            System.out.println("Game controller: New match request From " + message.PlayerId);
+            System.out.println("Game controller: New match request from " + message.PlayerId);
 
             Match newMatch;
             try {
@@ -77,7 +77,7 @@ public class GameController extends MessageReceiver<MessageType> {
             Matches.getChildren().add(new TreeItem<>(newMatch));
 
             requested.Players.forEach(u -> {
-                releasePlayer(u);
+                releasePlayer(u, false);
                 newMatch.addPlayer(u);
             });
 
@@ -127,9 +127,9 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Add a new user To the lobby
+     * Add a new user to the lobby
      *
-     * @param Connection Connection relative To the user
+     * @param Connection Connection relative to the user
      */
     public void addPlayer(int Id, String Username, Socket Connection) {
 
@@ -148,9 +148,9 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * User gets back From match To lobby
+     * User gets back from match to lobby
      *
-     * @param Player User To set back To lobby
+     * @param Player User to set back to lobby
      */
     void returnPlayer(Player Player) {
 
@@ -166,24 +166,27 @@ public class GameController extends MessageReceiver<MessageType> {
     }
 
     /**
-     * User is disconnecting From game
+     * User is disconnecting from game
      *
-     * @param PlayerId Player To remove From lobby
+     * @param PlayerId Player to remove from lobby
      */
-    void releasePlayer(int PlayerId) {
-        releasePlayer(lobby.get(PlayerId));
+    void releasePlayer(int PlayerId, boolean remove) {
+        releasePlayer(lobby.get(PlayerId), remove);
     }
 
-    void releasePlayer(Player Player) {
+    void releasePlayer(Player Player, boolean remove) {
         lobby.remove(Player.id);
-        Players.getChildren().removeIf(item -> item.getValue().equals(Player));
+
+        if(remove)
+            Players.getChildren().removeIf(item -> item.getValue().equals(Player));
+
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
     }
 
     /**
-     * End specified match and removes it From match list
+     * End specified match and removes it from match list
      *
-     * @param MatchId Match To remove
+     * @param MatchId Match to remove
      */
     private void endMatch(int MatchId) {
         matches.get(MatchId).terminate();

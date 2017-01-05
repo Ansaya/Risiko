@@ -1,5 +1,7 @@
 package Game.Map;
 
+import javafx.scene.image.Image;
+
 import java.util.ArrayList;
 
 /**
@@ -10,9 +12,9 @@ public class Card {
 
     public final Figure Figure;
 
-    private String image;
+    private Image image;
 
-    public String getImage() { return image; }
+    public Image getImage() { return image; }
 
     private String mapName;
 
@@ -23,7 +25,11 @@ public class Card {
     }
 
     public void loadGraphic() {
-        this.image = Card.class.getResource(mapName + "/Cards/" + Name.replaceAll(" ", "") + ".jpg").toExternalForm();
+        try {
+            this.image = new Image(Card.class.getResource(mapName + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

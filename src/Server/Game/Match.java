@@ -7,6 +7,7 @@ import Game.Connection.Battle;
 import Game.Connection.GameState;
 import Game.Map.Map;
 import Game.MessageReceiver;
+import Game.Sounds.Sounds;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Map.Territory;
@@ -58,7 +59,6 @@ public class Match extends MessageReceiver<MessageType> {
      */
     public static final AtomicInteger counter = new AtomicInteger(0);
 
-
     public Match(int Id, String MapName) throws ClassNotFoundException{
         super("Match-" + Id);
 
@@ -93,7 +93,6 @@ public class Match extends MessageReceiver<MessageType> {
         // Setup Players
         final Deck<Color> deckColor = new Deck<>(Color.values());
         players.forEach((id, player) -> {
-
             player.initMatch(deckColor.next(), this.id, map.nextMission());
             playersOrder.add(player.id);
         });
@@ -194,7 +193,7 @@ public class Match extends MessageReceiver<MessageType> {
 
                     // Pass user To witness mode
                     defeated.exitMatch();
-                    defeated.witnessMatch(this.id);
+                    defeated.enterMatch(this.id);
                     break;
             }
         });
@@ -495,7 +494,7 @@ public class Match extends MessageReceiver<MessageType> {
             /* Battle phase end */
 
             /* Update */
-            final MapUpdate<Territory> result = new MapUpdate<>(battle.from, battle.to);
+            final MapUpdate<Territory> result = new MapUpdate<>(atkDice, defDice, Sounds.battleSoundSelector(lostAtk, lostDef), battle.from, battle.to);
             // If attacker hasn't conquered the territory or no armies can be moved to it complete battle
             if(!battle.to.getOwner().equals(battle.from.getOwner()) || battle.from.getArmies() == 1) {
                 // Send update to all players

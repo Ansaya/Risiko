@@ -5,6 +5,7 @@ import Client.Game.Observables.ObservableUser;
 import Client.UI.LobbyController;
 import Client.UI.MatchController;
 import Game.Connection.Match;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
@@ -56,8 +57,6 @@ public class Main extends Application {
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Match");
-        window.setMinWidth(1187.0);
-        window.setMinHeight(620.0);
         window.setScene(new Scene(root, 1366, 768));
         window.show();
 
@@ -86,10 +85,6 @@ public class Main extends Application {
 
         window.setTitle("Risiko - Lobby");
         window.setResizable(true);
-        window.setX(window.getX() - 538.0);
-        window.setY(window.getY() - 125.0);
-        window.setMinWidth(1067.0);
-        window.setMinHeight(600.0);
         window.setScene(new Scene(root, 1366, 768));
         window.show();
     }
@@ -112,11 +107,7 @@ public class Main extends Application {
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");
-        window.setMinWidth(250.0);
-        window.setMinHeight(300.0);
-        window.setWidth(250.0);
-        window.setHeight(300.0);
-        window.setScene(new Scene(root, 250, 300));
+        window.setScene(new Scene(root, 1366, 768));
         window.setResizable(false);
         window.show();
     }
@@ -132,6 +123,7 @@ public class Main extends Application {
             btn.setButtonType(JFXButton.ButtonType.RAISED);
             btn.setStyle("-fx-background-color: #44B449");
             btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
+                Sounds.Button.play();
                 synchronized (dialogClosed){
                     dialogClosed.notify();
                 }
@@ -164,6 +156,8 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;
         window.getIcons().add(new Image(Main.class.getResource("icon.png").openStream()));
+        window.setMinWidth(1187.0);
+        window.setMinHeight(620.0);
 
         toLogin();
 

@@ -7,6 +7,7 @@ import Game.Connection.Chat;
 import Game.Connection.Lobby;
 import Game.Connection.Match;
 import Client.Game.Connection.MessageType;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.application.Platform;
@@ -85,6 +86,8 @@ public class LobbyController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
+            Sounds.Match.play();
+
             // Get selected users
             ObservableList<TreeItem<ObservableUser>> selected = lobbyTable.getSelectionModel().getSelectedItems();
 
@@ -108,8 +111,6 @@ public class LobbyController implements Initializable {
         /* Lobby view setup */
         idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
-
-        lobbyTable.getColumns().setAll(idColumn, usernameColumn);
         lobbyTable.setRoot(usersRoot);
         lobbyTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -161,6 +162,7 @@ public class LobbyController implements Initializable {
 
                 // Scroll container to end
                 chatSP.setVvalue(1.0f);
+                Sounds.Chat.play();
             });
             return;
         }
@@ -175,6 +177,7 @@ public class LobbyController implements Initializable {
 
         // Scroll container to end
         chatSP.setVvalue(1.0f);
+        Sounds.Chat.play();
     }
 
     private void updateUsers(Lobby<ObservableUser> Lobby) {

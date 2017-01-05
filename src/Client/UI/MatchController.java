@@ -3,6 +3,7 @@ package Client.UI;
 import Client.Game.GameController;
 import Client.Game.Observables.*;
 import Game.Connection.Chat;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.application.Platform;
@@ -97,6 +98,10 @@ public class MatchController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+        endTurnBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, evt -> Sounds.Button.play());
+        cardsBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, evt -> Sounds.Button.play());
+        missionBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, evt -> Sounds.Button.play());
+
         /* Map rescaling */
         worldMap.widthProperty().addListener(this::setMapWidth);
         worldMap.heightProperty().addListener(this::setMapHeight);
@@ -106,7 +111,7 @@ public class MatchController implements Initializable {
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
         territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
 
-        playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
+        //playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(usersRoot);
     }
 
@@ -159,8 +164,8 @@ public class MatchController implements Initializable {
         mapHandler.setPhaseButton(endTurnBtn);
     }
 
-    private void setCardsHandler(String MapName) {
-        cardsHandler = new CardsHandler(MapName);
+    private void setCardsHandler() {
+        cardsHandler = new CardsHandler();
         cardsHandler.setCardsButton(cardsBtn);
     }
 
@@ -170,7 +175,7 @@ public class MatchController implements Initializable {
         GameController.getInstance().setChatEntry(this::addChatEntry);
         setMapHandler(MapName, UsersList);
         GameController.getInstance().setMapHandler(mapHandler);
-        setCardsHandler(MapName);
+        setCardsHandler();
         GameController.getInstance().setCardsHandler(cardsHandler);
         GameController.getInstance().startExecutor();
     }
@@ -205,6 +210,7 @@ public class MatchController implements Initializable {
 
                 // Scroll container to end
                 chatSP.setVvalue(1.0f);
+                Sounds.Chat.play();
             });
             return;
         }
@@ -219,6 +225,7 @@ public class MatchController implements Initializable {
 
         // Scroll container to end
         chatSP.setVvalue(1.0f);
+        Sounds.Chat.play();
     }
 
     private Label getChatEntry() {
