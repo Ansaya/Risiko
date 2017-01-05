@@ -169,7 +169,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                 cardsHandler.addCard(cards.combination.get(0));
 
                 // Notify user
-                Main.showDialog("RealWorldMap cards",
+                Main.showDialog("Territories cards",
                                   "You received " + cards.combination.get(0).toString() + " card!",
                                 "Continue");
                 return;

@@ -10,6 +10,9 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class Main extends Application {
 
     @Override
@@ -32,15 +35,39 @@ public class Main extends Application {
 
     public static void main(String[] args) {
 
-        // Load UI
-        launch(args);
+        //args = new String[] { "risiko.jar", "console" };
+
+        final ArrayList<String> Args = new ArrayList<>(Arrays.asList(args));
+
+        if(Args.contains("console")) {
+            GameController.getInstance().init();
+            ConnectionHandler.getInstance().Listen(5757);
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    terminate();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }));
+            System.out.println("Press CTRL + C to exit...");
+        }
+        else {
+            // Load UI
+            launch(args);
+        }
+    }
+
+    private static void terminate() {
+        System.out.println("Shouting down...");
+        ConnectionHandler.getInstance().terminate();
+        GameController.getInstance().terminate();
+        System.out.println("Shutdown completed");
     }
 
     @Override
     public void stop() throws Exception {
-        ConnectionHandler.getInstance().terminate();
-        GameController.getInstance().terminate();
-        System.out.println("Shutdown completed");
+        terminate();
 
         super.stop();
     }

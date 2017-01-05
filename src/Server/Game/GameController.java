@@ -74,7 +74,8 @@ public class GameController extends MessageReceiver<MessageType> {
             }
 
             matches.put(newMatch.id, newMatch);
-            Matches.getChildren().add(new TreeItem<>(newMatch));
+            if(Matches != null)
+                Matches.getChildren().add(new TreeItem<>(newMatch));
 
             requested.Players.forEach(u -> {
                 releasePlayer(u, false);
@@ -101,6 +102,10 @@ public class GameController extends MessageReceiver<MessageType> {
         this.startExecutor();
 
         System.out.println("Game controller: Message receiver up and running.");
+    }
+
+    public void init() {
+        init(null, null);
     }
 
     /**
@@ -139,7 +144,9 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(newP, null)));
 
         lobby.put(Id, newP);
-        Players.getChildren().add(new TreeItem<>(newP));
+
+        if(Players != null)
+            Players.getChildren().add(new TreeItem<>(newP));
 
         // Notify new player for all Players
         lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
@@ -170,14 +177,14 @@ public class GameController extends MessageReceiver<MessageType> {
      *
      * @param PlayerId Player to remove from lobby
      */
-    void releasePlayer(int PlayerId, boolean remove) {
-        releasePlayer(lobby.get(PlayerId), remove);
+    void releasePlayer(int PlayerId, boolean Remove) {
+        releasePlayer(lobby.get(PlayerId), Remove);
     }
 
-    void releasePlayer(Player Player, boolean remove) {
+    void releasePlayer(Player Player, boolean Remove) {
         lobby.remove(Player.id);
 
-        if(remove)
+        if(Remove && Players != null)
             Players.getChildren().removeIf(item -> item.getValue().equals(Player));
 
         lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
@@ -192,7 +199,8 @@ public class GameController extends MessageReceiver<MessageType> {
         matches.get(MatchId).terminate();
         System.out.println("Game controller: Terminating match " + MatchId);
         matches.remove(MatchId);
-        Matches.getChildren().removeIf(item -> item.getValue().id == MatchId);
+        if(Matches != null)
+            Matches.getChildren().removeIf(item -> item.getValue().id == MatchId);
     }
 
     private GsonBuilder getGsonBuilder(GsonBuilder builder){

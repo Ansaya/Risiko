@@ -31,6 +31,9 @@ public class Controller implements Initializable {
     private TreeTableColumn<Player, String> playerUsernameColumn;
 
     @FXML
+    private TreeTableColumn<Player, Integer> playerMatchIdColumn;
+
+    @FXML
     private TreeTableView matchesTable;
 
     @FXML
@@ -64,6 +67,7 @@ public class Controller implements Initializable {
 
         playerIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().id).asObject());
         playerUsernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getValue().username));
+        playerMatchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().getMatchId()).asObject());
         playersTable.setRoot(players);
 
         matchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().id).asObject());

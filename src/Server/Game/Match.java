@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Match object To manage game turns in a dedicated thread
+ * Match object to manage game turns in a dedicated thread
  */
 public class Match extends MessageReceiver<MessageType> {
 
@@ -40,7 +40,7 @@ public class Match extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Contains playing Players' id only
+     * Contains active players' id only
      */
     private final ArrayList<Integer> playersOrder = new ArrayList<>();
 
@@ -132,7 +132,7 @@ public class Match extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Stop current match thread and returns Players To GameController
+     * Stop current match thread and returns players to GameController
      */
     void terminate() {
         currentTurn.endTurn();
@@ -164,9 +164,12 @@ public class Match extends MessageReceiver<MessageType> {
                 case Abandoned: // Message received From user
                     final Player p = players.get(message.PlayerId);
 
-                    // Winner null in Abandoned game state means player has closed the application, so no need To return To lobby
-                    if(gameState.winner == null)
+                    // Winner null in Abandoned game state means player has closed the application, so remove player completely
+                    if(gameState.winner == null) {
                         players.remove(message.PlayerId);
+                        GameController.getInstance().returnPlayer(p);
+                        GameController.getInstance().releasePlayer(p, true);
+                    }
 
                     // If player was playing in this match, abort match
                     if(p.isPlaying()) {
@@ -174,7 +177,7 @@ public class Match extends MessageReceiver<MessageType> {
                         message.PlayerId = this.id;
                         GameController.getInstance().setIncoming(message);
                     }
-                    else { // Else return player To lobby
+                    else { // Else return player to lobby
                         if(players.remove(p.id, p))
                             GameController.getInstance().returnPlayer(p);
                     }
@@ -252,9 +255,9 @@ public class Match extends MessageReceiver<MessageType> {
         private final ArrayList<Message> incoming = new ArrayList<>();
 
         /**
-         * Add new message To turn queue
+         * Add new message to turn queue
          *
-         * @param Message Message To add
+         * @param Message Message to add
          */
         void setIncoming(Message Message) {
             synchronized (incoming){
@@ -275,7 +278,7 @@ public class Match extends MessageReceiver<MessageType> {
          *
          * @param Match Match where this turn is taking place
          * @param Current Player who will play this turn
-         * @param isSetup If set To true starts From territories choice
+         * @param isSetup If set to true starts from territories choice
          */
         public Turn(Match Match, Player Current, boolean isSetup) {
             this.match = Match;
@@ -307,10 +310,10 @@ public class Match extends MessageReceiver<MessageType> {
         }
 
         /**
-         * Waits for requested message From specified user and returns it deserialized
+         * Waits for requested message from specified user and returns it deserialized
          *
          * @param Type Type of message expected
-         * @param PlayerId Player who the message is expected From. If set To -1 get message From any player
+         * @param PlayerId Player from whom the message is expected. If set to -1 get message from any player
          * @return Deserialized message
          */
         private <T> T waitMessage(MessageType Type, int PlayerId) {
@@ -343,7 +346,7 @@ public class Match extends MessageReceiver<MessageType> {
         }
 
         /**
-         * Waits for requested message From current user and returns it deserialized
+         * Waits for requested message from current user and returns it deserialized
          *
          * @param Type Type of message expected
          * @return Deserialized message
@@ -354,23 +357,23 @@ public class Match extends MessageReceiver<MessageType> {
 
 
         /**
-         * Takes care of initial Armies distribution and territories choosing turns
+         * Takes care of initial armies distribution and territories choosing turns
          */
         private void Setup(Player AI) {
             // Setup
             Player last = null;
 
-            // Save last player id To trigger ai choice during initial phase
+            // Save last player id to trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
             final ArrayList<String> toGo = match.map.getTerritoryNames();
 
-            /* RealWorldMap choice */
+            /* Territories choice */
 
             while (toGo.size() > 0){
                 // Send next player positioning message with one army
                 (last = match.nextPlaying(last)).SendMessage(MessageType.Positioning, new Positioning(1));
 
-                // Get chosen Territory
+                // Get chosen territory
                 MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
                 if(update == null)
                     return;
@@ -381,10 +384,10 @@ public class Match extends MessageReceiver<MessageType> {
                 toUpdate.NewArmies = 0;
                 toUpdate.setOwner(last);
 
-                // Remove it From remaining territories
+                // Remove it from remaining territories
                 toGo.remove(toUpdate.Name);
 
-                // Send update To all Players
+                // Send update to all players
                 match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
 
                 // At the end of the row chose one for AI if only two players are in match
@@ -400,21 +403,20 @@ public class Match extends MessageReceiver<MessageType> {
 
             /* Armies displacement */
 
-            // Generate initial Armies for each player
+            // Generate initial armies for each player
             final int startingArmies = 50 - (5 * playersOrder.size());
 
             // Send each player initial armies
             playersOrder.forEach(pId -> {
                 Player p = match.players.get(pId);
 
-                // Calculate remaining Armies to send                 (    total      -   already placed Armies   )
+                // Calculate remaining armies to send                 (               total     -   already placed Armies  )
                 p.SendMessage(MessageType.Positioning, new Positioning(startingArmies - p.getTerritories().size()));
                 // Send mission to player
                 p.SendMessage(MessageType.Mission, new Game.Connection.Mission(p.getMission()));
             });
 
-            // Wait for all Players To return initial displacement
-            final ArrayList<Territory> finalUpdate = new ArrayList<>();
+            // Wait for all players to return initial displacement
             for(int i = playersOrder.size(); i > 0; i--){
                 MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
                 if(u == null)
@@ -423,12 +425,11 @@ public class Match extends MessageReceiver<MessageType> {
                 u.updated.forEach(t -> {
                     t.addArmies(t.NewArmies);
                     t.NewArmies = 0;
-                    finalUpdate.add(t);
                 });
-            }
 
-            // Send global initial displacement To all Players
-            sendAll(MessageType.MapUpdate, new MapUpdate<>(finalUpdate));
+                // Send displacement to all players
+                sendAll(MessageType.MapUpdate, u);
+            }
 
             // Notify end of setup when completed
             match.setIncoming(lastId, MessageType.Turn, "");
