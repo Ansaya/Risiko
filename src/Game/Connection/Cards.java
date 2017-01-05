@@ -1,7 +1,6 @@
 package Game.Connection;
 
 import Game.Map.Card;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 

@@ -68,9 +68,14 @@ public class Match extends MessageReceiver<MessageType> {
 
         try {
             map = new Map<>(MapName, Territory.class);
+            map.loadDecks();
         } catch (NoSuchFieldException e){
             throw new ClassNotFoundException("Can not find specified map");
         }
+
+        // Setup and start match message receiver
+        listenersInit();
+        startExecutor();
     }
 
     public Match() {
@@ -121,10 +126,6 @@ public class Match extends MessageReceiver<MessageType> {
 
             player.SendMessage(MessageType.Match, new Game.Connection.Match<>(matchPlayers));
         });
-
-        // Setup and start match message receiver
-        listenersInit();
-        startExecutor();
 
         // Start first setup turn
         System.out.println("Match " + this.id + ": Started game with " + players.size() + " players.");

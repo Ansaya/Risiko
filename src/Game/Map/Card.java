@@ -11,15 +11,21 @@ public class Card {
 
     public final Figure Figure;
 
-    private Image image;
+    private transient Image image;
 
-    public Image getImage() { return image; }
+    public Image getImage() {
+        if(image == null)
+            loadGraphic();
+
+        return image;
+    }
 
     private String mapName;
 
     public Card(String Name, Figure Figure, String MapName){
         this.Name = Name;
         this.Figure = Figure;
+        this.image = null;
         this.mapName = MapName;
     }
 

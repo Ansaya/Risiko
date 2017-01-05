@@ -94,7 +94,6 @@ public class CardsHandler {
      * @return Initialized card
      */
     private ImageView getCard(Card Card) {
-
         final ImageView card = new ImageView(Card.getImage());
         card.setPreserveRatio(true);
         card.setSmooth(true);

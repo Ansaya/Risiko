@@ -46,8 +46,8 @@ public class Map<T extends Territory<? extends Player>> {
         this.areas = new HashMap<>();
         this.territories = new HashMap<>();
         this.ConnectionsPath = "";
-        final ArrayList<Mission> missions = new ArrayList<>();
-        final ArrayList<Card> cards = new ArrayList<>();
+        this.cardDeck = null;
+        this.missionDeck = null;
 
         // Gain access to private final field territories of class Area
         final Field areaTerritories = Area.class.getDeclaredField("territories");
@@ -60,20 +60,6 @@ public class Map<T extends Territory<? extends Player>> {
         territoryName.setAccessible(true);
         territoryAdjacent.setAccessible(true);
         territoryArea.setAccessible(true);
-
-        // Gain access to all final/private fields of Mission class
-        final Field missionName = Mission.class.getDeclaredField("Name");
-        final Field missionDescription = Mission.class.getDeclaredField("Description");
-        final Field missionToConquer = Mission.class.getDeclaredField("ToConquer");
-        final Field missionNumber = Mission.class.getDeclaredField("Number");
-        final Field missionArmy = Mission.class.getDeclaredField("Army");
-        final Field missionType = Mission.class.getDeclaredField("Type");
-        missionName.setAccessible(true);
-        missionDescription.setAccessible(true);
-        missionToConquer.setAccessible(true);
-        missionNumber.setAccessible(true);
-        missionArmy.setAccessible(true);
-        missionType.setAccessible(true);
 
         // Basic initialization of each territory
         final JsonArray jTerritories = map.getAsJsonArray("territories");
@@ -91,12 +77,7 @@ public class Map<T extends Territory<? extends Player>> {
             // If no svgPath, it is only a card
             if(jt.has("SvgPath"))
                 territories.put(territory.Name, territory);
-
-            if(jt.has("Card"))
-                cards.add(new Card(territory.Name, Figure.valueOf(jt.get("Card").getAsString()), Name));
         });
-
-        this.cardDeck = new Deck<>(cards);
 
         // Initialize all areas with initialized territories
         final JsonArray jAreas = map.getAsJsonArray("areas");
@@ -128,34 +109,6 @@ public class Map<T extends Territory<? extends Player>> {
                 territoryArea.set(territory, this.areas.get(jt.get("Area").getAsString()));
             } catch (IllegalAccessException e) {}
         });
-
-        // Initialize each mission with initialized territories
-        final JsonArray jMissions = map.getAsJsonArray("missions");
-        jMissions.forEach(m -> {
-            JsonObject jm = m.getAsJsonObject();
-
-            Mission mission = null;
-            try { mission = Mission.class.newInstance(); } catch (Exception e) {}
-
-            try {
-                missionName.set(mission, jm.get("Name").getAsString());
-                missionDescription.set(mission, jm.get("Description").getAsString());
-                missionType.set(mission, Mission.MissionType.valueOf(jm.get("Type").getAsString()));
-                if(jm.has("Number"))
-                    missionNumber.set(mission, jm.get("Number").getAsInt());
-                if(jm.has("Army"))
-                    missionArmy.set(mission, Color.valueOf(jm.get("Army").getAsString()));
-                if(jm.has("ToConquer")){
-                    final ArrayList<T> toConquer = new ArrayList<>();
-                    jm.getAsJsonArray("ToConquer").forEach(t -> toConquer.add(territories.get(t.getAsString())));
-                    missionToConquer.set(mission, toConquer);
-                }
-            } catch (IllegalAccessException e) {}
-
-            missions.add(mission);
-        });
-
-        this.missionDeck = new Deck<>(missions);
     }
 
     public void loadGraphic() throws NoSuchFieldException, IllegalAccessException {
@@ -189,17 +142,112 @@ public class Map<T extends Territory<? extends Player>> {
                     territoryArmyY.set(territory, jt.get("ArmyY").getAsFloat());
             } catch (IllegalAccessException e) {}
         });
-
-        final Field allCards = Deck.class.getDeclaredField("allCards");
-        allCards.setAccessible(true);
-
-        ArrayList<Card> cards = (ArrayList<Card>) allCards.get(cardDeck);
-        cards.forEach(Card::loadGraphic);
     }
 
-    public Card nextCard() { return cardDeck.next(); }
+    private void loadMissionDeck() throws NoSuchFieldException, IllegalAccessException {
+        // Load json map filed from resources
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+
+        final ArrayList<Mission> missions = new ArrayList<>();
+        final Field missionDeck = Map.class.getDeclaredField("missionDeck");
+        missionDeck.setAccessible(true);
+
+        // Gain access to all final/private fields of Mission class
+        final Field missionName = Mission.class.getDeclaredField("Name");
+        final Field missionDescription = Mission.class.getDeclaredField("Description");
+        final Field missionToConquer = Mission.class.getDeclaredField("ToConquer");
+        final Field missionNumber = Mission.class.getDeclaredField("Number");
+        final Field missionArmy = Mission.class.getDeclaredField("Army");
+        final Field missionType = Mission.class.getDeclaredField("Type");
+        missionName.setAccessible(true);
+        missionDescription.setAccessible(true);
+        missionToConquer.setAccessible(true);
+        missionNumber.setAccessible(true);
+        missionArmy.setAccessible(true);
+        missionType.setAccessible(true);
+
+        // Initialize each mission with initialized territories
+        final JsonArray jMissions = map.getAsJsonArray("missions");
+        jMissions.forEach(m -> {
+            JsonObject jm = m.getAsJsonObject();
+
+            Mission mission = null;
+            try { mission = Mission.class.newInstance(); } catch (Exception e) {}
+
+            try {
+                missionName.set(mission, jm.get("Name").getAsString());
+                missionDescription.set(mission, jm.get("Description").getAsString());
+                missionType.set(mission, Mission.MissionType.valueOf(jm.get("Type").getAsString()));
+                if(jm.has("Number"))
+                    missionNumber.set(mission, jm.get("Number").getAsInt());
+                if(jm.has("Army"))
+                    missionArmy.set(mission, Color.valueOf(jm.get("Army").getAsString()));
+                if(jm.has("ToConquer")){
+                    final ArrayList<T> toConquer = new ArrayList<>();
+                    jm.getAsJsonArray("ToConquer").forEach(t -> toConquer.add(territories.get(t.getAsString())));
+                    missionToConquer.set(mission, toConquer);
+                }
+            } catch (IllegalAccessException e) {}
+
+            missions.add(mission);
+        });
+
+        missionDeck.set(this, new Deck<>(missions));
+    }
+
+    private void loadCardDeck() throws NoSuchFieldException, IllegalAccessException {
+        // Load json map filed from resources
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+
+        final ArrayList<Card> cards = new ArrayList<>();
+        final Field cardDeck = Map.class.getDeclaredField("cardDeck");
+        cardDeck.setAccessible(true);
+
+        final JsonArray jTerritories = map.getAsJsonArray("territories");
+        jTerritories.forEach(t -> {
+            // Get json territory
+            JsonObject jt = t.getAsJsonObject();
+
+            if(jt.has("Card"))
+                cards.add(new Card(jt.get("Name").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Name));
+        });
+
+        cardDeck.set(this, new Deck<>(cards));
+    }
+
+    /**
+     * Load decks for this map object
+     */
+    public void loadDecks() {
+        try {
+            loadCardDeck();
+            loadMissionDeck();
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Card nextCard() {
+        if(cardDeck == null) {
+            try {
+                loadCardDeck();
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return cardDeck.next();
+    }
 
     public Mission nextMission() {
+        if(missionDeck == null) {
+            try {
+                loadMissionDeck();
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
         return missionDeck.next();
     }
 
