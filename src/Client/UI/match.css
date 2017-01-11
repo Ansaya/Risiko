@@ -1,7 +1,22 @@
+.playersList {
+    -fx-background-color: rgba(0,0,0,.05);
+}
+
+.playersList .column-header {
+    -fx-pref-height: 25px;
+    -fx-border-width: 0 0 0 0;
+    -fx-border-color: transparent;
+}
+
+.playersList .tree-table-row-cell {
+    -fx-pref-height: 35px;
+}
+
+.playersList .tree-table-cell {
+    -fx-text-alignment: center;
+}
+
 .mapContainer {
-    -fx-background-color: #1e3eff;
-    /*-fx-padding: -100px, 0, 0, -100px;*/
-    -fx-scale-shape: false;
 }
 
 .selected {

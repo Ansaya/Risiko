@@ -3,7 +3,6 @@ package Client.UI;
 import Client.Game.GameController;
 import Client.Main;
 import Client.Game.Observables.ObservableUser;
-import Game.Connection.Chat;
 import Game.Connection.Lobby;
 import Game.Connection.Match;
 import Client.Game.Connection.MessageType;
@@ -14,17 +13,13 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Login view controller
@@ -53,34 +48,6 @@ public class LobbyController implements Initializable {
 
     @FXML
     private JFXButton deselectAllBtn;
-
-    /* Chat fields */
-    @FXML
-    private ScrollPane chatSP;
-
-    @FXML
-    private VBox chatContainer;
-
-    @FXML
-    private TextField chatMessage;
-
-    @FXML
-    private Button chatSendBtn;
-
-    @FXML
-    private JFXBadge chatBadge;
-
-    private final AtomicInteger lastSenderId = new AtomicInteger(-1);
-
-    /**
-     * Lambda for chat message sending
-     */
-    private EventHandler sendMessage = (evt) -> {
-        if(!chatMessage.getText().trim().equals(""))
-            GameController.getInstance().SendChat(chatMessage.getText().trim());
-
-        chatMessage.clear();
-    };
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -125,59 +92,8 @@ public class LobbyController implements Initializable {
     }
 
     public void setGameController() {
-        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
-        chatMessage.setOnAction(sendMessage);
-        GameController.getInstance().setChatEntry(this::addChatEntry);
         GameController.getInstance().setUpdateUsers(this::updateUsers);
         GameController.getInstance().startExecutor();
-    }
-
-    private void addChatEntry(Chat<ObservableUser> Chat) {
-        final Label sender = getChatEntry();
-        final Label text = getChatEntry();
-
-        sender.setText(Chat.sender.username.get());
-        text.setText(Chat.message);
-
-        // If message is From this client display it on opposite side of chat view
-        if(Chat.sender.equals(GameController.getInstance().getUser())){
-            sender.setAlignment(Pos.TOP_RIGHT);
-            text.setAlignment(Pos.TOP_RIGHT);
-        }
-
-        if(Chat.sender.color != null) {
-            sender.setTextFill(Chat.sender.color.hexColor);
-            text.setTextFill(Chat.sender.color.hexColor);
-        }
-
-        if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> {
-                // If message is from same sender as before, avoid writing sender again
-                if (lastSenderId.get() != Chat.sender.id.get())
-                    chatContainer.getChildren().add(sender);
-
-                lastSenderId.set(Chat.sender.id.get());
-
-                chatContainer.getChildren().add(text);
-
-                // Scroll container to end
-                chatSP.setVvalue(1.0f);
-                Sounds.Chat.play();
-            });
-            return;
-        }
-
-        // If message is from same sender as before, avoid writing sender again
-        if(lastSenderId.get() != Chat.sender.id.get())
-            chatContainer.getChildren().add(sender);
-
-        lastSenderId.set(Chat.sender.id.get());
-
-        chatContainer.getChildren().add(text);
-
-        // Scroll container to end
-        chatSP.setVvalue(1.0f);
-        Sounds.Chat.play();
     }
 
     private void updateUsers(Lobby<ObservableUser> Lobby) {
@@ -194,12 +110,4 @@ public class LobbyController implements Initializable {
         Lobby.toAdd.forEach(u -> usersRoot.getChildren().add(new TreeItem<>(u)));
     }
 
-    private Label getChatEntry() {
-        final Label chatEntry = new Label();
-        chatEntry.prefWidth(228.0f);
-        chatEntry.getStyleClass().add("chat");
-        chatEntry.setWrapText(true);
-
-        return chatEntry;
-    }
 }

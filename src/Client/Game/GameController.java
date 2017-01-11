@@ -2,6 +2,7 @@ package Client.Game;
 
 import Client.Game.Connection.Serializer.ObservableUserSerializer;
 import Client.Main;
+import Client.UI.ChatBox.ChatBox;
 import Game.Connection.Mission;
 import Game.Connection.Serializer.IntegerPropertySerializer;
 import Game.Connection.Serializer.StringPropertySerializer;
@@ -58,14 +59,14 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     /* Chat section */
 
-    private volatile Consumer<Chat<ObservableUser>> addChatEntry = null;
+    private volatile ChatBox chatBox;
 
-    /**
-     * Set method reference to add new message to chatbos in UI
-     *
-     * @param AddChatEntry Method reference
-     */
-    public void setChatEntry(Consumer<Chat<ObservableUser>> AddChatEntry) { addChatEntry = AddChatEntry; }
+    public ChatBox getChatBox() {
+        if(chatBox == null)
+            chatBox = new ChatBox(2);
+
+        return chatBox;
+    }
 
     /* Chat section end */
 
@@ -120,7 +121,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         // Handler for incoming chat messages
         messageHandlers.put(MessageType.Chat, (message) -> {
             final Chat<ObservableUser> chat = gson.fromJson(message.Json, MessageType.Chat.getType());
-            addChatEntry.accept(chat);
+            chatBox.addChat(chat);
         });
 
         // Handler for userList in lobby
@@ -264,6 +265,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         // Set user for this client
         this.user = new ObservableUser(Integer.valueOf(incoming.split("[#]")[1]), Username, null);
         System.out.println("Got id " + user.id.get() + " from server.");
+
+        this.chatBox = new ChatBox(user.getId());
 
         // If connection is successfully established start listening and receiving
         _threadInstance.start();

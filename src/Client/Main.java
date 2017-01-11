@@ -2,9 +2,11 @@ package Client;
 
 import Client.Game.GameController;
 import Client.Game.Observables.ObservableUser;
+import Client.UI.ChatBox.ChatBox;
 import Client.UI.LobbyController;
 import Client.UI.MatchController;
 import Game.Connection.Match;
+import Game.Map.Army.Color;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -17,9 +19,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main extends Application {
 
@@ -39,9 +46,8 @@ public class Main extends Application {
         Parent root = null;
         try {
             root = loader.load(Main.class.getResource("UI/match.fxml").openStream());
-
-            root.getStylesheets().add(Main.class.getResource("UI/map.css").toExternalForm());
-            root.getStylesheets().add(Main.class.getResource("UI/chat.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/match.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,12 +61,16 @@ public class Main extends Application {
         }
 
         parent = (StackPane) root;
+        final ChatBox cb = GameController.getInstance().getChatBox();
+        ((AnchorPane)parent.getChildren().get(0)).getChildren().add(cb);
+        AnchorPane.setRightAnchor(cb, 25.0);
+        AnchorPane.setBottomAnchor(cb, 0.0);
 
         window.setTitle("Risiko - Match");
-        window.setScene(new Scene(root, 1366, 768));
+        window.setScene(new Scene(root, 1067, 600));
         window.show();
 
-        mc.updateMapSize(1366, 768);
+        mc.updateMapSize(1067, 600);
     }
 
     public static void toLobby() {
@@ -73,7 +83,8 @@ public class Main extends Application {
         Parent root = null;
         try {
             root = loader.load(Main.class.getResource("UI/lobby.fxml").openStream());
-            root.getStylesheets().add(Main.class.getResource("UI/chat.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/lobby.css").toExternalForm());
+            root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,10 +93,14 @@ public class Main extends Application {
         lc.setGameController();
 
         parent = (StackPane) root;
+        final ChatBox cb = GameController.getInstance().getChatBox();
+        ((AnchorPane)parent.getChildren().get(0)).getChildren().add(cb);
+        AnchorPane.setRightAnchor(cb, 25.0);
+        AnchorPane.setBottomAnchor(cb, 0.0);
 
         window.setTitle("Risiko - Lobby");
         window.setResizable(true);
-        window.setScene(new Scene(root, 1366, 768));
+        window.setScene(new Scene(root, 1067, 600));
         window.show();
     }
 
@@ -99,6 +114,7 @@ public class Main extends Application {
         Parent root = null;
         try {
             root = loader.load(Main.class.getResource("UI/login.fxml").openStream());
+            root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -107,7 +123,7 @@ public class Main extends Application {
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");
-        window.setScene(new Scene(root, 1366, 768));
+        window.setScene(new Scene(root, 1067, 600));
         window.setResizable(false);
         window.show();
     }
@@ -152,16 +168,23 @@ public class Main extends Application {
             Platform.runLater(() -> Dialog.show(parent));
     }
 
+    public static Font globalFont = Font.font("Trebuchet MS", 12.0f);
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;
         window.getIcons().add(new Image(Main.class.getResource("icon.png").openStream()));
-        window.setMinWidth(1187.0);
-        window.setMinHeight(620.0);
+        window.setMinWidth(1067.0);
+        window.setMinHeight(600.0);
 
-        toLogin();
+        //toLogin();
 
-        //toMatch(new Match<>(null));
+        toMatch(new Match<>(new ArrayList<>(Arrays.asList(
+                new ObservableUser(1, "Giocatore1", Color.BLACK),
+                new ObservableUser(2, "Giocatore2", Color.RED),
+                new ObservableUser(3, "Giocatore3", Color.BLUE),
+                new ObservableUser(4, "Giocatore4", Color.GREEN),
+                new ObservableUser(5, "Giocatore5", Color.YELLOW)))));
     }
 
 

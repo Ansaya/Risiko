@@ -9,7 +9,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -25,7 +24,9 @@ public class Main extends Application {
         c.initGameController();
 
         primaryStage.setTitle("Risiko - Server");
-        primaryStage.setScene(new Scene(root, 800, 600));
+        primaryStage.setMinWidth(800.0f);
+        primaryStage.setMinHeight(600.0f);
+        primaryStage.setScene(new Scene(root, 800.0f, 600.0f));
         primaryStage.show();
 
         // Launch connection handler

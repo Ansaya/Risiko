@@ -1,0 +1,30 @@
+.chatBox {
+    -fx-text-fill: whitesmoke;
+    -fx-max-width: 300px;
+}
+
+.chatBox .title {
+    -fx-background-color: rgba(0,0,0,0.60), rgba(0,0,0,0.60), rgba(0,0,0,0.60);
+}
+
+.chatBox > .title > .arrow-button .arrow {
+    -fx-background-color: -fx-mark-highlight-color, whitesmoke;
+}
+
+.chatView {
+    -fx-pref-height: 150px;
+    -fx-end-margin: 5px;
+}
+
+.chat {
+    -fx-padding: 2px 10px;
+    -fx-pref-width: 228px;
+}
+
+.chatInput {
+    -fx-pref-width: 230px;
+}
+
+.chatSendBtn {
+    -fx-background-color: #ff8700;
+}

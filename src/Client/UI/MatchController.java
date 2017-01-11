@@ -14,6 +14,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.transform.Scale;
@@ -27,37 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MatchController implements Initializable {
 
-    private double mapRatio = 765.0f / 520.0f;
+    private double mapRatio = 750.0f / 520.0f;
 
     private CardsHandler cardsHandler;
-
-    /* Chat fields */
-    @FXML
-    private ScrollPane chatSP;
-
-    @FXML
-    private VBox chatContainer;
-
-    @FXML
-    private TextField chatMessage;
-
-    @FXML
-    private Button chatSendBtn;
-
-    @FXML
-    private JFXBadge chatBadge;
-
-    private final AtomicInteger lastSenderId = new AtomicInteger(-1);
-
-    /**
-     * Lambda for chat message sending
-     */
-    private EventHandler sendMessage = (evt) -> {
-        if(!chatMessage.getText().trim().equals(""))
-            GameController.getInstance().SendChat(chatMessage.getText().trim());
-
-        chatMessage.clear();
-    };
 
     private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
 
@@ -111,8 +84,8 @@ public class MatchController implements Initializable {
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
         territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
 
-        //playersList.getColumns().setAll(idColumn, usernameColumn, territoriesColumn);
         playersList.setRoot(usersRoot);
+        playersList.setMouseTransparent(true);
     }
 
     public void updateMapSize(double newWidth, double newHeight){
@@ -124,7 +97,7 @@ public class MatchController implements Initializable {
         double containerRatio = (double) newValue / worldMap.getHeight();
 
         if(containerRatio < mapRatio)
-            updateMap((double) newValue / 765.0f);
+            updateMap((double) newValue / 750.0f);
     }
 
     private void setMapHeight(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
@@ -155,8 +128,13 @@ public class MatchController implements Initializable {
                 if (u.equals(current))
                     current.color = u.color;
 
-                usersRoot.getChildren().add(new TreeItem<>(u));
+                final ImageView iv = new ImageView(u.color.armyImg);
+                iv.setX(30.0);
+                iv.setPreserveRatio(true);
+
+                usersRoot.getChildren().add(new TreeItem<>(u, iv));
             });
+            playersList.setPrefHeight(35.0 * UsersList.size() + 30.0);
         }
         mapHandler = new MapHandler(MapName, mapPane, UsersList);
         mapHandler.setArmiesLabel(newArmiesLabel);
@@ -170,70 +148,10 @@ public class MatchController implements Initializable {
     }
 
     public void setGameController(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
-        chatSendBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, sendMessage);
-        chatMessage.setOnAction(sendMessage);
-        GameController.getInstance().setChatEntry(this::addChatEntry);
         setMapHandler(MapName, UsersList);
         GameController.getInstance().setMapHandler(mapHandler);
         setCardsHandler();
         GameController.getInstance().setCardsHandler(cardsHandler);
         GameController.getInstance().startExecutor();
-    }
-
-    private void addChatEntry(Chat<ObservableUser> Chat) {
-        final Label sender = getChatEntry();
-        final Label text = getChatEntry();
-
-        sender.setText(Chat.sender.username.get());
-        text.setText(Chat.message);
-
-        // If message is From this client display it on opposite side of chat view
-        if(Chat.sender.equals(GameController.getInstance().getUser())){
-            sender.setAlignment(Pos.TOP_RIGHT);
-            text.setAlignment(Pos.TOP_RIGHT);
-        }
-
-        if(Chat.sender.color != null) {
-            sender.setTextFill(Chat.sender.color.hexColor);
-            text.setTextFill(Chat.sender.color.hexColor);
-        }
-
-        if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> {
-                // If message is from same sender as before, avoid writing sender again
-                if (lastSenderId.get() != Chat.sender.id.get())
-                    chatContainer.getChildren().add(sender);
-
-                lastSenderId.set(Chat.sender.id.get());
-
-                chatContainer.getChildren().add(text);
-
-                // Scroll container to end
-                chatSP.setVvalue(1.0f);
-                Sounds.Chat.play();
-            });
-            return;
-        }
-
-        // If message is from same sender as before, avoid writing sender again
-        if(lastSenderId.get() != Chat.sender.id.get())
-            chatContainer.getChildren().add(sender);
-
-        lastSenderId.set(Chat.sender.id.get());
-
-        chatContainer.getChildren().add(text);
-
-        // Scroll container to end
-        chatSP.setVvalue(1.0f);
-        Sounds.Chat.play();
-    }
-
-    private Label getChatEntry() {
-        final Label chatEntry = new Label();
-        chatEntry.prefWidth(228.0f);
-        chatEntry.getStyleClass().add("chat");
-        chatEntry.setWrapText(true);
-
-        return chatEntry;
     }
 }

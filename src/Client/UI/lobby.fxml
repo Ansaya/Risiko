@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.JFXBadge?>
 <?import com.jfoenix.controls.JFXButton?>
 <?import com.jfoenix.controls.JFXTextField?>
 <?import com.jfoenix.controls.JFXTreeTableView?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <StackPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.LobbyController">
@@ -38,35 +34,8 @@
          <columns>
             <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" resizable="false" text="Id" />
             <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="980.0" minWidth="150.0" prefWidth="250.0" text="Username" />
-         </columns></JFXTreeTableView>
-       <TitledPane alignment="TOP_LEFT" contentDisplay="RIGHT" maxWidth="-Infinity" pickOnBounds="false" prefWidth="250.0" text="Chat" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="50.0">
-          <content>
-             <VBox prefHeight="200.0" prefWidth="100.0">
-                <children>
-                   <ScrollPane fx:id="chatSP" fitToWidth="true" hbarPolicy="NEVER" prefHeight="150.0">
-                      <content>
-                         <VBox fx:id="chatContainer" />
-                      </content>
-                   </ScrollPane>
-                   <HBox alignment="BOTTOM_CENTER" nodeOrientation="LEFT_TO_RIGHT" prefWidth="250.0">
-                      <children>
-                         <JFXTextField fx:id="chatMessage" alignment="BASELINE_LEFT" prefColumnCount="14" />
-                         <JFXButton fx:id="chatSendBtn" alignment="BASELINE_RIGHT" style="-fx-background-color: #00e600;" text="Send">
-                            <font>
-                               <Font name="Trebuchet MS" size="12.0" />
-                            </font></JFXButton>
-                      </children>
-                   </HBox>
-                </children>
-             </VBox>
-          </content>
-          <graphic>
-             <JFXBadge fx:id="chatBadge" alignment="TOP_RIGHT" prefHeight="19.0" prefWidth="28.0" text="" />
-          </graphic>
-          <font>
-             <Font name="Trebuchet MS" size="12.0" />
-          </font>
-       </TitledPane>
+         </columns>
+       </JFXTreeTableView>
       <JFXButton fx:id="matchBtn" buttonType="RAISED" layoutX="1191.0" layoutY="50.0" prefHeight="35.0" prefWidth="120.0" style="-fx-background-color: yellow;" text="Create Match" AnchorPane.rightAnchor="90.0" AnchorPane.topAnchor="50.0">
          <font>
             <Font name="Trebuchet MS" size="12.0" />
