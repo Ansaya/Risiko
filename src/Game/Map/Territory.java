@@ -22,6 +22,8 @@ public abstract class Territory<T extends Player> {
 
     public abstract void setOwner(T NewOwner);
 
+    public abstract int getArmies();
+
     private final transient ArrayList<Territory<T>> adjacent;
 
     public boolean isAdjacent(Territory Territory) {

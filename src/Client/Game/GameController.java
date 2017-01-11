@@ -199,7 +199,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for special move
         messageHandlers.put(MessageType.SpecialMoving, (message) -> {
-            System.out.println("GameController: Special moving message: " + message.Json);
+            System.out.println("GameController: Areas moving message: " + message.Json);
             // Request user To move Armies and send response to server
             SendMessage(MessageType.SpecialMoving, mapHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
         });

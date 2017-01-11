@@ -15,11 +15,11 @@ public class Area {
 
     public final ArrayList<Territory> territories;
 
-    public Area(String Name, String hexColor, int BonusArmies) {
+    private Area(String Name, String hexColor, int BonusArmies, ArrayList<Territory> Territories) {
         this.Name = Name;
         this.Color = javafx.scene.paint.Color.web(hexColor);
         this.BonusArmies = BonusArmies;
-        territories = null;
+        this.territories = Territories;
     }
 
     public int getOwnerId() {

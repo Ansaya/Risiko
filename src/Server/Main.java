@@ -14,6 +14,8 @@ import java.util.Arrays;
 
 public class Main extends Application {
 
+    private static final int listenPort = 5757;
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.getIcons().add(new Image(Client.Main.class.getResource("icon.png").openStream()));
@@ -30,7 +32,7 @@ public class Main extends Application {
         primaryStage.show();
 
         // Launch connection handler
-        ConnectionHandler.getInstance().Listen(5757);
+        ConnectionHandler.getInstance().Listen(listenPort);
     }
 
 
@@ -42,7 +44,7 @@ public class Main extends Application {
 
         if(Args.contains("console")) {
             GameController.getInstance().init();
-            ConnectionHandler.getInstance().Listen(5757);
+            ConnectionHandler.getInstance().Listen(listenPort);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {

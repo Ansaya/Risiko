@@ -391,7 +391,7 @@ public class MapHandler {
 
             // Can select only 'to' or 'from'
             if(!st.Selected.equals(from) && !st.Selected.equals(to)) {
-                Main.showDialog("Special moving error", "Perform this move only between highlighted territories.", "Continue");
+                Main.showDialog("Areas moving error", "Perform this move only between highlighted territories.", "Continue");
                 continue;
             }
 

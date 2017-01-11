@@ -700,7 +700,7 @@
                 "Western Australia"
             ],
             "Number":3,
-            "Type":"Special"
+            "Type":"Areas"
         },
         {
             "Name":"EuropeSouthAmericaContinent",
@@ -719,7 +719,7 @@
                 "Venezuela"
             ],
             "Number":3,
-            "Type":"Special"
+            "Type":"Areas"
         },
         {
             "Name":"NorthAmericaAfrica",
@@ -819,11 +819,13 @@
             "Name":"Territory24",
             "Description":"You have to conquer 24 territories.",
             "Number":24,
+            "Army":"YELLOW",
             "Type":"Number"
         },{
             "Name":"Territory18Two",
             "Description":"You have to conquer 18 territories and place two armies on each.",
             "Number":18,
+            "Army":"BLUE",
             "Type":"Number"
         },
         {

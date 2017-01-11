@@ -98,6 +98,8 @@ public class ObservableTerritory extends Territory<ObservableUser> {
 
     public ObservableUser getOwner() { return owner; }
 
+    public int getArmies() { return Armies.add(NewArmies.get()).get(); }
+
     /**
      * Instance of map Territory with reference To UI Territory
      *

@@ -44,6 +44,6 @@ public class Mission {
         Conquer,
         Destroy,
         Number,
-        Special
+        Areas
     }
 }
