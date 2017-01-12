@@ -20,15 +20,18 @@ public class Mission {
 
     public final MissionType Type;
 
-    public Mission(){
-        this.Name = "";
-        this.Description = "";
-        this.ToConquer = null;
-        this.Number = 0;
-        this.Army = null;
-        this.Type = null;
+    private Mission(String Name, String Description, ArrayList<Territory> Territories, int Number, Color Army, MissionType Type) {
+        this.Name = Name;
+        this.Description = Description;
+        this.ToConquer = Territories;
+        this.Number = Number;
+        this.Army = Army;
+        this.Type = Type;
     }
 
+    /**
+     * Change mission type from Destroy to Number if the army to destroy is not present in the match
+     */
     public void changeToNumber() {
         if(Type != MissionType.Destroy)
             return;

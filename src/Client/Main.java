@@ -55,7 +55,7 @@ public class Main extends Application {
         MatchController mc = loader.getController();
         try {
             mc.setGameController("RealWorldMap", Match.Players);
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
         }
@@ -179,7 +179,7 @@ public class Main extends Application {
 
         //toLogin();
 
-        toMatch(new Match<>(new ArrayList<>(Arrays.asList(
+        toMatch(new Match<>("RealWorldMap", new ArrayList<>(Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),

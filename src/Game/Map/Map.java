@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by fiore on 18/12/2016.
+ * Game map
  */
-public class Map<T extends Territory<? extends Player>> {
+public class Map<T extends Territory> {
 
 
     public final String Name;
@@ -43,6 +43,7 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Load requested map from relative json file
+     *
      * @param Name Name of the map
      * @param TerritoryExtender Type of territory class to use for this map
      * @throws NoSuchFieldException If map can not be found
@@ -62,7 +63,7 @@ public class Map<T extends Territory<? extends Player>> {
         // Gain access to private constructor of class Area
         Constructor<Area> areaConstructor;
         try {
-            areaConstructor = Area.class.getConstructor(String.class, String.class, int.class, ArrayList.class);
+            areaConstructor = Area.class.getDeclaredConstructor(String.class, String.class, int.class, ArrayList.class);
         } catch (NoSuchMethodException e){
             e.printStackTrace();
             return;
@@ -108,7 +109,7 @@ public class Map<T extends Territory<? extends Player>> {
                 area = areaConstructor.newInstance(ja.get("Name").getAsString(),
                         ja.get("Color").getAsString(),
                         ja.get("BonusArmies").getAsInt(),
-                        states);
+                        states/*.toArray(new Territory[states.size()])*/);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
                 return;
@@ -137,6 +138,7 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Load all graphic information for map territories
+     *
      * @throws NoSuchFieldException Cannot find map json file
      * @throws IllegalAccessException Cannot access territory properties
      */
@@ -176,53 +178,54 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Load cards into mission deck
+     *
      * @throws NoSuchFieldException Cannot find map json file
      * @throws IllegalAccessException Cannot access deck properties
      */
-    private void loadMissionDeck() throws NoSuchFieldException, IllegalAccessException {
+    private void loadMissionDeck() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
         // Load json map filed from resources
         final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
 
         final ArrayList<Mission> missions = new ArrayList<>();
+
+        // Gain access to mission deck filed of map
         final Field missionDeck = Map.class.getDeclaredField("missionDeck");
         missionDeck.setAccessible(true);
 
-        // Gain access to all final/private fields of Mission class
-        final Field missionName = Mission.class.getDeclaredField("Name");
-        final Field missionDescription = Mission.class.getDeclaredField("Description");
-        final Field missionToConquer = Mission.class.getDeclaredField("ToConquer");
-        final Field missionNumber = Mission.class.getDeclaredField("Number");
-        final Field missionArmy = Mission.class.getDeclaredField("Army");
-        final Field missionType = Mission.class.getDeclaredField("Type");
-        missionName.setAccessible(true);
-        missionDescription.setAccessible(true);
-        missionToConquer.setAccessible(true);
-        missionNumber.setAccessible(true);
-        missionArmy.setAccessible(true);
-        missionType.setAccessible(true);
+        //Gain access to mission constructor
+        final Constructor<Mission> missionConstructor = Mission.class.getDeclaredConstructor(String.class, String.class, ArrayList.class, int.class, Color.class, Mission.MissionType.class);
+        missionConstructor.setAccessible(true);
 
         // Initialize each mission with initialized territories
         final JsonArray jMissions = map.getAsJsonArray("missions");
         jMissions.forEach(m -> {
             JsonObject jm = m.getAsJsonObject();
 
-            Mission mission = null;
-            try { mission = Mission.class.newInstance(); } catch (Exception e) {}
+            Mission mission;
+            final ArrayList<T> toConquer = new ArrayList<>();
+            int number = 0;
+            Color army = null;
+
+            if(jm.has("ToConquer"))
+                jm.getAsJsonArray("ToConquer").forEach(t -> toConquer.add(territories.get(t.getAsString())));
+
+            if(jm.has("Number"))
+                number = jm.get("Number").getAsInt();
+
+            if(jm.has("Army"))
+                army = Color.valueOf(jm.get("Army").getAsString());
 
             try {
-                missionName.set(mission, jm.get("Name").getAsString());
-                missionDescription.set(mission, jm.get("Description").getAsString());
-                missionType.set(mission, Mission.MissionType.valueOf(jm.get("Type").getAsString()));
-                if(jm.has("Number"))
-                    missionNumber.set(mission, jm.get("Number").getAsInt());
-                if(jm.has("Army"))
-                    missionArmy.set(mission, Color.valueOf(jm.get("Army").getAsString()));
-                if(jm.has("ToConquer")){
-                    final ArrayList<T> toConquer = new ArrayList<>();
-                    jm.getAsJsonArray("ToConquer").forEach(t -> toConquer.add(territories.get(t.getAsString())));
-                    missionToConquer.set(mission, toConquer);
-                }
-            } catch (IllegalAccessException e) {}
+                mission = missionConstructor.newInstance(jm.get("Name").getAsString(),
+                        jm.get("Description").getAsString(),
+                        toConquer.size() > 0 ? toConquer : null,
+                        number,
+                        army,
+                        Mission.MissionType.valueOf(jm.get("Type").getAsString()));
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                return;
+            }
 
             missions.add(mission);
         });
@@ -232,16 +235,23 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Load cards into territory deck
+     *
      * @throws NoSuchFieldException Cannot find map json file
      * @throws IllegalAccessException Cannot access deck properties
      */
-    private void loadCardDeck() throws NoSuchFieldException, IllegalAccessException {
+    private void loadCardDeck() throws NoSuchFieldException, NoSuchMethodException, IllegalAccessException {
         // Load json map filed from resources
         final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
 
         final ArrayList<Card> cards = new ArrayList<>();
+
+        // Gain access to deck field
         final Field cardDeck = Map.class.getDeclaredField("cardDeck");
         cardDeck.setAccessible(true);
+
+        // Gain access to cards constructor
+        final Constructor<Card> cardConstructor = Card.class.getDeclaredConstructor(String.class, Figure.class, Map.class);
+        cardConstructor.setAccessible(true);
 
         final JsonArray jTerritories = map.getAsJsonArray("territories");
         jTerritories.forEach(t -> {
@@ -249,7 +259,11 @@ public class Map<T extends Territory<? extends Player>> {
             JsonObject jt = t.getAsJsonObject();
 
             if(jt.has("Card"))
-                cards.add(new Card(jt.get("Name").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Name));
+                try {
+                    cards.add(cardConstructor.newInstance(jt.get("Name").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Name));
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
         });
 
         cardDeck.set(this, new Deck<>(cards));
@@ -262,7 +276,7 @@ public class Map<T extends Territory<? extends Player>> {
         try {
             loadCardDeck();
             loadMissionDeck();
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -275,8 +289,9 @@ public class Map<T extends Territory<? extends Player>> {
         if(cardDeck == null) {
             try {
                 loadCardDeck();
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+            } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
                 e.printStackTrace();
+                return null;
             }
         }
 
@@ -291,8 +306,9 @@ public class Map<T extends Territory<? extends Player>> {
         if(missionDeck == null) {
             try {
                 loadMissionDeck();
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+            } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
                 e.printStackTrace();
+                return null;
             }
         }
 
@@ -349,6 +365,7 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Check owned areas and return total bonus armies for the player
+     *
      * @param Player Player to evaluate
      * @return Number of bonus armies
      */
@@ -364,6 +381,7 @@ public class Map<T extends Territory<? extends Player>> {
 
     /**
      * Count number of dominated areas of the player
+     *
      * @param Player Player to check
      * @return Number of dominated areas
      */

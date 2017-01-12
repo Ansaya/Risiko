@@ -3,12 +3,12 @@ package Server.Game.Map;
 import Server.Game.Player;
 
 /**
- * Instance of a Territory on the map
+ * Instance of a territory on the map
  */
 public class Territory extends Game.Map.Territory<Player> {
 
     /**
-     * Armies placed on this Territory
+     * Armies placed on this territory
      */
     private volatile int Armies = 0;
 
@@ -29,17 +29,17 @@ public class Territory extends Game.Map.Territory<Player> {
     public Player getOwner() { return owner; }
 
     /**
-     * Add Armies To this Territory
+     * Add Armies to this territory
      *
-     * @param toAdd Armies To add
+     * @param toAdd Armies to add
      */
     public void addArmies(int toAdd) { Armies += toAdd; }
 
     /**
-     * Removes Armies From this Territory if is possible
+     * Removes armies from this territory if is possible
      *
-     * @param toRemove Armies To remove
-     * @return True if Armies have been removed, false if cannot remove requested number of Armies
+     * @param toRemove Armies to remove
+     * @return True if armies have been removed, false if cannot remove requested number of armies
      */
     public boolean canRemoveArmies(int toRemove) {
         if(toRemove >= this.Armies)

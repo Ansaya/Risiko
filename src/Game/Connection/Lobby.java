@@ -13,10 +13,10 @@ public class Lobby<T> {
 
     public Lobby(ArrayList<T> ToAdd, ArrayList<T> ToRemove) {
         if(ToAdd != null)
-            ToAdd.forEach((p) -> toAdd.add(p));
+            toAdd.addAll(ToAdd);
 
         if(ToRemove != null)
-            ToRemove.forEach((p) -> toRemove.add(p));
+            toRemove.addAll(ToRemove);
     }
 
     public Lobby(T ToAdd, T ToRemove) {

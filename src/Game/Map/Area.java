@@ -2,6 +2,7 @@ package Game.Map;
 
 import javafx.scene.paint.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by fiore on 18/12/2016.
@@ -22,6 +23,10 @@ public class Area {
         this.territories = Territories;
     }
 
+    /**
+     * If a player owns all the area return its id
+     * @return Owner id or -1 if multiple owners are present
+     */
     public int getOwnerId() {
         int id = territories.get(0).getOwner().getId();
 

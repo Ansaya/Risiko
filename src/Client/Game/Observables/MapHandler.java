@@ -193,7 +193,7 @@ public class MapHandler {
 
         MapUpdate.Sound.play();
 
-        MapUpdate.updated.forEach((u) -> {
+        MapUpdate.Updated.forEach((u) -> {
             synchronized (map) {
                 ObservableTerritory t = map.getTerritory(u.Name);
                 t.Armies.set(u.Armies.get());
@@ -204,7 +204,7 @@ public class MapHandler {
         });
 
         // If standard armies displacement play relative sound
-        if(MapUpdate.attackDice != null) {
+        if(MapUpdate.AttackDice != null) {
             // Display dice result somewhere
         }
 
@@ -270,7 +270,7 @@ public class MapHandler {
         map.getTerritories().forEach(territory -> {
             // Add Territory To update only if modified
             if(territory.NewArmies.get() != 0)
-                update.updated.add(territory);
+                update.Updated.add(territory);
         });
 
         // Return update message To be sent back To the server

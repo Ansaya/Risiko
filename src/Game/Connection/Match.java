@@ -7,9 +7,12 @@ import java.util.ArrayList;
  */
 public class Match<T> {
 
-    public ArrayList<T> Players = new ArrayList<>();
+    public final ArrayList<T> Players;
 
-    public Match(ArrayList<T> Players) {
+    public final String MapName;
+
+    public Match(String MapName, ArrayList<T> Players) {
+        this.MapName = MapName;
         this.Players = Players;
     }
 }

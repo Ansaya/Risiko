@@ -8,9 +8,9 @@ public class Positioning {
     public final int newArmies;
 
     /**
-     * Server initializer. Specify new Armies To be placed
+     * Server initializer. Specify new armies to be placed
      *
-     * @param NewArmies Number of new Armies
+     * @param NewArmies Number of new armies
      */
     public Positioning(int NewArmies) {
         this.newArmies = NewArmies;

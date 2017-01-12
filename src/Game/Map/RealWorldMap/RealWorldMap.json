@@ -1,5 +1,7 @@
 {
     "Name":"Real world map",
+    "prefWidth":750,
+    "prefHeight":520,
     "areas":[
         {
             "Name":"North America",

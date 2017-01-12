@@ -1,7 +1,6 @@
 package Game.Connection;
 
 import Game.Sounds.Sounds;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -13,11 +12,11 @@ public class MapUpdate<T> {
     /**
      * Updated territories on the map
      */
-    public final ArrayList<T> updated = new ArrayList<>();
+    public final ArrayList<T> Updated = new ArrayList<>();
 
-    public final ArrayList<Integer> attackDice;
+    public final ArrayList<Integer> AttackDice;
 
-    public final ArrayList<Integer> defenceDice;
+    public final ArrayList<Integer> DefenceDice;
 
     public final Sounds Sound;
 
@@ -27,16 +26,16 @@ public class MapUpdate<T> {
      * @param Updated Updated territories after displacement
      */
     public MapUpdate(ArrayList<T> Updated) {
-        this.updated.addAll(Updated);
-        attackDice = null;
-        defenceDice = null;
+        this.Updated.addAll(Updated);
+        AttackDice = null;
+        DefenceDice = null;
         Sound = Sounds.Match;
     }
 
     public MapUpdate(T... Updated) {
-        updated.addAll(Arrays.asList(Updated));
-        attackDice = null;
-        defenceDice = null;
+        this.Updated.addAll(Arrays.asList(Updated));
+        AttackDice = null;
+        DefenceDice = null;
         Sound = Sounds.Match;
     }
 
@@ -48,9 +47,9 @@ public class MapUpdate<T> {
      * @param Battle Battle territories updated
      */
     public MapUpdate(ArrayList<Integer> Attack, ArrayList<Integer> Defense, Sounds Sound, T... Battle) {
-        updated.addAll(Arrays.asList(Battle));
-        attackDice = Attack;
-        defenceDice = Defense;
+        Updated.addAll(Arrays.asList(Battle));
+        AttackDice = Attack;
+        DefenceDice = Defense;
         this.Sound = Sound;
     }
 }

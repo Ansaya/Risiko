@@ -4,7 +4,7 @@ import javafx.scene.media.AudioClip;
 import java.util.prefs.Preferences;
 
 /**
- * Created by fiore on 04/01/2017.
+ * Application sounds
  */
 public enum Sounds {
     Button("button.mp3"),
@@ -26,7 +26,7 @@ public enum Sounds {
 
     private static final Preferences prefs = Preferences.userNodeForPackage(Client.Main.class);
 
-    private static double volume = prefs.getDouble("volume", 80.0f);
+    private static double volume = prefs.getDouble("volume", 80.0);
 
     Sounds(String fileName) {
         sound = new AudioClip(Sounds.class.getResource(fileName).toExternalForm());
@@ -46,6 +46,13 @@ public enum Sounds {
         sound.play();
     }
 
+    /**
+     * Select correct sound to play for battle result
+     *
+     * @param LostAtk Armies lost from attack
+     * @param LostDef Armies lost from defense
+     * @return Sound to play
+     */
     public static Sounds battleSoundSelector(int LostAtk, int LostDef) {
         switch ("" + LostDef + "" + LostAtk){
             case "01":

@@ -6,7 +6,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import java.lang.reflect.Type;
 
 /**
- * Created by fiore on 06/12/2016.
+ * IntegerProperty serializer to simplify serialization
  */
 public class IntegerPropertySerializer implements JsonSerializer<IntegerProperty>, JsonDeserializer<IntegerProperty> {
 

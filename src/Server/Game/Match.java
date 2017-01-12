@@ -380,7 +380,7 @@ public class Match extends MessageReceiver<MessageType> {
                     return;
 
                 // Update game map
-                Territory toUpdate = update.updated.get(0);
+                Territory toUpdate = update.Updated.get(0);
                 toUpdate.addArmies(1);
                 toUpdate.NewArmies = 0;
                 toUpdate.setOwner(last);
@@ -423,7 +423,7 @@ public class Match extends MessageReceiver<MessageType> {
                 if(u == null)
                     return;
 
-                u.updated.forEach(t -> {
+                u.Updated.forEach(t -> {
                     t.addArmies(t.NewArmies);
                     t.NewArmies = 0;
                 });
@@ -554,7 +554,7 @@ public class Match extends MessageReceiver<MessageType> {
                 return;
 
             // Update Armies number in game map
-            newPlacement.updated.forEach(t -> {
+            newPlacement.Updated.forEach(t -> {
                 t.addArmies(t.NewArmies);
                 t.NewArmies = 0;
             });

@@ -136,6 +136,7 @@ public class MatchController implements Initializable {
             });
             playersList.setPrefHeight(35.0 * UsersList.size() + 30.0);
         }
+
         mapHandler = new MapHandler(MapName, mapPane, UsersList);
         mapHandler.setArmiesLabel(newArmiesLabel);
         mapHandler.setMissionButton(missionBtn);

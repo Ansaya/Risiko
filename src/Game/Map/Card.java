@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import java.util.ArrayList;
 
 /**
- * Created by fiore on 20/12/2016.
+ * Card object
  */
 public class Card {
     public final String Name;
@@ -13,6 +13,10 @@ public class Card {
 
     private transient Image image;
 
+    /**
+     * Get image relative to this card
+     * @return
+     */
     public Image getImage() {
         if(image == null)
             loadGraphic();
@@ -22,13 +26,16 @@ public class Card {
 
     private String mapName;
 
-    public Card(String Name, Figure Figure, String MapName){
+    private Card(String Name, Figure Figure, String MapName){
         this.Name = Name;
         this.Figure = Figure;
         this.image = null;
         this.mapName = MapName;
     }
 
+    /**
+     * Load card image from resources
+     */
     public void loadGraphic() {
         try {
             this.image = new Image(Card.class.getResource(mapName + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
