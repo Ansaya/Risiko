@@ -18,6 +18,12 @@ public abstract class Territory<T extends Player> {
 
     public final transient float ArmyY;
 
+    public final transient float LabelX;
+
+    public final transient float LabelY;
+
+    public final transient float LabelR;
+
     public abstract T getOwner();
 
     public abstract void setOwner(T NewOwner);
@@ -36,6 +42,9 @@ public abstract class Territory<T extends Player> {
         SvgPath = "";
         ArmyX = 0.0f;
         ArmyY = 0.0f;
+        LabelX = 0.0f;
+        LabelY = 0.0f;
+        LabelR = 0.0f;
         adjacent = null;
     }
 

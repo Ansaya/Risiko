@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
  */
 public enum MessageType {
     Chat(new TypeToken<Chat<ObservableUser>>(){}.getType()),
+    MatchLobby(new TypeToken<MatchLobby<Match<ObservableUser>>>(){}.getType()),
     Lobby(new TypeToken<Lobby<ObservableUser>>(){}.getType()),
     Match(new TypeToken<Match<ObservableUser>>(){}.getType()),
     Mission(Game.Connection.Mission.class),

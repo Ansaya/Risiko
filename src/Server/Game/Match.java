@@ -24,46 +24,93 @@ public class Match extends MessageReceiver<MessageType> {
     /**
      * Match id
      */
-    public final int id;
+    public final int Id;
 
     public final String GameMap;
 
     /**
      * Players' list for this match (contains witnesses too)
      */
-    private final HashMap<Integer, Player> players = new HashMap<>();
+    private final transient HashMap<Integer, Player> players = new HashMap<>();
 
     public HashMap<Integer, Player> getPlayers() { return players; }
 
+    /**
+     * Add player to this match removing it from lobby
+     *
+     * @param Player Player to add to the match
+     */
     public void addPlayer(Player Player) {
+        if(currentTurn == null && players.size() >= 6)
+            return;
+
+        GameController.getInstance().releasePlayer(Player, false);
         players.put(Player.id, Player);
+
+        if(currentTurn == null) {
+            players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
+            Player.SendMessage(MessageType.Lobby, new Lobby<>(players.values(), null));
+        }
+    }
+
+    /**
+     * Remove player from this match taking care of all cases
+     *
+     * @param Player Player to remove
+     * @param Remove True if player has exited, false if player is going to lobby
+     */
+    public void removePlayer(Player Player, boolean Remove) {
+        // If player is playing terminate match
+        if (Player.isPlaying()) {
+            GameController.getInstance().endMatch(this);
+            return;
+        }
+
+
+        players.remove(Player.id);
+
+        if(Remove)
+            GameController.getInstance().releasePlayer(Player, true);
+        else
+            GameController.getInstance().returnPlayer(Player);
+
+        // If match hasn't already started notify other users
+        if(currentTurn == null)
+            players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
     }
 
     /**
      * Contains active players' id only
      */
-    private final ArrayList<Integer> playersOrder = new ArrayList<>();
+    private final transient ArrayList<Integer> playersOrder = new ArrayList<>();
 
     /**
      * Game map
      */
-    private final Map<Territory> map;
+    private final transient Map<Territory> map;
 
     /**
      * Current turn
      */
-    private volatile Turn currentTurn;
+    private volatile transient Turn currentTurn;
 
     /**
      * Global matches counter
      */
     public static final AtomicInteger counter = new AtomicInteger(0);
 
-    public Match(int Id, String MapName) throws ClassNotFoundException{
+    /**
+     * Initialize a new match using requested map
+     *
+     * @param Id Match id from Match.counter
+     * @param MapName Name of the map to use
+     * @throws ClassNotFoundException Cannot find requested map
+     */
+    public Match(int Id, String MapName) throws ClassNotFoundException {
         super("Match-" + Id);
 
         // Set current match id
-        this.id = Id;
+        this.Id = Id;
         this.GameMap = MapName;
 
         try {
@@ -78,27 +125,28 @@ public class Match extends MessageReceiver<MessageType> {
         startExecutor();
     }
 
+    /**
+     * Instance of empty uninitialized match for TreeTableView root
+     */
     public Match() {
         super("Match-ListRoot");
 
-        this.id = -1;
+        this.Id = -1;
         this.GameMap = "NONE";
         map = null;
     }
 
     /**
-     * Initialize a new match and starts the game
-     *
+     * Initialize users in this match and starts the game
      */
     public void initMatch() {
-
         if(players.size() < 2 || players.size() > 6)
             throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", players.size()));
 
         // Setup Players
         final Deck<Color> deckColor = new Deck<>(Color.values());
         players.forEach((id, player) -> {
-            player.initMatch(deckColor.next(), this.id, map.nextMission());
+            player.initMatch(deckColor.next(), this.Id, map.nextMission());
             playersOrder.add(player.id);
         });
 
@@ -106,7 +154,7 @@ public class Match extends MessageReceiver<MessageType> {
         final ArrayList<Player> matchPlayers = new ArrayList<>(players.values());
 
         if(players.size() == 2) {
-            AI = Player.getAI(id, deckColor.next());
+            AI = Player.getAI(Id, deckColor.next());
             matchPlayers.add(AI);
         }
 
@@ -124,11 +172,11 @@ public class Match extends MessageReceiver<MessageType> {
                     player.getMission().changeToNumber();
             }
 
-            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(matchPlayers));
+            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, map.Name, matchPlayers));
         });
 
         // Start first setup turn
-        System.out.println("Match " + this.id + ": Started game with " + players.size() + " players.");
+        System.out.println("Match " + this.Id + ": Started game with " + players.size() + " players.");
         this.currentTurn = new Turn(this, AI, true);
     }
 
@@ -139,10 +187,7 @@ public class Match extends MessageReceiver<MessageType> {
         currentTurn.endTurn();
         stopExecutor();
 
-        players.forEach((id, p) -> {
-            p.exitMatch();
-            GameController.getInstance().returnPlayer(p);
-        });
+        players.forEach((id, p) -> GameController.getInstance().returnPlayer(p));
         players.clear();
     }
 
@@ -162,42 +207,22 @@ public class Match extends MessageReceiver<MessageType> {
             final GameState<Player> gameState = (new Gson()).fromJson(message.Json, message.Type.getType());
 
             switch (gameState.state){
-                case Abandoned: // Message received From user
-                    final Player p = players.get(message.PlayerId);
-
-                    // Winner null in Abandoned game state means player has closed the application, so remove player completely
-                    if(gameState.winner == null) {
-                        players.remove(message.PlayerId);
-                        GameController.getInstance().returnPlayer(p);
-                        GameController.getInstance().releasePlayer(p, true);
-                    }
-
-                    // If player was playing in this match, abort match
-                    if(p.isPlaying()) {
-                        sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, p));
-                        message.PlayerId = this.id;
-                        GameController.getInstance().setIncoming(message);
-                    }
-                    else { // Else return player to lobby
-                        if(players.remove(p.id, p))
-                            GameController.getInstance().returnPlayer(p);
-                    }
-
+                case Abandoned: // Message received from user
+                    // Winner null in Abandoned game state means player has closed the application,
+                    // so remove player completely
+                    removePlayer(players.get(message.PlayerId), gameState.winner == null);
                     break;
-                case Winner:    // Message received From turn instance
+                case Winner:    // Message received from turn instance
                     routeAll(message);
-                    message.PlayerId = this.id;
-                    GameController.getInstance().setIncoming(message);
+                    GameController.getInstance().endMatch(this);
                     break;
-                case Defeated:  // Message received From turn instance
-                    final Player defeated = players.get(gameState.winner.id);
+                case Defeated:  // Message received from turn instance
+                    // Report defeat to user
+                    gameState.winner.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
 
-                    // Report defeat To user
-                    defeated.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
-
-                    // Pass user To witness mode
-                    defeated.exitMatch();
-                    defeated.enterMatch(this.id);
+                    // Pass user to witness mode
+                    gameState.winner.exitMatch();
+                    gameState.winner.enterMatch(this.Id);
                     break;
             }
         });
@@ -293,7 +318,7 @@ public class Match extends MessageReceiver<MessageType> {
                 this._instance = new Thread(this);
 
 
-            _instance.setName("Match" + match.id + "-Turn");
+            _instance.setName("Match" + match.Id + "-Turn");
             _instance.start();
         }
 

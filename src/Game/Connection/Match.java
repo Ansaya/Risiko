@@ -1,18 +1,22 @@
 package Game.Connection;
 
+import Game.Player;
 import java.util.ArrayList;
 
 /**
  * Match initialization message
  */
-public class Match<T> {
+public class Match<T extends Player> {
 
-    public final ArrayList<T> Players;
+    public final int Id;
+
+    public final T Player;
 
     public final String MapName;
 
-    public Match(String MapName, ArrayList<T> Players) {
+    public Match(int Id, String MapName, T Player) {
+        this.Id = Id;
         this.MapName = MapName;
-        this.Players = Players;
+        this.Player = Player;
     }
 }

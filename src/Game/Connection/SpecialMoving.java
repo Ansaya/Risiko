@@ -1,9 +1,11 @@
 package Game.Connection;
 
+import Game.Map.Territory;
+
 /**
  * SpecialMoving packet
  */
-public class SpecialMoving<T> {
+public class SpecialMoving<T extends Territory> {
 
     public final T From;
 

@@ -70,7 +70,7 @@ public class Controller implements Initializable {
         playerMatchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().getMatchId()).asObject());
         playersTable.setRoot(players);
 
-        matchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().id).asObject());
+        matchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().Id).asObject());
         matchUsersColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().getPlayers().size()).asObject());
         matchGameMapColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getValue().GameMap));
         matchesTable.setRoot(matches);

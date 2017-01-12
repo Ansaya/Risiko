@@ -145,6 +145,7 @@ public class Map<T extends Territory> {
     public void loadGraphic() throws NoSuchFieldException, IllegalAccessException {
         final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
 
+        // Gain access to map connection field
         final Field connPath = Map.class.getDeclaredField("ConnectionsPath");
         connPath.setAccessible(true);
 
@@ -155,9 +156,15 @@ public class Map<T extends Territory> {
         final Field territorySvgPath = Territory.class.getDeclaredField("SvgPath");
         final Field territoryArmyX = Territory.class.getDeclaredField("ArmyX");
         final Field territoryArmyY = Territory.class.getDeclaredField("ArmyY");
+        final Field territoryLabelX = Territory.class.getDeclaredField("LabelX");
+        final Field territoryLabelY = Territory.class.getDeclaredField("LabelY");
+        final Field territoryLabelR = Territory.class.getDeclaredField("LabelR");
         territorySvgPath.setAccessible(true);
         territoryArmyX.setAccessible(true);
         territoryArmyY.setAccessible(true);
+        territoryLabelX.setAccessible(true);
+        territoryLabelY.setAccessible(true);
+        territoryLabelR.setAccessible(true);
 
         // Load graphic for each territory
         final JsonArray jTerritories = map.getAsJsonArray("territories");
@@ -172,7 +179,15 @@ public class Map<T extends Territory> {
                     territoryArmyX.set(territory, jt.get("ArmyX").getAsFloat());
                 if (jt.has("ArmyY"))
                     territoryArmyY.set(territory, jt.get("ArmyY").getAsFloat());
-            } catch (IllegalAccessException e) {}
+                if(jt.has("LabelX"))
+                    territoryLabelX.set(territory, jt.get("LabelX").getAsFloat());
+                if(jt.has("LabelY"))
+                    territoryLabelX.set(territory, jt.get("LabelY").getAsFloat());
+                if(jt.has("LabelR"))
+                    territoryLabelX.set(territory, jt.get("LabelR").getAsFloat());
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
         });
     }
 

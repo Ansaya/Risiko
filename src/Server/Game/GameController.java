@@ -1,15 +1,14 @@
 package Server.Game;
 
+import Game.Connection.MatchLobby;
 import Game.Map.Army.Color;
 import Game.Connection.Chat;
-import Game.Connection.Lobby;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
 import javafx.scene.control.TreeItem;
 import java.lang.reflect.Type;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -65,6 +64,17 @@ public class GameController extends MessageReceiver<MessageType> {
             final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
             System.out.println("Game controller: New match request from " + message.PlayerId);
 
+            // If this match exists check if player wants to be added or to start this match
+            if(matches.containsKey(requested.Id)) {
+                if (requested.Player != null)
+                    matches.get(requested.Id).addPlayer(requested.Player);
+                else
+                    matches.get(requested.Id).initMatch();
+
+                return;
+            }
+
+            // Else create a new match
             Match newMatch;
             try {
                 newMatch = new Match(Match.counter.getAndIncrement(), "RealWorldMap");
@@ -73,21 +83,14 @@ public class GameController extends MessageReceiver<MessageType> {
                 return;
             }
 
-            matches.put(newMatch.id, newMatch);
+            matches.put(newMatch.Id, newMatch);
             if(Matches != null)
                 Matches.getChildren().add(new TreeItem<>(newMatch));
 
-            requested.Players.forEach(u -> {
-                releasePlayer(u, false);
-                newMatch.addPlayer(u);
-            });
+            newMatch.addPlayer(requested.Player);
 
-            newMatch.initMatch();
-            System.out.println("Game controller: Launch new match with " + requested.Players.size() + " players.");
+            System.out.println("Game controller: New match created with id " + newMatch.Id);
         });
-
-        // Handler for GameState message received From match (always used To finalize match)
-        messageHandlers.put(MessageType.GameState, (message) -> endMatch(message.PlayerId));
     }
 
     /**
@@ -119,7 +122,7 @@ public class GameController extends MessageReceiver<MessageType> {
         final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
 
         // Send end message To matches Players and close connection
-        matches.forEach((matchId, m) -> endMatch(matchId));
+        matches.forEach((matchId, m) -> endMatch(m));
 
         // Send end message and close connection of lobby Players
         lobby.forEach((id, p) -> {
@@ -140,16 +143,13 @@ public class GameController extends MessageReceiver<MessageType> {
 
         final Player newP = new Player(Id, Username, Connection);
 
-        // Notify all Players for new player
-        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(newP, null)));
-
         lobby.put(Id, newP);
 
         if(Players != null)
             Players.getChildren().add(new TreeItem<>(newP));
 
-        // Notify new player for all Players
-        lobby.get(Id).SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
+        // Send current matches list to new player
+        newP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
 
         System.out.println("Game controller: New player in lobby.");
     }
@@ -163,13 +163,12 @@ public class GameController extends MessageReceiver<MessageType> {
 
         System.out.println("Game controller: Player " + Player.username + " got back From match.");
 
-        // Notify all Players for new player
-        lobby.forEach((id ,p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
-
+        // Clean player and put it back to lobby
+        Player.exitMatch();
         lobby.put(Player.id, Player);
 
-        // Notify new player for all Players
-        Player.SendMessage(MessageType.Lobby, new Lobby<>(new ArrayList<>(lobby.values()), null));
+        //Send current matches to player
+        Player.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
     }
 
     /**
@@ -186,21 +185,22 @@ public class GameController extends MessageReceiver<MessageType> {
 
         if(Remove && Players != null)
             Players.getChildren().removeIf(item -> item.getValue().equals(Player));
-
-        lobby.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
     }
 
     /**
      * End specified match and removes it from match list
      *
-     * @param MatchId Match to remove
+     * @param Match Match to remove
      */
-    private void endMatch(int MatchId) {
-        matches.get(MatchId).terminate();
-        System.out.println("Game controller: Terminating match " + MatchId);
-        matches.remove(MatchId);
+    void endMatch(Match Match) {
+        Match.terminate();
+        System.out.println("Game controller: Match " + Match.Id + " terminated.");
+        matches.remove(Match.Id);
+
         if(Matches != null)
-            Matches.getChildren().removeIf(item -> item.getValue().id == MatchId);
+            Matches.getChildren().removeIf(item -> item.getValue().Id == Match.Id);
+
+        lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, new MatchLobby<>(null, Match)));
     }
 
     private GsonBuilder getGsonBuilder(GsonBuilder builder){

@@ -1,5 +1,6 @@
 package Game.Connection;
 
+import Game.Map.Territory;
 import Game.Sounds.Sounds;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,7 +8,7 @@ import java.util.Arrays;
 /**
  * Map packet
  */
-public class MapUpdate<T> {
+public class MapUpdate<T extends Territory> {
 
     /**
      * Updated territories on the map

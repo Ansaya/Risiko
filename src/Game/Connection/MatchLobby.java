@@ -1,19 +1,17 @@
 package Game.Connection;
 
-import Game.Player;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * Lobby packet
+ * Created by fiore on 12/01/2017.
  */
-public class Lobby<T extends Player> {
-
+public class MatchLobby<T> {
     public final ArrayList<T> toAdd = new ArrayList<>();
 
     public final ArrayList<T> toRemove = new ArrayList<>();
 
-    public Lobby(Collection<T> ToAdd, Collection<T> ToRemove) {
+    public MatchLobby(Collection<T> ToAdd, Collection<T> ToRemove) {
         if(ToAdd != null)
             toAdd.addAll(ToAdd);
 
@@ -21,7 +19,7 @@ public class Lobby<T extends Player> {
             toRemove.addAll(ToRemove);
     }
 
-    public Lobby(T ToAdd, T ToRemove) {
+    public MatchLobby(T ToAdd, T ToRemove) {
         if(ToAdd != null)
             toAdd.add(ToAdd);
 
