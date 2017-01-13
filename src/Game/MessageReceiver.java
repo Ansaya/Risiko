@@ -9,17 +9,17 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver<T> {
 
-    private volatile boolean execute = false;
+    private transient volatile boolean execute = false;
 
-    private final ArrayList<Message> queue = new ArrayList<>();
+    private transient final ArrayList<Message> queue = new ArrayList<>();
 
-    protected final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
+    protected transient final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
 
-    protected Consumer<Message> defaultHandler = null;
+    protected transient Consumer<Message> defaultHandler = null;
 
-    private final String name;
+    private transient final String name;
 
-    private volatile Thread _instance;
+    private transient volatile Thread _instance;
 
     public MessageReceiver(String Name) {
         this.name = Name;

@@ -71,7 +71,7 @@ public class LobbyController implements Initializable {
         playersTable.visibleProperty().addListener((ob, oldV, newV) -> matchTable.setVisible(!newV));
         newMatchBox.visibleProperty().bind(matchTable.visibleProperty());
 
-        parent.getChildren().addAll(newMatchBox, playersTable, matchTable);
+        parent.getChildren().addAll(newMatchBox, matchTable, playersTable);
         AnchorPane.setTopAnchor(newMatchBox, 50.0);
         AnchorPane.setRightAnchor(newMatchBox, 0.0);
         AnchorPane.setTopAnchor(matchTable, 50.0);

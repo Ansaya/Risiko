@@ -81,10 +81,15 @@ public class GameController extends MessageReceiver<MessageType> {
                 if(Matches != null)
                     Matches.add(match);
 
+                match.addPlayer(requested.Players.get(0));
+
+                final MatchLobby<Match> newMatch = new MatchLobby<>(match, null);
+                lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, newMatch));
+
                 System.out.println("Game controller: New match created with id " + match.Id);
             }
-
-            match.addPlayer(requested.Players.get(0));
+            else
+                match.addPlayer(requested.Players.get(0));
         });
     }
 
