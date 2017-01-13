@@ -24,9 +24,9 @@ public class Card {
         return image;
     }
 
-    private String mapName;
+    private Maps mapName;
 
-    private Card(String Name, Figure Figure, String MapName){
+    private Card(String Name, Figure Figure, Maps MapName){
         this.Name = Name;
         this.Figure = Figure;
         this.image = null;
@@ -38,7 +38,7 @@ public class Card {
      */
     public void loadGraphic() {
         try {
-            this.image = new Image(Card.class.getResource(mapName + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
+            this.image = new Image(Card.class.getResource(mapName.name() + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
         } catch (Exception e) {
             e.printStackTrace();
         }

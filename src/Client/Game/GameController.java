@@ -78,6 +78,11 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     public ObservableUser getUser() { return this.user; }
 
+    /* User section end */
+
+    /* UI Handlers */
+    private volatile boolean inMatch = false;
+
     private volatile Consumer<Lobby<ObservableUser>> updateUsers = null;
 
     /**
@@ -87,10 +92,9 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
      */
     public void setUpdateUsers(Consumer<Lobby<ObservableUser>> UpdateUsers) { updateUsers = UpdateUsers; }
 
-    /* User section end */
+    private volatile Consumer<MatchLobby<Match<ObservableUser>>> updateMatches = null;
 
-    /* UI Handlers */
-    private volatile boolean inMatch = false;
+    public void setUpdateMatches(Consumer<MatchLobby<Match<ObservableUser>>> UpdateMatches) { updateMatches = UpdateMatches; }
 
     private volatile MapHandler mapHandler;
 
@@ -124,7 +128,14 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             chatBox.addChat(chat);
         });
 
-        // Handler for userList in lobby
+        // Handler for matches list
+        messageHandlers.put(MessageType.MatchLobby, (message) -> {
+           final MatchLobby<Match<ObservableUser>> matchLobby = gson.fromJson(message.Json, MessageType.MatchLobby.getType());
+
+           updateMatches.accept(matchLobby);
+        });
+
+        // Handler for user list in match room
         messageHandlers.put(MessageType.Lobby, (message) -> {
             System.out.println("GameController: Lobby message: " + message.Json);
             final Lobby<ObservableUser> lobbyUsers = gson.fromJson(message.Json, MessageType.Lobby.getType());
@@ -210,8 +221,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             System.out.println("GameController: GameState message: " + message.Json);
             // If a GameState message is received than match is no longer valid, so go back To lobby
             Main.toLobby();
-            user.territories.set(0);
-            user.color = null;
+            user.Territories.set(0);
+            user.Color = null;
             mapHandler = null;
             cardsHandler = null;
 
@@ -225,12 +236,12 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                    }
                    else {
                        Main.showDialog("Game state message",
-                               "You lost this match. The winner is " + gameState.winner.username.get(),
+                               "You lost this match. The winner is " + gameState.winner.Username.get(),
                                "Close");
                    }
                    break;
                case Abandoned:
-                   Main.showDialog("Game state message", "Player " + gameState.winner.username.get() + " left the game.", "Close");
+                   Main.showDialog("Game state message", "Player " + gameState.winner.Username.get() + " left the game.", "Close");
                    break;
            }
         });
@@ -264,7 +275,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Set user for this client
         this.user = new ObservableUser(Integer.valueOf(incoming.split("[#]")[1]), Username, null);
-        System.out.println("Got id " + user.id.get() + " from server.");
+        System.out.println("Got id " + user.Id.get() + " from server.");
 
         this.chatBox = new ChatBox(user.getId());
 

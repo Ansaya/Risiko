@@ -75,24 +75,24 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      * @param Owner New owner of this Territory
      */
     public void setOwner(ObservableUser Owner) {
-        synchronized (owner.territories){
-            owner.territories.set(owner.territories.subtract(1).get());
+        synchronized (owner.Territories){
+            owner.Territories.set(owner.Territories.subtract(1).get());
         }
 
         owner = Owner;
 
-        synchronized (owner.territories){
-            owner.territories.set(owner.territories.add(1).get());
+        synchronized (owner.Territories){
+            owner.Territories.set(owner.Territories.add(1).get());
         }
 
         if(Platform.isFxApplicationThread()) {
-            svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0));
-            armyImg.setImage(owner.color.armyImg);
+            svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
+            armyImg.setImage(owner.Color.armyImg);
         }
         else
             Platform.runLater(() -> {
-                svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0));
-                armyImg.setImage(owner.color.armyImg);
+                svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
+                armyImg.setImage(owner.Color.armyImg);
             });
     }
 
@@ -174,7 +174,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         // Request is not sent From server if Armies are less then two
 
         // Message shown To the user
-        final String popupInfo = "Player " + battle.from.owner.username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
+        final String popupInfo = "Player " + battle.from.owner.Username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
                 " armies to " + battle.to.toString() + ".\r\nChoose how many defending armies to use.";
 
         Platform.runLater(() -> {

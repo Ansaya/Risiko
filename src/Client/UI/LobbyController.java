@@ -6,19 +6,22 @@ import Client.Game.Observables.ObservableUser;
 import Game.Connection.Lobby;
 import Game.Connection.Match;
 import Client.Game.Connection.MessageType;
-import Game.Sounds.Sounds;
+import Game.Connection.MatchLobby;
+import Game.Map.Maps;
 import com.jfoenix.controls.*;
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
@@ -27,87 +30,146 @@ import java.util.ResourceBundle;
 public class LobbyController implements Initializable {
 
     @FXML
-    private Button matchBtn;
+    private AnchorPane parent;
 
-    private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
+    private final MatchTable matchTable = new MatchTable();
 
-    @FXML
-    private JFXTreeTableView<ObservableUser> lobbyTable;
-
-    @FXML
-    private TreeTableColumn<ObservableUser, Integer> idColumn;
-
-    @FXML
-    private TreeTableColumn<ObservableUser, String> usernameColumn;
-
-    @FXML
-    private Label lobbyCount;
-
-    @FXML
-    private JFXTextField searchField;
-
-    @FXML
-    private JFXButton deselectAllBtn;
+    private final PlayersTable playersTable = new PlayersTable();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        matchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (e) -> {
-            Sounds.Match.play();
+        final Label createLabel = new Label("Create new match");
+        createLabel.setFont(Main.globalFont);
 
-            // Get selected users
-            ObservableList<TreeItem<ObservableUser>> selected = lobbyTable.getSelectionModel().getSelectedItems();
+        final JFXTextField name = new JFXTextField();
+        name.setFont(Main.globalFont);
+        final JFXComboBox<Maps> map = new JFXComboBox<>(FXCollections.observableArrayList(Maps.values()));
+        map.getSelectionModel().select(0);
 
-            // Check if users number is correct to begin a match
-            if(selected.size() < 1 || selected.size() >= 6) {
-                Main.showDialog("Match creation", "Cannot create a match with " + (selected.size() + 1) + " users.", "Close");
+        final JFXButton createMatchBtn = new JFXButton("Create match", new ImageView(LobbyController.class.getResource("match.png").toExternalForm()));
+        createMatchBtn.setFont(Main.globalFont);
+        createMatchBtn.setPadding(new Insets(5.0, 10.0, 10.0, 5.0));
+        createMatchBtn.setButtonType(JFXButton.ButtonType.RAISED);
+        createMatchBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, evt -> {
+            if(name.getText().equals(""))
                 return;
-            }
 
-            // Populate user list for the match
-            final ArrayList<ObservableUser> players = new ArrayList<>();
-            selected.forEach((t) -> players.add(t.getValue()));
-            players.add(GameController.getInstance().getUser());
+            final Match<ObservableUser> newMatch = new Match<>(0,
+                    name.getText(),
+                    map.getSelectionModel().selectedItemProperty().get(),
+                    GameController.getInstance().getUser());
 
-            // Send match request to the server
-            GameController.getInstance().SendMessage(MessageType.Match, new Match<>(players));
-
-            // GameController will open match view when match confirmation is received from the server
+            GameController.getInstance().SendMessage(MessageType.Match, newMatch);
         });
 
-        /* Lobby view setup */
-        idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
-        usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
-        lobbyTable.setRoot(usersRoot);
-        lobbyTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        final VBox newMatchBox = new VBox(createLabel, name, map, createMatchBtn);
+        newMatchBox.setSpacing(5.0);
+        newMatchBox.setAlignment(Pos.BASELINE_CENTER);
+        newMatchBox.setPrefWidth(350.0);
 
-        // Bind user counter
-        usersRoot.getChildren().addListener((ListChangeListener.Change<? extends TreeItem<ObservableUser>> c) -> lobbyCount.setText("( " + usersRoot.getChildren().size() + " )"));
+        playersTable.visibleProperty().addListener((ob, oldV, newV) -> matchTable.setVisible(!newV));
+        newMatchBox.visibleProperty().bind(matchTable.visibleProperty());
 
-        // Bind search field
-        searchField.textProperty().addListener((o,oldVal,newVal)-> {
-            System.out.println("Search: " + newVal);
-            usersRoot.setPredicate((u) -> (u.getValue().id.get()+"").contains(newVal) || u.getValue().username.get().contains(newVal));
-        });
+        parent.getChildren().addAll(newMatchBox, playersTable, matchTable);
+        AnchorPane.setTopAnchor(newMatchBox, 50.0);
+        AnchorPane.setRightAnchor(newMatchBox, 0.0);
+        AnchorPane.setTopAnchor(matchTable, 50.0);
+        AnchorPane.setRightAnchor(matchTable, 350.0);
+        AnchorPane.setBottomAnchor(matchTable, 0.0);
+        AnchorPane.setLeftAnchor(matchTable, 0.0);
+        AnchorPane.setTopAnchor(playersTable, 50.0);
+        AnchorPane.setRightAnchor(playersTable, 350.0);
+        AnchorPane.setBottomAnchor(playersTable, 0.0);
+        AnchorPane.setLeftAnchor(playersTable, 0.0);
     }
 
     public void setGameController() {
-        GameController.getInstance().setUpdateUsers(this::updateUsers);
+        GameController.getInstance().setUpdateMatches(matchTable::updateTable);
+        GameController.getInstance().setUpdateUsers(playersTable::updateTable);
         GameController.getInstance().startExecutor();
     }
 
-    private void updateUsers(Lobby<ObservableUser> Lobby) {
-        if(Lobby == null)
-            return;
+    private class MatchTable extends TableView<Match> {
 
-        if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> updateUsers(Lobby));
-            return;
+        public MatchTable() {
+            final TableColumn<Match, Integer> idColumn = new TableColumn<>("ID");
+            final TableColumn<Match, String> nameColumn = new TableColumn<>("Match");
+            final TableColumn<Match, Maps> gameMapColumn = new TableColumn<>("Game map");
+            idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
+            nameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
+            gameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().MapName));
+            getColumns().addAll(idColumn, nameColumn, gameMapColumn);
+
+            this.setRowFactory(tv -> {
+                final TableRow<Match> row = new TableRow<>();
+                row.setOnMouseClicked(evt -> {
+                    if(evt.getClickCount() > 1 && !row.isEmpty()){
+                        GameController.getInstance().SendMessage(MessageType.Match, row.getItem());
+                    }
+                });
+
+                return row;
+            });
         }
 
-        Lobby.toRemove.forEach(u -> usersRoot.getChildren().removeIf(ul -> ul.getValue().equals(u)));
-        Lobby.toAdd.remove(GameController.getInstance().getUser());
-        Lobby.toAdd.forEach(u -> usersRoot.getChildren().add(new TreeItem<>(u)));
+        /**
+         * Update match table with message from server
+         *
+         * @param Update Server update message
+         */
+        public void updateTable(MatchLobby<Match<ObservableUser>> Update) {
+            setVisible(true);
+
+            getItems().removeIf(Update.toRemove::contains);
+            final ObservableUser user = GameController.getInstance().getUser();
+            Update.toAdd.forEach(m -> m.Players.add(user));
+            getItems().addAll(Update.toAdd);
+        }
     }
 
+    private class PlayersTable extends TableView<ObservableUser> {
+
+        private final TableColumn<ObservableUser, Integer> idColumn = new TableColumn<>("ID");
+
+        private final TableColumn<ObservableUser, String> usernameColumn = new TableColumn<>("Username");
+
+        private final Callback<TableColumn<ObservableUser, Integer>, TableCell<ObservableUser, Integer>> defaultCellFactory = idColumn.getCellFactory();
+
+        public PlayersTable() {
+            idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getId()));
+            usernameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getUsername()));
+
+            getColumns().addAll(idColumn, usernameColumn);
+        }
+
+        public void updateTable(Lobby<ObservableUser> Update) {
+            setVisible(true);
+            getItems().removeIf(Update.toRemove::contains);
+            getItems().addAll(Update.toAdd);
+        }
+
+        public void addUserColor() {
+            idColumn.setCellFactory(tr -> {
+                final ImageView iv = new ImageView();
+                iv.setPreserveRatio(true);
+                iv.setY(30.0);
+
+                final TableCell<ObservableUser, Integer> idCell = new TableCell<ObservableUser, Integer>() {
+                    public void updateItem(ObservableUser item, boolean empty) {
+                        if(item != null)
+                            iv.setImage(item.getColor().armyImg);
+                    }
+                };
+
+                idCell.setGraphic(iv);
+
+                return idCell;
+            });
+        }
+
+        public void removeUserColor() {
+            idColumn.setCellFactory(defaultCellFactory);
+        }
+    }
 }

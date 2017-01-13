@@ -21,12 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Match extends MessageReceiver<MessageType> {
 
-    /**
-     * Match id
-     */
     public final int Id;
 
-    public final String GameMap;
+    public final String Name;
+
+    public final Maps GameMap;
 
     /**
      * Players' list for this match (contains witnesses too)
@@ -45,11 +44,20 @@ public class Match extends MessageReceiver<MessageType> {
             return;
 
         GameController.getInstance().releasePlayer(Player, false);
+
+        if(currentTurn == null)
+            players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
+
         players.put(Player.id, Player);
+        Player.enterMatch(this.Id);
 
         if(currentTurn == null) {
-            players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
             Player.SendMessage(MessageType.Lobby, new Lobby<>(players.values(), null));
+        }
+        else {
+            final ArrayList<Player> playing = new ArrayList<>();
+            playersOrder.forEach(id -> playing.add(players.get(id)));
+            Player.SendMessage(MessageType.Lobby, new Lobby<>(playing, null));
         }
     }
 
@@ -66,8 +74,8 @@ public class Match extends MessageReceiver<MessageType> {
             return;
         }
 
-
         players.remove(Player.id);
+        Player.exitMatch();
 
         if(Remove)
             GameController.getInstance().releasePlayer(Player, true);
@@ -106,34 +114,63 @@ public class Match extends MessageReceiver<MessageType> {
      * @param MapName Name of the map to use
      * @throws ClassNotFoundException Cannot find requested map
      */
-    public Match(int Id, String MapName) throws ClassNotFoundException {
+    public Match(int Id, String Name, Maps MapName) throws ClassNotFoundException {
         super("Match-" + Id);
 
         // Set current match id
         this.Id = Id;
+        this.Name = Name;
         this.GameMap = MapName;
 
         try {
             map = new Map<>(MapName, Territory.class);
             map.loadDecks();
         } catch (NoSuchFieldException e){
-            throw new ClassNotFoundException("Can not find specified map");
+            throw new ClassNotFoundException("Match " + this.Id + ": Can not find specified map");
         }
 
         // Setup and start match message receiver
-        listenersInit();
+        messageHandlers.put(MessageType.Turn, (message) -> {
+            if(currentTurn == null){
+                initMatch();
+                return;
+            }
+
+            // If a player notified end of his turn, go ahead with next player
+            currentTurn.endTurn();
+            currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
+        });
+
+        messageHandlers.put(MessageType.Chat, this::routeAll);
+
+        messageHandlers.put(MessageType.GameState, (message) -> {
+            final GameState<Player> gameState = (new Gson()).fromJson(message.Json, message.Type.getType());
+
+            switch (gameState.state){
+                case Abandoned: // Message received from user
+                    // Winner null in Abandoned game state means player has closed the application,
+                    // so remove player completely
+                    removePlayer(players.get(message.PlayerId), gameState.winner == null);
+                    break;
+                case Winner:    // Message received from turn instance
+                    routeAll(message);
+                    GameController.getInstance().endMatch(this);
+                    break;
+                case Defeated:  // Message received from turn instance
+                    // Report defeat to user
+                    gameState.winner.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
+
+                    // Pass user to witness mode
+                    gameState.winner.exitMatch();
+                    gameState.winner.enterMatch(this.Id);
+                    break;
+            }
+        });
+
+        // Any other message is routed to current turn to handle game progress
+        defaultHandler = message -> currentTurn.setIncoming(message);
+
         startExecutor();
-    }
-
-    /**
-     * Instance of empty uninitialized match for TreeTableView root
-     */
-    public Match() {
-        super("Match-ListRoot");
-
-        this.Id = -1;
-        this.GameMap = "NONE";
-        map = null;
     }
 
     /**
@@ -172,7 +209,7 @@ public class Match extends MessageReceiver<MessageType> {
                     player.getMission().changeToNumber();
             }
 
-            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, map.Name, matchPlayers));
+            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, this.Name, map.Name, matchPlayers));
         });
 
         // Start first setup turn
@@ -184,51 +221,11 @@ public class Match extends MessageReceiver<MessageType> {
      * Stop current match thread and returns players to GameController
      */
     void terminate() {
-        currentTurn.endTurn();
         stopExecutor();
+        currentTurn.endTurn();
 
         players.forEach((id, p) -> GameController.getInstance().returnPlayer(p));
         players.clear();
-    }
-
-    /**
-     * Initialize handlers for new messages and start message receiver
-     */
-    private void listenersInit() {
-        messageHandlers.put(MessageType.Turn, (message) -> {
-            // If a player notified end of his turn, go ahead with next player
-            currentTurn.endTurn();
-            currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
-        });
-
-        messageHandlers.put(MessageType.Chat, this::routeAll);
-
-        messageHandlers.put(MessageType.GameState, (message) -> {
-            final GameState<Player> gameState = (new Gson()).fromJson(message.Json, message.Type.getType());
-
-            switch (gameState.state){
-                case Abandoned: // Message received from user
-                    // Winner null in Abandoned game state means player has closed the application,
-                    // so remove player completely
-                    removePlayer(players.get(message.PlayerId), gameState.winner == null);
-                    break;
-                case Winner:    // Message received from turn instance
-                    routeAll(message);
-                    GameController.getInstance().endMatch(this);
-                    break;
-                case Defeated:  // Message received from turn instance
-                    // Report defeat to user
-                    gameState.winner.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
-
-                    // Pass user to witness mode
-                    gameState.winner.exitMatch();
-                    gameState.winner.enterMatch(this.Id);
-                    break;
-            }
-        });
-
-        // Any other message is routed to current turn to handle game progress
-        defaultHandler = message -> currentTurn.setIncoming(message);
     }
 
     private void sendAll(MessageType Type, Object Message) {
@@ -705,5 +702,10 @@ public class Match extends MessageReceiver<MessageType> {
 
             return map.getTerritory(json.getAsJsonObject().get("Name").getAsString());
         }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof Match && ((Match)other).Id == this.Id;
     }
 }

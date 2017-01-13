@@ -77,7 +77,7 @@ public class ChatBox extends TitledPane {
     }
 
     public void addChat(Chat<ObservableUser> Message) {
-        final Label sender = getChatEntry(Message.sender.username.get()), message = getChatEntry(Message.message);
+        final Label sender = getChatEntry(Message.sender.Username.get()), message = getChatEntry(Message.message);
 
         if(Message.sender.getId() == userId){
             sender.setAlignment(Pos.CENTER_RIGHT);
@@ -85,8 +85,8 @@ public class ChatBox extends TitledPane {
         }
 
         if(Message.sender.getColor() != null){
-            sender.setTextFill(Message.sender.color.hexColor);
-            message.setTextFill(Message.sender.color.hexColor);
+            sender.setTextFill(Message.sender.Color.hexColor);
+            message.setTextFill(Message.sender.Color.hexColor);
         }
 
         if(Platform.isFxApplicationThread()){

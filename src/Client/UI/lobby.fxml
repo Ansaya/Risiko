@@ -1,45 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXTextField?>
-<?import com.jfoenix.controls.JFXTreeTableView?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.text.Font?>
 
 <StackPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.LobbyController">
-    <AnchorPane>
-       <HBox maxHeight="-Infinity" prefHeight="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
-          <Label prefHeight="50.0" styleClass="title-label">Lobby</Label>
-          <Label fx:id="lobbyCount" prefHeight="50.0" styleClass="title-label" />
-          <StackPane HBox.hgrow="ALWAYS">
-             <StackPane maxWidth="200" StackPane.alignment="CENTER_RIGHT">
-                <JFXTextField fx:id="searchField" promptText="Search..." />
-             </StackPane>
-          </StackPane>
-         <JFXButton fx:id="deselectAllBtn" buttonType="RAISED" defaultButton="true" prefHeight="25.0" text="Deselect All">
-            <font>
-               <Font name="Trebuchet MS" size="12.0" />
-            </font>
-            <HBox.margin>
-               <Insets top="12.5" />
-            </HBox.margin>
-         </JFXButton>
-       </HBox>
-       <JFXTreeTableView fx:id="lobbyTable" showRoot="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="300.0" AnchorPane.topAnchor="50.0">
-         <columns>
-            <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" resizable="false" text="Id" />
-            <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="980.0" minWidth="150.0" prefWidth="250.0" text="Username" />
-         </columns>
-       </JFXTreeTableView>
-      <JFXButton fx:id="matchBtn" buttonType="RAISED" layoutX="1191.0" layoutY="50.0" prefHeight="35.0" prefWidth="120.0" style="-fx-background-color: yellow;" text="Create Match" AnchorPane.rightAnchor="90.0" AnchorPane.topAnchor="50.0">
-         <font>
-            <Font name="Trebuchet MS" size="12.0" />
-         </font>
-      </JFXButton>
+    <AnchorPane fx:id="parent">
+
     </AnchorPane>
 </StackPane>

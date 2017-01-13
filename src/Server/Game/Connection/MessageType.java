@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
 public enum MessageType {
     Chat(new TypeToken<Chat<Player>>(){}.getType()),
     Lobby(new TypeToken<Lobby<Player>>(){}.getType()),
-    MatchLobby(new TypeToken<MatchLobby<Match<Player>>>(){}.getType()),
+    MatchLobby(new TypeToken<MatchLobby<Server.Game.Match>>(){}.getType()),
     Match(new TypeToken<Match<Player>>(){}.getType()),
     Mission(Game.Connection.Mission.class),
     Turn(null),

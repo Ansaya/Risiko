@@ -7,6 +7,7 @@ import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
 import Game.Connection.SpecialMoving;
 import Game.Map.Map;
+import Game.Map.Maps;
 import Game.Map.Mission;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
@@ -157,7 +158,7 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(String MapName, Pane MapPane, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+    public MapHandler(Maps MapName, Pane MapPane, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
 
         try {
             map = new Map<>(MapName, ObservableTerritory.class);
@@ -173,7 +174,7 @@ public class MapHandler {
         MapPane.getChildren().add(connections);
 
         if(UsersList != null)
-            UsersList.forEach(u -> usersList.put(u.id.get(), u));
+            UsersList.forEach(u -> usersList.put(u.Id.get(), u));
 
         MapPane.getChildren().forEach(l -> {
             if(l instanceof Label) map.getTerritory(l.getId()).initTerritory(this, (Label)l);
@@ -199,7 +200,7 @@ public class MapHandler {
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
                 if (!t.getOwner().equals(u.getOwner()))
-                    t.setOwner(usersList.get(u.getOwner().id.get()));
+                    t.setOwner(usersList.get(u.getOwner().Id.get()));
             }
         });
 
@@ -377,7 +378,7 @@ public class MapHandler {
                 from.Armies.set(1);
                 from.NewArmies.set(SpecialMoving.From.Armies.get() - 1);
                 to.Armies.set(SpecialMoving.To.Armies.get());
-                to.setOwner(usersList.get(from.getOwner().id.get()));
+                to.setOwner(usersList.get(from.getOwner().Id.get()));
             }
         });
 
@@ -560,7 +561,7 @@ public class MapHandler {
 
         // If owner is null then we are in setup phase, so update owner and end phase after choice
         if(Territory.NewArmies.get() != 0 && Territory.getOwner().equals(nullUser)) {
-            Territory.setOwner(usersList.get(gameController.getUser().id.get()));
+            Territory.setOwner(usersList.get(gameController.getUser().Id.get()));
             canSelect = false;
         }
     }

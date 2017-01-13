@@ -7,6 +7,7 @@ import Client.UI.LobbyController;
 import Client.UI.MatchController;
 import Game.Connection.Match;
 import Game.Map.Army.Color;
+import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -24,8 +25,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Main extends Application {
@@ -54,7 +53,7 @@ public class Main extends Application {
 
         MatchController mc = loader.getController();
         try {
-            mc.setGameController("RealWorldMap", Match.Players);
+            mc.setGameController(Match.MapName, Match.Players);
         } catch (ClassNotFoundException e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
@@ -177,14 +176,14 @@ public class Main extends Application {
         window.setMinWidth(1067.0);
         window.setMinHeight(600.0);
 
-        //toLogin();
+        toLogin();
 
-        toMatch(new Match<>("RealWorldMap", new ArrayList<>(Arrays.asList(
+        /*toMatch(new Match<>(0, "Test match", Maps.RealWorldMap, Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),
                 new ObservableUser(4, "Giocatore4", Color.GREEN),
-                new ObservableUser(5, "Giocatore5", Color.YELLOW)))));
+                new ObservableUser(5, "Giocatore5", Color.YELLOW))));*/
     }
 
 

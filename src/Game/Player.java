@@ -8,5 +8,7 @@ import Game.Map.Army.Color;
 public interface Player {
     int getId();
 
+    String getUsername();
+
     Color getColor();
 }

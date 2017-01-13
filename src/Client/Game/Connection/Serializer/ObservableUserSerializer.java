@@ -13,10 +13,10 @@ public class ObservableUserSerializer implements JsonSerializer<ObservableUser>,
     public JsonElement serialize(ObservableUser src, Type typeOfSrc, JsonSerializationContext context) {
 
         JsonObject obj = new JsonObject();
-        obj.addProperty("id", src.id.get());
-        obj.addProperty("username", src.username.get());
-        if(src.color != null)
-            obj.addProperty("color", src.color.name());
+        obj.addProperty("id", src.Id.get());
+        obj.addProperty("username", src.Username.get());
+        if(src.Color != null)
+            obj.addProperty("color", src.Color.name());
 
         return obj;
     }

@@ -1,18 +1,15 @@
 package Server.UI;
 
-import Game.Map.Army.Color;
+import Game.Map.Maps;
 import Server.Game.GameController;
 import Server.Game.Match;
 import Server.Game.Player;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
+import javafx.scene.control.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -22,28 +19,25 @@ import java.util.ResourceBundle;
 public class Controller implements Initializable {
 
     @FXML
-    private TreeTableView playersTable;
+    private TableView playersTable;
 
     @FXML
-    private TreeTableColumn<Player, Integer> playerIdColumn;
+    private TableColumn<Player, Integer> playerIdColumn;
 
     @FXML
-    private TreeTableColumn<Player, String> playerUsernameColumn;
+    private TableColumn<Player, String> playerUsernameColumn;
 
     @FXML
-    private TreeTableColumn<Player, Integer> playerMatchIdColumn;
+    private TableView matchesTable;
 
     @FXML
-    private TreeTableView matchesTable;
+    private TableColumn<Match, Integer> matchIdColumn;
 
     @FXML
-    protected TreeTableColumn<Match, Integer> matchIdColumn;
+    private TableColumn<Match, Integer> matchNameColumn;
 
     @FXML
-    private TreeTableColumn<Match, Integer> matchUsersColumn;
-
-    @FXML
-    private TreeTableColumn<Match, String> matchGameMapColumn;
+    private TableColumn<Match, Maps> matchGameMapColumn;
 
     @FXML
     private TextArea consoleView;
@@ -51,10 +45,6 @@ public class Controller implements Initializable {
     private final PrintStream stdOut = System.out;
 
     private final PrintStream stdErr = System.err;
-
-    private final TreeItem<Match> matches = new TreeItem<>(new Match());
-
-    private final TreeItem<Player> players = new TreeItem<>(Player.getAI(-1, Color.RED));
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -65,19 +55,16 @@ public class Controller implements Initializable {
         System.setOut(p);
         System.setErr(p);
 
-        playerIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().id).asObject());
-        playerUsernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getValue().username));
-        playerMatchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().getMatchId()).asObject());
-        playersTable.setRoot(players);
+        playerIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getId()));
+        playerUsernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
 
-        matchIdColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().Id).asObject());
-        matchUsersColumn.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getValue().getPlayers().size()).asObject());
-        matchGameMapColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getValue().GameMap));
-        matchesTable.setRoot(matches);
+        matchIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
+        matchNameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getPlayers().size()));
+        matchGameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
     }
 
     public void initGameController() {
-        GameController.getInstance().init(players, matches);
+        GameController.getInstance().init(playersTable.getItems(), matchesTable.getItems());
     }
 
     public void resetStdOut() {

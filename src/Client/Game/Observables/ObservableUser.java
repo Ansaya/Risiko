@@ -12,33 +12,33 @@ import javafx.beans.property.StringProperty;
  * Observable class of simplified user
  */
 public class ObservableUser extends RecursiveTreeObject<ObservableUser> implements Player {
-    public final IntegerProperty id = new SimpleIntegerProperty(-1);
+    public final IntegerProperty Id = new SimpleIntegerProperty(-1);
 
-    public final StringProperty username = new SimpleStringProperty("");
+    public int getId() {
+        return Id.get();
+    }
 
-    public volatile Color color;
+    public final StringProperty Username = new SimpleStringProperty("");
 
-    public final IntegerProperty territories = new SimpleIntegerProperty(0);
+    public String getUsername() { return Username.get(); }
+
+    public volatile Color Color;
+
+    public Color getColor() {
+        return Color;
+    }
+
+    public final IntegerProperty Territories = new SimpleIntegerProperty(0);
 
     public ObservableUser(int userId, String username, Color Color) {
-        this.id.set(userId);
-        this.username.set(username);
+        this.Id.set(userId);
+        this.Username.set(username);
         if(Color != null)
-            this.color = Color;
+            this.Color = Color;
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof  ObservableUser && this.id.get() == ((ObservableUser)other).id.get();
-    }
-
-    @Override
-    public int getId() {
-        return id.get();
-    }
-
-    @Override
-    public Color getColor() {
-        return color;
+        return other instanceof  ObservableUser && this.Id.get() == ((ObservableUser)other).Id.get();
     }
 }

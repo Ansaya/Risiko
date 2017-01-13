@@ -16,8 +16,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Map<T extends Territory> {
 
+    public final Maps Name;
 
-    public final String Name;
+    public final double PrefWidth;
+
+    public final double PrefHeight;
 
     private final HashMap<String, Area> areas;
 
@@ -48,12 +51,14 @@ public class Map<T extends Territory> {
      * @param TerritoryExtender Type of territory class to use for this map
      * @throws NoSuchFieldException If map can not be found
      */
-    public Map(String Name, Class<T> TerritoryExtender) throws NoSuchFieldException {
+    public Map(Maps Name, Class<T> TerritoryExtender) throws NoSuchFieldException {
         // Load json map filed from resources
-        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name.name() + "/" + Name.name() + ".json")));
 
         // Initialize all fields to empty value
         this.Name = Name;
+        this.PrefWidth = map.get("prefWidth").getAsDouble();
+        this.PrefHeight = map.get("prefHeight").getAsDouble();
         this.areas = new HashMap<>();
         this.territories = new HashMap<>();
         this.ConnectionsPath = "";
@@ -83,13 +88,21 @@ public class Map<T extends Territory> {
         jTerritories.forEach(t -> {
             // Get json territory
             JsonObject jt = t.getAsJsonObject();
-            T territory = null;
-            try { territory = TerritoryExtender.newInstance(); } catch (IllegalAccessException | InstantiationException e) {}
+            T territory;
+            try {
+                territory = TerritoryExtender.newInstance();
+            } catch (IllegalAccessException | InstantiationException e) {
+                e.printStackTrace();
+                return;
+            }
 
             // Initialize all fields available
             try {
                 territoryName.set(territory, jt.get("Name").getAsString());
-            } catch (IllegalAccessException e) {}
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                return;
+            }
 
             // If no svgPath, it is only a card
             if(jt.has("SvgPath"))
@@ -132,7 +145,9 @@ public class Map<T extends Territory> {
             try {
                 territoryAdjacent.set(territory, adjacent);
                 territoryArea.set(territory, this.areas.get(jt.get("Area").getAsString()));
-            } catch (IllegalAccessException e) {}
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
         });
     }
 
@@ -265,7 +280,7 @@ public class Map<T extends Territory> {
         cardDeck.setAccessible(true);
 
         // Gain access to cards constructor
-        final Constructor<Card> cardConstructor = Card.class.getDeclaredConstructor(String.class, Figure.class, Map.class);
+        final Constructor<Card> cardConstructor = Card.class.getDeclaredConstructor(String.class, Figure.class, Maps.class);
         cardConstructor.setAccessible(true);
 
         final JsonArray jTerritories = map.getAsJsonArray("territories");

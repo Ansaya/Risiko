@@ -30,7 +30,9 @@ public class Player extends SocketHandler implements Game.Player {
     /**
      * Username choose From
      */
-    public final String username;
+    private final String username;
+
+    public String getUsername() { return username; }
 
     /**
      * Id of match the player is inside

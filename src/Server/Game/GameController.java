@@ -6,6 +6,7 @@ import Game.Connection.Chat;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
+import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 import java.lang.reflect.Type;
 import java.net.Socket;
@@ -45,9 +46,9 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
-    private volatile TreeItem<Player> Players = null;
+    private volatile ObservableList<Player> Players = null;
 
-    private volatile TreeItem<Match> Matches = null;
+    private volatile ObservableList<Match> Matches = null;
 
     private GameController() {
         super("GameController");
@@ -64,39 +65,33 @@ public class GameController extends MessageReceiver<MessageType> {
             final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
             System.out.println("Game controller: New match request from " + message.PlayerId);
 
-            // If this match exists check if player wants to be added or to start this match
-            if(matches.containsKey(requested.Id)) {
-                if (requested.Player != null)
-                    matches.get(requested.Id).addPlayer(requested.Player);
-                else
-                    matches.get(requested.Id).initMatch();
+            // Get requested match
+            Match match = matches.get(requested.Id);
 
-                return;
+            // If match is null create it
+            if(match == null) {
+                try {
+                    match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.MapName);
+                } catch (ClassNotFoundException e){
+                    System.err.println("Game Controller: Can not create new match");
+                    return;
+                }
+
+                matches.put(match.Id, match);
+                if(Matches != null)
+                    Matches.add(match);
+
+                System.out.println("Game controller: New match created with id " + match.Id);
             }
 
-            // Else create a new match
-            Match newMatch;
-            try {
-                newMatch = new Match(Match.counter.getAndIncrement(), "RealWorldMap");
-            } catch (ClassNotFoundException e){
-                System.err.println("Can not create new match");
-                return;
-            }
-
-            matches.put(newMatch.Id, newMatch);
-            if(Matches != null)
-                Matches.getChildren().add(new TreeItem<>(newMatch));
-
-            newMatch.addPlayer(requested.Player);
-
-            System.out.println("Game controller: New match created with id " + newMatch.Id);
+            match.addPlayer(requested.Players.get(0));
         });
     }
 
     /**
      * Starts game controller
      */
-    public void init(TreeItem<Player> Players, TreeItem<Match> Matches) {
+    public void init(ObservableList<Player> Players, ObservableList<Match> Matches) {
 
         this.Players = Players;
         this.Matches = Matches;
@@ -126,7 +121,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // Send end message and close connection of lobby Players
         lobby.forEach((id, p) -> {
-            System.out.println("Game controller: Releasing player " + p.username);
+            System.out.println("Game controller: Releasing player " + p.getUsername());
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
         });
@@ -146,7 +141,7 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.put(Id, newP);
 
         if(Players != null)
-            Players.getChildren().add(new TreeItem<>(newP));
+            Players.add(newP);
 
         // Send current matches list to new player
         newP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
@@ -161,7 +156,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     void returnPlayer(Player Player) {
 
-        System.out.println("Game controller: Player " + Player.username + " got back From match.");
+        System.out.println("Game controller: Player " + Player.getUsername() + " got back From match.");
 
         // Clean player and put it back to lobby
         Player.exitMatch();
@@ -184,7 +179,7 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.remove(Player.id);
 
         if(Remove && Players != null)
-            Players.getChildren().removeIf(item -> item.getValue().equals(Player));
+            Players.removeIf(Player::equals);
     }
 
     /**
@@ -198,7 +193,7 @@ public class GameController extends MessageReceiver<MessageType> {
         matches.remove(Match.Id);
 
         if(Matches != null)
-            Matches.getChildren().removeIf(item -> item.getValue().Id == Match.Id);
+            Matches.removeIf(Match::equals);
 
         lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, new MatchLobby<>(null, Match)));
     }

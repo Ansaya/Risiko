@@ -2,17 +2,14 @@ package Client.UI;
 
 import Client.Game.GameController;
 import Client.Game.Observables.*;
-import Game.Connection.Chat;
+import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -21,14 +18,17 @@ import javafx.scene.transform.Scale;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Match view controller
  */
 public class MatchController implements Initializable {
 
-    private double mapRatio = 750.0f / 520.0f;
+    private double mapRatio = 1.0;
+
+    private double mapPrefWidth = 100.0;
+
+    private double mapPrefHeight = 100.0;
 
     private CardsHandler cardsHandler;
 
@@ -80,9 +80,9 @@ public class MatchController implements Initializable {
         worldMap.heightProperty().addListener(this::setMapHeight);
 
         /* Players table setup */
-        idColumn.setCellValueFactory(data -> data.getValue().getValue().id.asObject());
-        usernameColumn.setCellValueFactory(data -> data.getValue().getValue().username);
-        territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().territories.asObject());
+        idColumn.setCellValueFactory(data -> data.getValue().getValue().Id.asObject());
+        usernameColumn.setCellValueFactory(data -> data.getValue().getValue().Username);
+        territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().Territories.asObject());
 
         playersList.setRoot(usersRoot);
         playersList.setMouseTransparent(true);
@@ -97,14 +97,14 @@ public class MatchController implements Initializable {
         double containerRatio = (double) newValue / worldMap.getHeight();
 
         if(containerRatio < mapRatio)
-            updateMap((double) newValue / 750.0f);
+            updateMap((double) newValue / mapPrefWidth);
     }
 
     private void setMapHeight(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
         double containerRatio = worldMap.getWidth() / (double) newValue;
 
         if(containerRatio > mapRatio)
-            updateMap((double) newValue / 520.0f);
+            updateMap((double) newValue / mapPrefHeight);
     }
 
     private void updateMap(double scaleValue) {
@@ -121,14 +121,14 @@ public class MatchController implements Initializable {
         AnchorPane.setTopAnchor(mapPane, -110.0f * scaleValue);
     }
 
-    private void setMapHandler(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+    private void setMapHandler(Maps MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
         if(UsersList != null) {
             final ObservableUser current = GameController.getInstance().getUser();
             UsersList.forEach(u -> {
                 if (u.equals(current))
-                    current.color = u.color;
+                    current.Color = u.Color;
 
-                final ImageView iv = new ImageView(u.color.armyImg);
+                final ImageView iv = new ImageView(u.Color.armyImg);
                 iv.setX(30.0);
                 iv.setPreserveRatio(true);
 
@@ -138,6 +138,9 @@ public class MatchController implements Initializable {
         }
 
         mapHandler = new MapHandler(MapName, mapPane, UsersList);
+        mapPrefWidth = mapHandler.map.PrefWidth;
+        mapPrefHeight = mapHandler.map.PrefHeight;
+        mapRatio = mapPrefWidth / mapPrefHeight;
         mapHandler.setArmiesLabel(newArmiesLabel);
         mapHandler.setMissionButton(missionBtn);
         mapHandler.setPhaseButton(endTurnBtn);
@@ -148,7 +151,7 @@ public class MatchController implements Initializable {
         cardsHandler.setCardsButton(cardsBtn);
     }
 
-    public void setGameController(String MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+    public void setGameController(Maps MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
         setMapHandler(MapName, UsersList);
         GameController.getInstance().setMapHandler(mapHandler);
         setCardsHandler();

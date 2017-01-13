@@ -53,6 +53,7 @@ public class LoginController implements Initializable {
     private void initSettings() {
         Label langLabel = new Label("Language");
         ComboBox<String> languages = new ComboBox<>(FXCollections.observableArrayList("English", "Italian"));
+        languages.getSelectionModel().select(0);
         languages.valueProperty().addListener((ObservableValue<? extends String> ov, String oldVal, String newVal) -> {
             prefs.put("language", newVal);
         });
