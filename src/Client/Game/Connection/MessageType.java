@@ -11,10 +11,11 @@ import java.lang.reflect.Type;
  */
 public enum MessageType {
     Chat(new TypeToken<Chat<ObservableUser>>(){}.getType()),
-    MatchLobby(new TypeToken<MatchLobby<Match<ObservableUser>>>(){}.getType()),
     Lobby(new TypeToken<Lobby<ObservableUser>>(){}.getType()),
+    MatchLobby(new TypeToken<MatchLobby<Match<ObservableUser>>>(){}.getType()),
     Match(new TypeToken<Match<ObservableUser>>(){}.getType()),
     Mission(Game.Connection.Mission.class),
+    Turn(null),
     Battle(new TypeToken<Battle<ObservableTerritory>>(){}.getType()),
     Cards(Game.Connection.Cards.class),
     Positioning(Game.Connection.Positioning.class),

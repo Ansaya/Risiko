@@ -3,8 +3,9 @@ package Client;
 import Client.Game.GameController;
 import Client.Game.Observables.ObservableUser;
 import Client.UI.ChatBox.ChatBox;
-import Client.UI.LobbyController;
-import Client.UI.MatchController;
+import Client.UI.Lobby.LobbyController;
+import Client.UI.Login.LoginController;
+import Client.UI.Match.MatchController;
 import Game.Connection.Match;
 import Game.Map.Army.Color;
 import Game.Map.Maps;
@@ -44,8 +45,8 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("UI/match.fxml").openStream());
-            root.getStylesheets().add(Main.class.getResource("UI/match.css").toExternalForm());
+            root = loader.load(MatchController.class.getResource("match.fxml").openStream());
+            root.getStylesheets().add(MatchController.class.getResource("match.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
@@ -53,7 +54,7 @@ public class Main extends Application {
 
         MatchController mc = loader.getController();
         try {
-            mc.setGameController(Match.MapName, Match.Players);
+            mc.setGameController(Match.GameMap, Match.Players);
         } catch (ClassNotFoundException e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
@@ -81,8 +82,8 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("UI/lobby.fxml").openStream());
-            root.getStylesheets().add(Main.class.getResource("UI/lobby.css").toExternalForm());
+            root = loader.load(LobbyController.class.getResource("lobby.fxml").openStream());
+            root.getStylesheets().add(LobbyController.class.getResource("lobby.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
@@ -112,7 +113,7 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = null;
         try {
-            root = loader.load(Main.class.getResource("UI/login.fxml").openStream());
+            root = loader.load(LoginController.class.getResource("login.fxml").openStream());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
             e.printStackTrace();
@@ -176,14 +177,14 @@ public class Main extends Application {
         window.setMinWidth(1067.0);
         window.setMinHeight(600.0);
 
-        toLogin();
+        //toLogin();
 
-        /*toMatch(new Match<>(0, "Test match", Maps.RealWorldMap, Arrays.asList(
+        toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),
                 new ObservableUser(4, "Giocatore4", Color.GREEN),
-                new ObservableUser(5, "Giocatore5", Color.YELLOW))));*/
+                new ObservableUser(5, "Giocatore5", Color.YELLOW))));
     }
 
 

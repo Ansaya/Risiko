@@ -117,7 +117,7 @@ public class Player extends SocketHandler implements Game.Player {
 
                     System.out.println("Player-" + id + ": Received <- " + incoming);
 
-                    String[] info = incoming.split("[#]");
+                    String[] info = incoming.split("[#]", 2);
 
                     if (matchId.get() == -1) {
                         GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);

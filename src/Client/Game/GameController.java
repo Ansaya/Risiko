@@ -250,7 +250,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     /**
      * Setup and start connection with the server
      *
-     * @param Username Username choose From user
+     * @param Username Username choose from user
      */
     public void InitConnection(String Username) throws Exception {
         try {
@@ -262,8 +262,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             throw new Exception("Cannot connect with the server");
         }
 
-        // Try connecting To server
-        // Send username To the server
+        // Try connecting to server
+        // Send username to the server
         this.send.println(Username);
 
         String incoming = receive.readLine();
@@ -292,7 +292,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         listen = false;
 
-        // Send close connection notification To server
+        // Send close connection notification to server
         if(fromClient)
             send.println("End");
 
@@ -348,7 +348,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
                     System.out.println("GameController: Received <- " + Packet);
 
-                    String[] info = Packet.split("[#]");
+                    String[] info = Packet.split("[#]", 2);
 
                     this.setIncoming(0, MessageType.valueOf(info[0]), info[1]);
                 }
@@ -368,32 +368,26 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     }
 
     /**
-     * Send a message To the server
+     * Send a message to the server
      *
      * @param Type Type of message
      * @param MessageObj Object of specified type
      */
     public void SendMessage(MessageType Type, Object MessageObj) {
-
         // Build packet string as MessageType#SerializedObject
-        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
+        RouteMessage(Type.toString() + "#" + gson.toJson(MessageObj, Type.getType()));
+    }
+
+    /**
+     * Send given string directly
+     *
+     * @param packet String to send to the server
+     */
+    public void RouteMessage(String packet) {
 
         synchronized (send) {
             send.println(packet);
         }
         System.out.println("GameController: Sent -> " + packet);
-    }
-
-    /**
-     * Send passed string directly
-     *
-     * @param packet String To send To the client
-     */
-    private void RouteMessage(String packet) {
-
-        synchronized (send) {
-            send.println(packet);
-        }
-        System.out.println("Sent To server: " + packet);
     }
 }

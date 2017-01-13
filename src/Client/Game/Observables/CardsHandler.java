@@ -8,15 +8,13 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import java.util.ArrayList;
 
@@ -31,7 +29,7 @@ public class CardsHandler {
     private final JFXDialog cardsDialog = new JFXDialog();
 
     public void setCardsButton(Button CardsBtn) {
-        CardsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(cardsDialog));
+        CardsBtn.setOnMouseClicked(evt -> Main.showDialog(cardsDialog));
     }
 
     /**
@@ -60,17 +58,12 @@ public class CardsHandler {
         final JFXButton closeBtn = new JFXButton("Close");
         closeBtn.setButtonType(JFXButton.ButtonType.RAISED);
         closeBtn.setStyle("-fx-background-color: #44B449");
-        closeBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
-            synchronized (selected){
-                selected.notify();
-            }
-            cardsDialog.close();
-        });
+        closeBtn.setOnMouseClicked(this::closeDialog);
 
         /* Redeem cards button setup */
         redeemBtn.setButtonType(JFXButton.ButtonType.RAISED);
         redeemBtn.setStyle("-fx-background-color: red");
-        redeemBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> cardsDialog.close());
+        redeemBtn.setOnMouseClicked(this::closeDialog);
         redeemBtn.setDisable(true);
 
         /* Layout setup */
@@ -80,11 +73,14 @@ public class CardsHandler {
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
         cardsDialog.setContent(dl);
-        cardsDialog.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, evt -> {
-            synchronized (selected){
-                selected.notify();
-            }
-        });
+        cardsDialog.setOnDialogClosed(this::closeDialog);
+    }
+
+    private void closeDialog(Event Event) {
+        synchronized (selected){
+            selected.notify();
+        }
+        cardsDialog.close();
     }
 
     /**
@@ -93,7 +89,7 @@ public class CardsHandler {
      * @param Card Card to initialize
      * @return Initialized card
      */
-    private ImageView getCard(Card Card) {
+    private ImageView loadCard(Card Card) {
         final ImageView card = new ImageView(Card.getImage());
         card.setPreserveRatio(true);
         card.setSmooth(true);
@@ -101,16 +97,15 @@ public class CardsHandler {
         card.setX(137.0f);
         card.setY(212.0f);
 
-        card.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+        card.setOnMouseClicked(evt -> {
             Node source = (Node) evt.getSource();
 
             if(!source.getStyleClass().remove("card-selected")) {
                 source.getStyleClass().add("card-selected");
                 selected.add(Card);
             }
-            else {
+            else
                 selected.remove(Card);
-            }
         });
 
         return card;
@@ -136,7 +131,9 @@ public class CardsHandler {
         synchronized (selected) {
             try {
                 selected.wait();
-            } catch (Exception e) {}
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         // If no cards are selected and less than five cards are present, return empty message
@@ -160,8 +157,9 @@ public class CardsHandler {
         synchronized (Main.dialogClosed){
             try {
                 Main.dialogClosed.wait();
-            } catch (Exception e) {}
-
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         return requestCombination();
@@ -178,6 +176,6 @@ public class CardsHandler {
             return;
         }
 
-        container.getChildren().add(getCard(Card));
+        container.getChildren().add(loadCard(Card));
     }
 }

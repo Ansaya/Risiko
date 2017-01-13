@@ -1,4 +1,4 @@
-package Client.UI;
+package Client.UI.Match;
 
 import Client.Game.GameController;
 import Client.Game.Observables.*;

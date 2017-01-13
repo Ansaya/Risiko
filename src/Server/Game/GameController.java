@@ -7,7 +7,7 @@ import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
 import javafx.collections.ObservableList;
-import javafx.scene.control.TreeItem;
+
 import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.HashMap;
@@ -71,7 +71,7 @@ public class GameController extends MessageReceiver<MessageType> {
             // If match is null create it
             if(match == null) {
                 try {
-                    match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.MapName);
+                    match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.GameMap);
                 } catch (ClassNotFoundException e){
                     System.err.println("Game Controller: Can not create new match");
                     return;

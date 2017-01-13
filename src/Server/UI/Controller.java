@@ -34,7 +34,7 @@ public class Controller implements Initializable {
     private TableColumn<Match, Integer> matchIdColumn;
 
     @FXML
-    private TableColumn<Match, Integer> matchNameColumn;
+    private TableColumn<Match, String> matchNameColumn;
 
     @FXML
     private TableColumn<Match, Maps> matchGameMapColumn;
@@ -59,7 +59,7 @@ public class Controller implements Initializable {
         playerUsernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
 
         matchIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
-        matchNameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getPlayers().size()));
+        matchNameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
         matchGameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
     }
 

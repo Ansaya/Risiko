@@ -1,25 +1,21 @@
-package Client.UI;
+package Client.UI.Login;
 
 import Client.Game.GameController;
 import Client.Main;
 import Game.Sounds.Sounds;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDialog;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXSlider;
-import javafx.beans.Observable;
+import com.jfoenix.controls.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
@@ -30,13 +26,16 @@ import java.util.prefs.Preferences;
 public class LoginController implements Initializable {
 
     @FXML
-    protected Button loginBtn;
+    private AnchorPane parent;
 
     @FXML
-    protected TextField usernameField;
+    private JFXButton loginBtn;
 
     @FXML
-    protected Button settingsBtn;
+    private JFXTextField usernameField;
+
+    @FXML
+    private JFXButton settingsBtn;
 
     private final JFXDialog sDialog = new JFXDialog();
 
@@ -44,15 +43,23 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        parent.setBackground(new Background(new BackgroundImage(new Image(LoginController.class.getResource("background.jpg").toExternalForm()),
+                BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
+                new BackgroundSize(950.0, 500.0, false, false, false, true))));
+
+        loginBtn.setGraphic(new ImageView(LoginController.class.getResource("login.png").toExternalForm()));
         loginBtn.addEventHandler(MouseEvent.MOUSE_CLICKED, (evt) -> ToLobby());
         usernameField.setOnAction((evt) -> ToLobby());
+
+        final Paint focusColor = usernameField.getFocusColor();
+        usernameField.textProperty().addListener((ob, oldV, newV) -> usernameField.setFocusColor(focusColor));
 
         initSettings();
     }
 
     private void initSettings() {
         Label langLabel = new Label("Language");
-        ComboBox<String> languages = new ComboBox<>(FXCollections.observableArrayList("English", "Italian"));
+        ComboBox<String> languages = new ComboBox<>(FXCollections.observableArrayList("English", "Italiano"));
         languages.getSelectionModel().select(0);
         languages.valueProperty().addListener((ObservableValue<? extends String> ov, String oldVal, String newVal) -> {
             prefs.put("language", newVal);
@@ -86,6 +93,7 @@ public class LoginController implements Initializable {
 
         sDialog.setContent(sLayout);
 
+        settingsBtn.setGraphic(new ImageView(LoginController.class.getResource("settings.png").toExternalForm()));
         settingsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(sDialog));
     }
 
@@ -93,6 +101,12 @@ public class LoginController implements Initializable {
      * Connect to the server and show lobby screen
      */
     private void ToLobby() {
+        if(usernameField.getText().equals("")){
+            usernameField.setFocusColor(Color.RED);
+            usernameField.requestFocus();
+            return;
+        }
+
         try {
             GameController.getInstance().InitConnection(usernameField.getText());
         } catch (Exception e) {

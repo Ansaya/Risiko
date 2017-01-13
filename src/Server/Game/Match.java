@@ -82,6 +82,9 @@ public class Match extends MessageReceiver<MessageType> {
         else
             GameController.getInstance().returnPlayer(Player);
 
+        if(players.isEmpty())
+            GameController.getInstance().endMatch(this);
+
         // If match hasn't already started notify other users
         if(currentTurn == null)
             players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
@@ -175,8 +178,13 @@ public class Match extends MessageReceiver<MessageType> {
 
     /**
      * Initialize users in this match and starts the game
+     *
+     * @throws UnsupportedOperationException If match has already been initialized or if players number is incorrect
      */
-    public void initMatch() {
+    public void initMatch() throws UnsupportedOperationException {
+        if (currentTurn != null)
+            throw new UnsupportedOperationException("Match " + Id + ": Match has already been initialized.");
+
         if(players.size() < 2 || players.size() > 6)
             throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", players.size()));
 
@@ -222,7 +230,9 @@ public class Match extends MessageReceiver<MessageType> {
      */
     void terminate() {
         stopExecutor();
-        currentTurn.endTurn();
+
+        if(currentTurn != null)
+            currentTurn.endTurn();
 
         players.forEach((id, p) -> GameController.getInstance().returnPlayer(p));
         players.clear();
