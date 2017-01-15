@@ -19,7 +19,6 @@ public enum MessageType {
     Battle(new TypeToken<Battle<Territory>>(){}.getType()),
     Cards(Game.Connection.Cards.class),
     Positioning(Game.Connection.Positioning.class),
-    SpecialMoving(new TypeToken<SpecialMoving<Territory>>(){}.getType()),
     MapUpdate(new TypeToken<MapUpdate<Territory>>(){}.getType()),
     GameState(new TypeToken<GameState<Player>>(){}.getType());
 

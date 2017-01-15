@@ -6,17 +6,23 @@ import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.transform.Scale;
+import javafx.util.Duration;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.ResourceBundle;
 
 /**
@@ -24,15 +30,10 @@ import java.util.ResourceBundle;
  */
 public class MatchController implements Initializable {
 
-    private double mapRatio = 1.0;
-
-    private double mapPrefWidth = 100.0;
-
-    private double mapPrefHeight = 100.0;
+    @FXML
+    private AnchorPane parent;
 
     private CardsHandler cardsHandler;
-
-    private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
 
     /* Map */
     @FXML
@@ -43,6 +44,13 @@ public class MatchController implements Initializable {
 
     private MapHandler mapHandler;
 
+    private double mapRatio = 1.0;
+
+    private double mapPrefWidth = 100.0;
+
+    private double mapPrefHeight = 100.0;
+
+    /* Players list */
     @FXML
     private JFXTreeTableView<ObservableUser> playersList;
 
@@ -54,6 +62,8 @@ public class MatchController implements Initializable {
 
     @FXML
     private TreeTableColumn<ObservableUser, Integer> territoriesColumn;
+
+    private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
 
     /* Game */
     @FXML
@@ -67,6 +77,8 @@ public class MatchController implements Initializable {
 
     @FXML
     private Button missionBtn;
+
+    private DiceBox diceBox = new DiceBox(125);
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -86,6 +98,11 @@ public class MatchController implements Initializable {
 
         playersList.setRoot(usersRoot);
         playersList.setMouseTransparent(true);
+
+        diceBox.setVisible(false);
+        parent.getChildren().add(diceBox);
+        AnchorPane.setLeftAnchor(diceBox, 50.0);
+        AnchorPane.setTopAnchor(diceBox, 50.0);
     }
 
     public void updateMapSize(double newWidth, double newHeight){
@@ -144,6 +161,7 @@ public class MatchController implements Initializable {
         mapHandler.setArmiesLabel(newArmiesLabel);
         mapHandler.setMissionButton(missionBtn);
         mapHandler.setPhaseButton(endTurnBtn);
+        mapHandler.setShowDice(diceBox::showDice);
     }
 
     private void setCardsHandler() {
@@ -157,5 +175,81 @@ public class MatchController implements Initializable {
         setCardsHandler();
         GameController.getInstance().setCardsHandler(cardsHandler);
         GameController.getInstance().startExecutor();
+    }
+
+    private class DiceBox extends HBox {
+        private final VBox attackDice = new VBox(5);
+
+        private final VBox defenseDice = new VBox(5);
+
+        private final Image[] dice = new Image[6];
+
+        public DiceBox(double width) {
+            setSpacing(10.0);
+            setStyle("-fx-background-color: blueviolet");
+            getChildren().addAll(attackDice, defenseDice);
+
+            widthProperty().addListener((ob, oldV, newV) -> {
+                final double dieWidth = ((double)newV - 10) / 2;
+
+                attackDice.setPrefWidth(dieWidth);
+                defenseDice.setPrefWidth(dieWidth);
+                setPrefHeight(dieWidth * 3 + attackDice.getSpacing() * 2);
+            });
+
+            setPrefWidth(width);
+
+            final FadeTransition ft = new FadeTransition(Duration.millis(500), this);
+            ft.setFromValue(1.0);
+            ft.setToValue(0.0);
+
+            final Timeline t = new Timeline( new KeyFrame(Duration.seconds(2), ae -> {
+                ft.playFromStart();
+                setVisible(false);
+            }));
+
+            visibleProperty().addListener((ob, oldV, newV) -> {
+                if(newV) t.playFromStart();
+            });
+
+            setOnMouseClicked(evt -> ft.playFromStart());
+
+            for (int i = 0; i < 6; i++)
+                dice[i] = new Image(MatchController.class.getResource((i+1) + ".png").toExternalForm());
+        }
+
+        /**
+         * Show given dice values in UI
+         *
+         * @param AttackDice Attacking dice results
+         * @param DefenseDice Defending dice results
+         */
+        public void showDice(Collection<Integer> AttackDice, Collection<Integer> DefenseDice) {
+            attackDice.getChildren().clear();
+            defenseDice.getChildren().clear();
+
+            AttackDice.forEach(die -> attackDice.getChildren().add(getDie(dice[die], true)));
+            DefenseDice.forEach(die -> defenseDice.getChildren().add(getDie(dice[die], false)));
+
+            setVisible(true);
+        }
+
+        /**
+         * Build die to display
+         *
+         * @param Die Die image
+         * @param isAtk True if attack die, false if defense die
+         * @return Initialized ImageView for requested die
+         */
+        private ImageView getDie(Image Die, boolean isAtk) {
+            final ImageView iv = new ImageView(Die);
+            if(isAtk)
+                iv.setStyle("-fx-background-color: darkred");
+            else
+                iv.setStyle("-fx-background-color: dodgerblue");
+            iv.setFitWidth(defenseDice.getPrefWidth());
+
+            return iv;
+        }
     }
 }

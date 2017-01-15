@@ -15,7 +15,7 @@
 
 <StackPane minHeight="600.0" minWidth="1067.0" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Match.MatchController">
 
-    <AnchorPane style="-fx-background-color: darkgrey;">
+    <AnchorPane fx:id="parent" style="-fx-background-color: darkgrey;">
 
         <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="25.0">
             <Pane fx:id="mapPane" AnchorPane.leftAnchor="-160.0" AnchorPane.topAnchor="-110.0">

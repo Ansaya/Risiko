@@ -5,7 +5,6 @@ import Client.Game.GameController;
 import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
-import Game.Connection.SpecialMoving;
 import Game.Map.Map;
 import Game.Map.Maps;
 import Game.Map.Mission;
@@ -20,9 +19,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
 
@@ -71,6 +72,10 @@ public class MapHandler {
         MissionBtn.setOnMouseClicked(evt -> Main.showDialog(getMissionDialog()));
     }
 
+    private volatile BiConsumer<Collection<Integer>, Collection<Integer>> showDice;
+
+    public void setShowDice(BiConsumer<Collection<Integer>, Collection<Integer>> ShowDice) { showDice = ShowDice; }
+
     private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
     public final Map<ObservableTerritory> map;
@@ -98,9 +103,6 @@ public class MapHandler {
             return null;
         }
 
-        if(selected.get().Selected == null)
-            return null;
-
         return selected.get();
     }
 
@@ -119,7 +121,10 @@ public class MapHandler {
 
     private void endPhase() {
         canSelect = false;
-        selected(null, false);
+        selected.set(null);
+        synchronized (selected){
+            selected.notify();
+        }
     }
 
     private final AtomicBoolean attackPhase = new AtomicBoolean(false);
@@ -205,14 +210,23 @@ public class MapHandler {
         });
 
         // If standard armies displacement play relative sound
-        if(MapUpdate.AttackDice != null) {
-            // Display dice result somewhere
+        if(MapUpdate.AttackDice != null && showDice != null) {
+            // Display dice result
+            showDice.accept(MapUpdate.AttackDice, MapUpdate.DefenceDice);
         }
 
-        if(attackPhase.compareAndSet(true, changeOwner.get()))
-            synchronized (attackPhase){
+        // If no special move is expected notify attack phase
+        if (MapUpdate.HasMove) {
+            final Thread move = new Thread(() ->
+                    specialMoving(MapUpdate.Updated.size() == 2 ? MapUpdate.Updated.get(0) : null,
+                            MapUpdate.Updated.size() == 2 ? MapUpdate.Updated.get(1) : null));
+            move.setDaemon(true);
+            move.start();
+        } else if(attackPhase.get()) {
+            synchronized (attackPhase) {
                 attackPhase.notify();
             }
+        }
     }
 
     /**
@@ -251,8 +265,7 @@ public class MapHandler {
                 st = waitSelected(current, false);
 
             // End phase button has been pressed
-            if(st == null)
-                break;
+            if(st == null) break;
 
             if(st.IsRightClick)
                 removeArmyFrom(st.Selected, false);
@@ -349,25 +362,24 @@ public class MapHandler {
                 // Send battle to server
                 gameController.SendMessage(MessageType.Battle, new Battle<>(attacker, defender, atkArmies));
 
-                // If player conquers new territory wait for special moving to complete, else go ahead to next battle
-                while (attackPhase.get()) {
-                    synchronized (attackPhase) {
-                        try {
-                            attackPhase.wait();
-                        } catch (InterruptedException e) {
-                            System.out.println("Map handler: Interrupted exception in battle phase.");
-                            e.printStackTrace();
-                            return;
-                        }
+                // Wait for map update and special move message, if present
+                synchronized (attackPhase) {
+                    try {
+                        attackPhase.wait();
+                    } catch (InterruptedException e) {
+                        System.out.println("Map handler: Interrupted exception in attack phase.");
+                        e.printStackTrace();
+                        return;
                     }
                 }
-                attackPhase.set(true);
 
                 Platform.runLater(() -> endPhaseBtn.setDisable(false));
             }
 
+            // Deselect territories
             defender.select(None);
             attacker.select(None);
+
             // Enable selection again
             canSelect = true;
         }
@@ -378,12 +390,14 @@ public class MapHandler {
     /**
      * Enable positioning controls to let the user move armies to newly conquered territory from attacking territory
      *
-     * @param SpecialMoving SpecialMoving message received from server
-     * @return Response message with updated displacement to send back to server
+     * @param From Attacker territory
+     * @param To Newly conquered territory
      */
-    public SpecialMoving<ObservableTerritory> specialMoving(SpecialMoving<ObservableTerritory> SpecialMoving) {
-        if(SpecialMoving.From == null)
-            return endTurnMove();
+    public void specialMoving(ObservableTerritory From, ObservableTerritory To) {
+        if(From == null) {
+            endTurnMove();
+            return;
+        }
 
         // Enable end phase button
         Platform.runLater(() -> {
@@ -392,8 +406,8 @@ public class MapHandler {
         });
 
         // Get territories from local map
-        final ObservableTerritory from = map.getTerritory(SpecialMoving.From.Name);
-        final ObservableTerritory to = map.getTerritory(SpecialMoving.To.Name);
+        final ObservableTerritory from = map.getTerritory(From.Name);
+        final ObservableTerritory to = map.getTerritory(To.Name);
         final ObservableUser current = gameController.getUser();
 
         canSelect = true;
@@ -419,24 +433,20 @@ public class MapHandler {
 
         // Notify attackPhase to go ahead with execution
         synchronized (attackPhase){
-            attackPhase.set(false);
             attackPhase.notify();
+
+            // If user has moved armies return new displacement
+            if(to.NewArmies.get() != 0)
+                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(from, to));
+            else
+                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
         }
-
-        // If user has not moved armies return null response
-        if(to.NewArmies.get() == 0)
-            return new SpecialMoving<>(null, null);
-
-        // Else return new displacement
-        return new SpecialMoving<>(from, to);
     }
 
     /**
      * Enable positioning controls between two selected territories to perform final movement at the end of turn
-     *
-     * @return Updated territories state after moving
      */
-    private SpecialMoving<ObservableTerritory> endTurnMove() {
+    private void endTurnMove() {
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
@@ -511,10 +521,10 @@ public class MapHandler {
             from.select(None);
         }
 
-        if(to == null || to.NewArmies.get() == 0)
-            return new SpecialMoving<>(null, null);
-
-        return new SpecialMoving<>(from, to);
+        if(to != null && to.NewArmies.get() != 0)
+            gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(from, to));
+        else
+            gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
     }
 
     /**

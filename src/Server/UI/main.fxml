@@ -10,7 +10,7 @@
 
 <StackPane alignment="center" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.UI.Controller">
    <children>
-      <AnchorPane minHeight="600.0" minWidth="800.0">
+      <AnchorPane minHeight="600.0" minWidth="800.0" style="-fx-background-color: grey;">
          <children>
             <TabPane layoutX="14.0" layoutY="14.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="240.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="25.0">
               <tabs>

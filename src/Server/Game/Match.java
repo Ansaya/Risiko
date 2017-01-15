@@ -359,7 +359,9 @@ public class Match extends MessageReceiver<MessageType> {
                         synchronized (incoming) {
                             incoming.wait();
                         }
-                    } catch (Exception e) {}
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
                 if(incoming.isEmpty())
                     return null;
@@ -408,8 +410,7 @@ public class Match extends MessageReceiver<MessageType> {
 
                 // Get chosen territory
                 MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
-                if(update == null)
-                    return;
+                if(update == null) return;
 
                 // Update game map
                 Territory toUpdate = update.Updated.get(0);
@@ -452,8 +453,7 @@ public class Match extends MessageReceiver<MessageType> {
             // Wait for all players to return initial displacement
             for(int i = playersOrder.size(); i > 0; i--){
                 MapUpdate<Territory> u = waitMessage(MessageType.MapUpdate, -1);
-                if(u == null)
-                    return;
+                if(u == null) return;
 
                 u.Updated.forEach(t -> {
                     t.addArmies(t.NewArmies);
@@ -499,7 +499,7 @@ public class Match extends MessageReceiver<MessageType> {
 
             final int maxDice = battle.atkArmies > battle.defArmies ? battle.defArmies : battle.atkArmies;
 
-            // Compare couples of dice To assign victory
+            // Compare couples of dice to assign victory
             for (int i = 0; i < maxDice; i++) {
                 if(defDice.get(i) >= atkDice.get(i))
                     lostAtk++;
@@ -507,12 +507,12 @@ public class Match extends MessageReceiver<MessageType> {
                     lostDef++;
             }
 
-            // Remove defeated Armies From attacker
+            // Remove defeated armies from attacker
             if(lostAtk > 0)
                 battle.from.canRemoveArmies(lostAtk);
 
-            // Remove defeated Armies From defender, else if cannot remove all Armies From
-            // defender Territory change ownership and add move armies From attacker territory
+            // Remove defeated armies from defender, else if cannot remove all armies from
+            // defender territory change ownership and move armies from attacker territory
             if(!battle.to.canRemoveArmies(lostDef)) {
                 // If player has no more territories, notify defeat to match object
                 if(battle.to.getOwner().getTerritories().size() == 1 && battle.to.getOwner().id != -1)
@@ -528,27 +528,25 @@ public class Match extends MessageReceiver<MessageType> {
             /* Battle phase end */
 
             /* Update */
-            final MapUpdate<Territory> result = new MapUpdate<>(atkDice, defDice, Sounds.battleSoundSelector(lostAtk, lostDef), battle.from, battle.to);
+            // Send update to all players
+            final boolean hasMove = battle.to.getOwner().equals(battle.from.getOwner()) && battle.from.getArmies() > 1;
+            final MapUpdate<Territory> result = new MapUpdate<>(atkDice, defDice, hasMove, Sounds.battleSoundSelector(lostAtk, lostDef), battle.from, battle.to);
+            match.sendAll(MessageType.MapUpdate, result);
+
             // If attacker hasn't conquered the territory or no armies can be moved to it complete battle
-            if(!battle.to.getOwner().equals(battle.from.getOwner()) || battle.from.getArmies() == 1) {
-                // Send update to all players
-                match.sendAll(MessageType.MapUpdate, result);
-                return true;
-            }
+            if(!hasMove) return true;
 
             // Else if there are some armies which can be moved to new territory
-            // send special move to current player and wait for response
-            playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(battle.from, battle.to));
-            final SpecialMoving<Territory> update = waitMessage(MessageType.SpecialMoving, playing.id);
+            // wait for response from attacker
+            final MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, playing.id);
 
-            if(update == null)
-                return false;
+            if(update == null) return false;
 
             // If no other move is performed complete battle
             // else if armies have been moved update game map
-            if(update.From != null)
-                if(battle.from.canRemoveArmies(update.To.NewArmies))
-                    battle.to.addArmies(update.To.NewArmies);
+            if(!update.Updated.isEmpty())
+                if(battle.from.canRemoveArmies(update.Updated.get(1).NewArmies))
+                    battle.to.addArmies(update.Updated.get(1).NewArmies);
 
             // Send new placement to all players
             match.sendAll(MessageType.MapUpdate, result);
@@ -559,33 +557,31 @@ public class Match extends MessageReceiver<MessageType> {
         @Override
         public void run() {
             /* Positioning phase */
-            // Ask for a card combination To get more Armies
+            // Ask for a card combination to get more armies
             playing.SendMessage(MessageType.Cards, new Cards());
 
-            // Calculate standard Armies reinforcement
+            // Calculate standard armies reinforcement
             int newArmies = (playing.getTerritories().size() / 3) >= 3 ? (playing.getTerritories().size() / 3) : 3;
 
-            // Extra Armies due To continent ownership
+            // Extra armies due to continent ownership
             newArmies += match.map.getAreasBonus(playing);
 
-            // Wait for Cards message To return From user
+            // Wait for cards message to return from user
             final Cards redeemed = waitMessage(MessageType.Cards);
-            if(redeemed == null)
-                return;
+            if(redeemed == null) return;
 
             // If there is a combination check for validity
             if(redeemed.combination.size() != 0)
                 newArmies += match.map.playCards(redeemed.combination);
 
-            // Send new Armies To player
+            // Send new armies to player
             playing.SendMessage(MessageType.Positioning, new Positioning(newArmies));
 
             // Wait to get new armies displacement over player's territories
             final MapUpdate<Territory> newPlacement = waitMessage(MessageType.MapUpdate);
-            if(newPlacement == null)
-                return;
+            if(newPlacement == null) return;
 
-            // Update Armies number in game map
+            // Update armies number in game map
             newPlacement.Updated.forEach(t -> {
                 t.addArmies(t.NewArmies);
                 t.NewArmies = 0;
@@ -603,14 +599,12 @@ public class Match extends MessageReceiver<MessageType> {
 
             // Wait for all attack messages from player
             while (true) {
-                // Get attack message From player
+                // Get attack message from player
                 Battle<Territory> newBattle = waitMessage(MessageType.Battle);
-                if(newBattle == null)
-                    return;
+                if(newBattle == null) return;
 
                 // If armies are zero end attack phase
-                if(newBattle.atkArmies == 0)
-                    break;
+                if(newBattle.atkArmies == 0) break;
 
                 // If more than one army is present on defender territory ask player how many he want to use
                 if(newBattle.to.getArmies() > 1) {
@@ -626,16 +620,14 @@ public class Match extends MessageReceiver<MessageType> {
 
                         // Wait for response
                         newBattle = waitMessage(MessageType.Battle, defenderId);
-                        if(newBattle == null)
-                            return;
+                        if(newBattle == null) return;
                     }
                 }
 
                 // Perform battle
-                if(!Battle(newBattle))
-                    return;
+                if(!Battle(newBattle)) return;
 
-                // After each battle check if Mission completed
+                // After each battle check if mission completed
                 if(match.map.checkMission(playing, playing.getMission())){
                     // If player wins notify match object and return
                     match.setIncoming(playing.id,
@@ -645,23 +637,22 @@ public class Match extends MessageReceiver<MessageType> {
                 }
             }
 
-            // If player has conquered at least one new Territory send him a card
+            // If player has conquered at least one new territory send him a card
             if(beforeAtkTerritories < playing.getTerritories().size())
                 playing.SendMessage(MessageType.Cards, new Cards(match.map.nextCard()));
 
             // Send empty positioning to request final move
-            playing.SendMessage(MessageType.SpecialMoving, new SpecialMoving<>(null, null));
-            final SpecialMoving<Territory> endMove = waitMessage(MessageType.SpecialMoving);
-            if(endMove == null)
-                return;
+            playing.SendMessage(MessageType.MapUpdate, new MapUpdate<>(true));
+            final MapUpdate<Territory> endMove = waitMessage(MessageType.MapUpdate);
+            if(endMove == null) return;
 
             // If final move is performed update map and players
-            if(endMove.From != null){
-                endMove.From.canRemoveArmies(endMove.To.NewArmies);
-                endMove.To.addArmies(endMove.To.NewArmies);
-                endMove.To.NewArmies = 0;
+            if(!endMove.Updated.isEmpty()){
+                endMove.Updated.get(0).canRemoveArmies(endMove.Updated.get(1).NewArmies);
+                endMove.Updated.get(1).addArmies(endMove.Updated.get(1).NewArmies);
+                endMove.Updated.get(1).NewArmies = 0;
 
-                match.sendAll(MessageType.MapUpdate, new MapUpdate<>(endMove.From, endMove.To));
+                match.sendAll(MessageType.MapUpdate, endMove);
             }
 
             // Notify end of turn when completed
