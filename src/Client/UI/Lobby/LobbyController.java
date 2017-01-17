@@ -11,6 +11,7 @@ import Game.Connection.MatchLobby;
 import Game.Map.Maps;
 import Game.StateType;
 import com.jfoenix.controls.*;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -198,6 +199,11 @@ public class LobbyController implements Initializable {
          * @param Update Server update message
          */
         public void updateTable(MatchLobby<Match<ObservableUser>> Update) {
+            if(!Platform.isFxApplicationThread()) {
+                Platform.runLater(() -> updateTable(Update));
+                return;
+            }
+
             setVisible(true);
             Update.toRemove.forEach(getItems()::remove);
             Update.toAdd.forEach(getItems()::add);
@@ -218,6 +224,11 @@ public class LobbyController implements Initializable {
         }
 
         public void updateTable(Lobby<ObservableUser> Update) {
+            if(!Platform.isFxApplicationThread()) {
+                Platform.runLater(() -> updateTable(Update));
+                return;
+            }
+
             setVisible(true);
             getItems().removeIf(Update.toRemove::contains);
             getItems().addAll(Update.toAdd);
