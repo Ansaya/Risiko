@@ -159,7 +159,7 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(Maps MapName, Pane MapPane, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+    public MapHandler(Maps MapName, Pane MapContainer, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
 
         try {
             map = new Map<>(MapName, ObservableTerritory.class);
@@ -168,22 +168,19 @@ public class MapHandler {
             throw new ClassNotFoundException("Can not load requested map.");
         }
 
-        ObservableTerritory.setMapPane(MapPane);
         final SVGPath connections = new SVGPath();
         connections.setContent(map.ConnectionsPath);
         connections.setStroke(Color.BLACK);
-        MapPane.getChildren().add(connections);
+        MapContainer.getChildren().add(connections);
 
         if(UsersList != null)
             UsersList.forEach(u -> usersList.put(u.Id.get(), u));
 
-        MapPane.getChildren().forEach(l -> {
-            if(l instanceof Label) map.getTerritory(l.getId()).initTerritory(this, (Label)l);
-        });
+        map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
     }
 
     /**
-     * Update current map with received information from server
+     * Update current map with received information from server. Trigger special move or end turn move if present
      *
      * @param MapUpdate MapUpdate message from server
      */
@@ -193,36 +190,39 @@ public class MapHandler {
             return;
         }
 
+        // Play relative update sound
         MapUpdate.Sound.play();
-
-        final AtomicBoolean changeOwner = new AtomicBoolean(false);
 
         MapUpdate.Updated.forEach((u) -> {
             synchronized (map) {
                 ObservableTerritory t = map.getTerritory(u.Name);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
-                if (!t.getOwner().equals(u.getOwner())) {
+                if (!t.getOwner().equals(u.getOwner()))
                     t.setOwner(usersList.get(u.getOwner().Id.get()));
-                    changeOwner.set(true);
-                }
             }
         });
 
-        // If standard armies displacement play relative sound
-        if(MapUpdate.AttackDice != null && showDice != null) {
-            // Display dice result
+        // If update has dice display dice result in UI
+        if(MapUpdate.AttackDice != null && showDice != null)
             showDice.accept(MapUpdate.AttackDice, MapUpdate.DefenceDice);
-        }
 
-        // If no special move is expected notify attack phase
+        // If update has move
         if (MapUpdate.HasMove) {
-            final Thread move = new Thread(() ->
-                    specialMoving(MapUpdate.Updated.size() == 2 ? MapUpdate.Updated.get(0) : null,
-                            MapUpdate.Updated.size() == 2 ? MapUpdate.Updated.get(1) : null));
+            final Thread move;
+
+            // If player is in attack phase has to perform special move
+            if(attackPhase.get())
+                move = new Thread(() -> specialMove(map.getTerritory(MapUpdate.Updated.get(0).Name), map.getTerritory(MapUpdate.Updated.get(1).Name)));
+            else if(MapUpdate.Updated.isEmpty()) { // Else if update is empty has to perform end turn movement
+                move = new Thread(this::endTurnMove);
+            }
+            else // Else HasMove is for another player
+                return;
+
             move.setDaemon(true);
             move.start();
-        } else if(attackPhase.get()) {
+        } else if(attackPhase.get()) { // Else if update has no move, notify attackPhase to go ahead if in attack phase
             synchronized (attackPhase) {
                 attackPhase.notify();
             }
@@ -393,21 +393,20 @@ public class MapHandler {
      * @param From Attacker territory
      * @param To Newly conquered territory
      */
-    public void specialMoving(ObservableTerritory From, ObservableTerritory To) {
-        if(From == null) {
-            endTurnMove();
-            return;
-        }
-
+    private void specialMove(ObservableTerritory From, ObservableTerritory To) {
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
             endPhaseBtn.setText("Continue");
         });
 
-        // Get territories from local map
-        final ObservableTerritory from = map.getTerritory(From.Name);
-        final ObservableTerritory to = map.getTerritory(To.Name);
+        // Set armies as new armies to enable movement
+        Platform.runLater(() -> {
+            synchronized (map) {
+                From.NewArmies.set(From.getArmies() - 1);
+                From.Armies.set(1);
+            }
+        });
         final ObservableUser current = gameController.getUser();
 
         canSelect = true;
@@ -418,7 +417,7 @@ public class MapHandler {
             if(st == null) break;
 
             // Can select only 'to' or 'from'
-            if(!st.Selected.equals(from) && !st.Selected.equals(to)) {
+            if(!st.Selected.equals(From) && !st.Selected.equals(To)) {
                 Main.showDialog("Special moving error", "Perform this move only between highlighted territories.", "Continue");
                 continue;
             }
@@ -436,8 +435,8 @@ public class MapHandler {
             attackPhase.notify();
 
             // If user has moved armies return new displacement
-            if(to.NewArmies.get() != 0)
-                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(from, to));
+            if(To.NewArmies.get() != 0)
+                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(From, To));
             else
                 gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
         }

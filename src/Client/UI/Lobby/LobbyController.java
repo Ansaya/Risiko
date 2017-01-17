@@ -21,7 +21,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Callback;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -84,7 +83,7 @@ public class LobbyController implements Initializable {
         startMatchBtn.setStyle("-fx-background-color: #44B449");
         startMatchBtn.setOnMouseClicked(evt -> {
             if(playersTable.getItems().size() > 1)
-                GameController.getInstance().RouteMessage("Turn#Init");
+                GameController.getInstance().SendMessage(MessageType.Turn, "");
         });
 
         // Exit match room button
@@ -169,16 +168,24 @@ public class LobbyController implements Initializable {
             final TableColumn<Match, Integer> idColumn = new TableColumn<>("ID");
             final TableColumn<Match, String> nameColumn = new TableColumn<>("Match");
             final TableColumn<Match, Maps> gameMapColumn = new TableColumn<>("Game map");
+            final TableColumn<Match, String> playersColumn = new TableColumn<>("Players");
             idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
             nameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
             gameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
-            getColumns().addAll(idColumn, nameColumn, gameMapColumn);
+            playersColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Players.size() + "/6"));
+            getColumns().addAll(idColumn, nameColumn, gameMapColumn, playersColumn);
 
             this.setRowFactory(tv -> {
                 final TableRow<Match> row = new TableRow<>();
                 row.setOnMouseClicked(evt -> {
-                    if(evt.getClickCount() > 1 && !row.isEmpty())
-                        GameController.getInstance().SendMessage(MessageType.Match, row.getItem());
+                    if(evt.getClickCount() > 1 && !row.isEmpty()) {
+                        final Match match = row.getItem();
+                        if(match.Players.size() == 6 && !match.IsStarted)
+                            return;
+
+                        final Match request = new Match<>(match.Id, match.Name, match.GameMap, GameController.getInstance().getUser());
+                        GameController.getInstance().SendMessage(MessageType.Match, request);
+                    }
                 });
 
                 return row;
@@ -193,12 +200,7 @@ public class LobbyController implements Initializable {
         public void updateTable(MatchLobby<Match<ObservableUser>> Update) {
             setVisible(true);
             Update.toRemove.forEach(getItems()::remove);
-
-            final ObservableUser user = GameController.getInstance().getUser();
-            Update.toAdd.forEach(m -> {
-                m.Players.add(user);
-                getItems().add(m);
-            });
+            Update.toAdd.forEach(getItems()::add);
         }
     }
 
@@ -208,11 +210,9 @@ public class LobbyController implements Initializable {
 
         private final TableColumn<ObservableUser, String> usernameColumn = new TableColumn<>("Username");
 
-        private final Callback<TableColumn<ObservableUser, Integer>, TableCell<ObservableUser, Integer>> defaultCellFactory = idColumn.getCellFactory();
-
         public PlayersTable() {
-            idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getId()));
-            usernameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getUsername()));
+            idColumn.setCellValueFactory(data -> data.getValue().Id.asObject());
+            usernameColumn.setCellValueFactory(data -> data.getValue().Username);
 
             getColumns().addAll(idColumn, usernameColumn);
         }
@@ -243,7 +243,7 @@ public class LobbyController implements Initializable {
         }
 
         public void removeUserColor() {
-            idColumn.setCellFactory(defaultCellFactory);
+            idColumn.setCellValueFactory(data -> data.getValue().Id.asObject());
         }
     }
 }

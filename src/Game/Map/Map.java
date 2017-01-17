@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -197,9 +198,9 @@ public class Map<T extends Territory> {
                 if(jt.has("LabelX"))
                     territoryLabelX.set(territory, jt.get("LabelX").getAsFloat());
                 if(jt.has("LabelY"))
-                    territoryLabelX.set(territory, jt.get("LabelY").getAsFloat());
+                    territoryLabelY.set(territory, jt.get("LabelY").getAsFloat());
                 if(jt.has("LabelR"))
-                    territoryLabelX.set(territory, jt.get("LabelR").getAsFloat());
+                    territoryLabelR.set(territory, jt.get("LabelR").getAsFloat());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -326,6 +327,15 @@ public class Map<T extends Territory> {
         }
 
         return cardDeck.next();
+    }
+
+    /**
+     * Put given cards back to cards deck
+     *
+     * @param Cards Cards to return
+     */
+    public void returnCards(Collection<Card> Cards) {
+        cardDeck.setBack(Cards.toArray(new Card[Cards.size()]));
     }
 
     /**

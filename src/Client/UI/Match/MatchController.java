@@ -1,18 +1,19 @@
 package Client.UI.Match;
 
+import Client.Game.Connection.MessageType;
 import Client.Game.GameController;
 import Client.Game.Observables.*;
 import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Match view controller
@@ -78,7 +80,7 @@ public class MatchController implements Initializable {
     @FXML
     private Button missionBtn;
 
-    private DiceBox diceBox = new DiceBox(125);
+    private DiceBox diceBox = new DiceBox(120);
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -139,20 +141,21 @@ public class MatchController implements Initializable {
     }
 
     private void setMapHandler(Maps MapName, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
-        if(UsersList != null) {
-            final ObservableUser current = GameController.getInstance().getUser();
-            UsersList.forEach(u -> {
-                if (u.equals(current))
-                    current.Color = u.Color;
+        final ObservableUser current = GameController.getInstance().getUser();
+        final AtomicBoolean imPlaying = new AtomicBoolean(false);
+        UsersList.forEach(u -> {
+            if (u.equals(current)) {
+                current.Color = u.Color;
+                imPlaying.set(true);
+            }
 
-                final ImageView iv = new ImageView(u.Color.armyImg);
-                iv.setX(30.0);
-                iv.setPreserveRatio(true);
+            final ImageView iv = new ImageView(u.Color.armyImg);
+            iv.setX(30.0);
+            iv.setPreserveRatio(true);
 
-                usersRoot.getChildren().add(new TreeItem<>(u, iv));
-            });
-            playersList.setPrefHeight(35.0 * UsersList.size() + 30.0);
-        }
+            usersRoot.getChildren().add(new TreeItem<>(u, iv));
+        });
+        playersList.setPrefHeight(35.0 * UsersList.size() + 30.0);
 
         mapHandler = new MapHandler(MapName, mapPane, UsersList);
         mapPrefWidth = mapHandler.map.PrefWidth;
@@ -162,6 +165,10 @@ public class MatchController implements Initializable {
         mapHandler.setMissionButton(missionBtn);
         mapHandler.setPhaseButton(endTurnBtn);
         mapHandler.setShowDice(diceBox::showDice);
+
+        // If user is not a player request update for current map conditions
+        if(!imPlaying.get())
+            GameController.getInstance().SendMessage(MessageType.Turn, "Update");
     }
 
     private void setCardsHandler() {
@@ -186,11 +193,12 @@ public class MatchController implements Initializable {
 
         public DiceBox(double width) {
             setSpacing(10.0);
-            setStyle("-fx-background-color: blueviolet");
+            setPadding(new Insets(5.0));
+            setStyle("-fx-background-color: rgba(0,0,0,.35);-fx-border-radius: 10px");
             getChildren().addAll(attackDice, defenseDice);
 
             widthProperty().addListener((ob, oldV, newV) -> {
-                final double dieWidth = ((double)newV - 10) / 2;
+                final double dieWidth = ((double)newV - 20) / 2;
 
                 attackDice.setPrefWidth(dieWidth);
                 defenseDice.setPrefWidth(dieWidth);
@@ -199,20 +207,13 @@ public class MatchController implements Initializable {
 
             setPrefWidth(width);
 
-            final FadeTransition ft = new FadeTransition(Duration.millis(500), this);
-            ft.setFromValue(1.0);
-            ft.setToValue(0.0);
-
-            final Timeline t = new Timeline( new KeyFrame(Duration.seconds(2), ae -> {
-                ft.playFromStart();
-                setVisible(false);
-            }));
+            final Timeline t = new Timeline( new KeyFrame(Duration.seconds(3), ae -> setVisible(false)));
 
             visibleProperty().addListener((ob, oldV, newV) -> {
                 if(newV) t.playFromStart();
             });
 
-            setOnMouseClicked(evt -> ft.playFromStart());
+            setOnMouseClicked(evt -> setVisible(false));
 
             for (int i = 0; i < 6; i++)
                 dice[i] = new Image(MatchController.class.getResource((i+1) + ".png").toExternalForm());
@@ -228,8 +229,8 @@ public class MatchController implements Initializable {
             attackDice.getChildren().clear();
             defenseDice.getChildren().clear();
 
-            AttackDice.forEach(die -> attackDice.getChildren().add(getDie(dice[die], true)));
-            DefenseDice.forEach(die -> defenseDice.getChildren().add(getDie(dice[die], false)));
+            AttackDice.forEach(die -> attackDice.getChildren().add(getDie(dice[die - 1], true)));
+            DefenseDice.forEach(die -> defenseDice.getChildren().add(getDie(dice[die - 1], false)));
 
             setVisible(true);
         }
@@ -241,15 +242,20 @@ public class MatchController implements Initializable {
          * @param isAtk True if attack die, false if defense die
          * @return Initialized ImageView for requested die
          */
-        private ImageView getDie(Image Die, boolean isAtk) {
+        private Pane getDie(Image Die, boolean isAtk) {
             final ImageView iv = new ImageView(Die);
-            if(isAtk)
-                iv.setStyle("-fx-background-color: darkred");
-            else
-                iv.setStyle("-fx-background-color: dodgerblue");
             iv.setFitWidth(defenseDice.getPrefWidth());
+            iv.setPreserveRatio(true);
+            iv.setStyle("-fx-effect: dropshadow(gaussian, rgba(0,0,0,.50), 3, 1.0, 0, 0)");
 
-            return iv;
+            final Pane p = new Pane(iv);
+            if(isAtk)
+                p.setStyle("-fx-background-color: #b00000");
+            else
+                p.setStyle("-fx-background-color: dodgerblue");
+            p.setPrefSize(defenseDice.getPrefWidth(), defenseDice.getPrefWidth());
+
+            return p;
         }
     }
 }

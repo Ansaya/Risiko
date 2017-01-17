@@ -47,7 +47,10 @@ public abstract class MessageReceiver<T> {
 
         try {
             _instance.join();
-        } catch (Exception e) {}
+        } catch (InterruptedException e) {
+            System.err.println(name + ": Interrupted exception during executor join.");
+            e.printStackTrace();
+        }
     }
 
     /**

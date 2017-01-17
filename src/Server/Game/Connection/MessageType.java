@@ -15,7 +15,7 @@ public enum MessageType {
     MatchLobby(new TypeToken<MatchLobby<Server.Game.Match>>(){}.getType()),
     Match(new TypeToken<Match<Player>>(){}.getType()),
     Mission(Game.Connection.Mission.class),
-    Turn(null),
+    Turn(String.class),
     Battle(new TypeToken<Battle<Territory>>(){}.getType()),
     Cards(Game.Connection.Cards.class),
     Positioning(Game.Connection.Positioning.class),

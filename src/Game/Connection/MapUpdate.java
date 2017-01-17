@@ -27,27 +27,28 @@ public class MapUpdate<T extends Territory> {
     /**
      * Standard update after armies displacement
      *
-     * @param Updated Updated territories after displacement
+     * @param Updated Updated territories after displacement. If null HasMove is set to true and will trigger end turn movement
      */
+    @SafeVarargs
     public MapUpdate(T... Updated) {
-        if(Updated != null)
+        if(Updated != null) {
             this.Updated.addAll(Arrays.asList(Updated));
+            HasMove = false;
+        }
+        else
+            HasMove = true;
+
         AttackDice = null;
         DefenceDice = null;
-        HasMove = false;
         Sound = Sounds.Match;
     }
 
-    /**
-     * MapUpdate to trigger end turn movement
-     *
-     * @param isMovement Set true to trigger end turn moving
-     */
-    public MapUpdate(boolean isMovement) {
+    public MapUpdate(Collection<T> Updated) {
+        this.Updated.addAll(Updated);
+        HasMove = false;
         AttackDice = null;
         DefenceDice = null;
-        HasMove = isMovement;
-        Sound = null;
+        Sound = Sounds.Match;
     }
 
     /**

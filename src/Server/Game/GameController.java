@@ -3,13 +3,17 @@ package Server.Game;
 import Game.Connection.MatchLobby;
 import Game.Map.Army.Color;
 import Game.Connection.Chat;
+import Game.Map.Maps;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
-
+import javafx.collections.ObservableMap;
 import java.lang.reflect.Type;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -26,7 +30,7 @@ public class GameController extends MessageReceiver<MessageType> {
     /**
      * Currently playing matches' list
      */
-    private final HashMap<Integer, Match> matches = new HashMap<>();
+    private final ObservableMap<Integer, Match> matches = FXCollections.observableHashMap();
 
     /**
      * Return requested match
@@ -46,9 +50,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     private final HashMap<Integer, Player> lobby = new HashMap<>();
 
-    private volatile ObservableList<Player> Players = null;
-
-    private volatile ObservableList<Match> Matches = null;
+    private volatile ObservableList<Player> players;
 
     private GameController() {
         super("GameController");
@@ -78,28 +80,40 @@ public class GameController extends MessageReceiver<MessageType> {
                 }
 
                 matches.put(match.Id, match);
-                if(Matches != null)
-                    Matches.add(match);
 
                 match.addPlayer(requested.Players.get(0));
 
-                final MatchLobby<Match> newMatch = new MatchLobby<>(match, null);
-                lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, newMatch));
+                sendAll(MessageType.MatchLobby, new MatchLobby<>(match, null));
 
                 System.out.println("Game controller: New match created with id " + match.Id);
             }
-            else
+            else {
                 match.addPlayer(requested.Players.get(0));
+                if(!match.isStarted())
+                    sendAll(MessageType.MatchLobby, new MatchLobby<>(match, match));
+            }
         });
     }
 
     /**
      * Starts game controller
+     *
+     * @param Players TableView players list
+     * @param Matches TableView matches list
      */
     public void init(ObservableList<Player> Players, ObservableList<Match> Matches) {
 
-        this.Players = Players;
-        this.Matches = Matches;
+        if(Players != null)
+            players = Players;
+
+        if(Matches != null)
+            matches.addListener((MapChangeListener.Change<? extends Integer, ? extends Match> change) -> {
+               if(change.wasAdded())
+                   Matches.add(change.getValueAdded());
+
+               if(change.wasRemoved())
+                   Matches.remove(change.getValueRemoved());
+            });
 
         // Start message receiver
         this.startExecutor();
@@ -119,7 +133,7 @@ public class GameController extends MessageReceiver<MessageType> {
         this.stopExecutor();
         System.out.println("Game controller: Message receiver stopped.");
 
-        final Chat<Player> end = new Chat<>(Player.getAI(-1, Color.RED), "Server is shutting down.");
+        final Chat<Player> end = new Chat<>(Player.getAI(), "Server is shutting down.");
 
         // Send end message To matches Players and close connection
         matches.forEach((matchId, m) -> endMatch(m));
@@ -134,6 +148,10 @@ public class GameController extends MessageReceiver<MessageType> {
         System.out.println("Game controller: All users released. Ready To join.");
     }
 
+    private void sendAll(MessageType Type, Object Message) {
+        lobby.forEach((id, p) -> p.SendMessage(Type, Message));
+    }
+
     /**
      * Add a new user to the lobby
      *
@@ -145,8 +163,8 @@ public class GameController extends MessageReceiver<MessageType> {
 
         lobby.put(Id, newP);
 
-        if(Players != null)
-            Players.add(newP);
+        if(players != null)
+            players.add(newP);
 
         // Send current matches list to new player
         newP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
@@ -161,7 +179,12 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     void returnPlayer(Player Player) {
 
-        System.out.println("Game controller: Player " + Player.getUsername() + " got back From match.");
+        System.out.println("Game controller: Player " + Player.getUsername() + " got back from match.");
+
+        // Send update to all players
+        final Match match = matches.get(Player.getMatchId());
+        if(!match.isStarted())
+            sendAll(MessageType.MatchLobby, new MatchLobby<>(match, match));
 
         // Clean player and put it back to lobby
         Player.exitMatch();
@@ -174,17 +197,14 @@ public class GameController extends MessageReceiver<MessageType> {
     /**
      * User is disconnecting from game
      *
-     * @param PlayerId Player to remove from lobby
+     * @param Player Player to remove from lobby
+     * @param Remove True if player has exited, false if player has entered a match
      */
-    void releasePlayer(int PlayerId, boolean Remove) {
-        releasePlayer(lobby.get(PlayerId), Remove);
-    }
-
     void releasePlayer(Player Player, boolean Remove) {
         lobby.remove(Player.id);
 
-        if(Remove && Players != null)
-            Players.removeIf(Player::equals);
+        if(Remove && players != null)
+            players.removeIf(Player::equals);
     }
 
     /**
@@ -193,12 +213,9 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param Match Match to remove
      */
     void endMatch(Match Match) {
-        Match.terminate();
+        lobby.putAll(Match.terminate());
         System.out.println("Game controller: Match " + Match.Id + " terminated.");
         matches.remove(Match.Id);
-
-        if(Matches != null)
-            Matches.removeIf(Match::equals);
 
         lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, new MatchLobby<>(null, Match)));
     }
@@ -208,6 +225,7 @@ public class GameController extends MessageReceiver<MessageType> {
             builder = new GsonBuilder();
 
         builder.registerTypeAdapter(Player.class, new PlayerDeserializer(this));
+        builder.registerTypeAdapter(Match.class, new MatchSerializer());
 
         return builder;
     }
@@ -220,10 +238,31 @@ public class GameController extends MessageReceiver<MessageType> {
             this.gc = GC;
         }
 
-
         @Override
         public Player deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return gc.lobby.get(json.getAsJsonObject().get("id").getAsInt());
+        }
+    }
+
+    public static class MatchSerializer implements JsonSerializer<Server.Game.Match> {
+        @Override
+        public JsonElement serialize(Match src, Type typeOfSrc, JsonSerializationContext context) {
+            final JsonObject jm = new JsonObject();
+
+            jm.addProperty("Id", src.Id);
+            jm.addProperty("Name", src.Name);
+            jm.addProperty("GameMap", src.GameMap.name());
+            jm.addProperty("IsStarted", src.isStarted());
+
+            final JsonArray pa = new JsonArray();
+            src.getPlayers().forEach((id, p) -> {
+                if(p.isPlaying() || !src.isStarted())
+                    pa.add(context.serialize(p, Player.class));
+            });
+
+            jm.add("Players", pa);
+
+            return jm;
         }
     }
 }

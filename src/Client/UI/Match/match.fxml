@@ -13,63 +13,20 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane minHeight="600.0" minWidth="1067.0" prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Match.MatchController">
+<StackPane xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Match.MatchController">
 
     <AnchorPane fx:id="parent" style="-fx-background-color: darkgrey;">
 
         <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="25.0">
-            <Pane fx:id="mapPane" AnchorPane.leftAnchor="-160.0" AnchorPane.topAnchor="-110.0">
-                <Label id="Northwest Territory" layoutX="250.0" layoutY="192.0" text="Northwest Territory" />
-                <Label id="Alaska" layoutX="210.0" layoutY="198.0" text="Alaska" />
-                <Label id="Alberta" layoutX="269.0" layoutY="231.0" text="Alberta" />
-                <Label id="Ontario" layoutX="319.0" layoutY="248.0" text="Ontario" />
-                <Label id="Quebec" layoutX="370.0" layoutY="241.0" text="Quebec" />
-                <Label id="Western United States" layoutX="272.0" layoutY="270.0" prefWidth="42.0" text="Western United States" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Eastern United States" layoutX="328.0" layoutY="295.0" prefWidth="39.0" text="Eastern United States" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Greenland" layoutX="408.0" layoutY="161.0" text="Greenland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Central America" layoutX="260.0" layoutY="345.0" prefWidth="61.0" text="Central America" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Venezuela" layoutX="330.0" layoutY="395.0" text="Venezuela" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Brazil" layoutX="390.0" layoutY="438.0" text="Brazil" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Peru" layoutX="345.0" layoutY="460.0" text="Peru" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Argentina" layoutX="348.0" layoutY="510.0" text="Argentina" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Iceland" layoutX="472.0" layoutY="220.0" text="Iceland" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Great Britain" layoutX="455.0" layoutY="280.0" prefWidth="49.0" text="Great Britain" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Ukraine" layoutX="596.0" layoutY="260.0" text="Ukraine" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Scandinavia" layoutX="521.0" layoutY="212.0" rotate="-48.4" text="Scandinavia" textAlignment="RIGHT" textOverrun="CLIP" wrapText="true" />
-                <Label id="Northern Europe" layoutX="518.0" layoutY="285.0" prefWidth="50.0" text="Northern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Southern Europe" layoutX="524.0" layoutY="320.0" prefWidth="50.0" text="Southern Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Western Europe" layoutX="460.0" layoutY="345.0" prefWidth="50.0" text="Western Europe" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="North Africa" layoutX="490.0" layoutY="430.0" prefWidth="50.0" text="North Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Egypt" layoutX="545.0" layoutY="400.0" text="Egypt" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="East Africa" layoutX="585.0" layoutY="435.0" prefWidth="29.0" text="East Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Congo" layoutX="557.0" layoutY="495.0" text="Congo" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="South Africa" layoutX="557.0" layoutY="530.0" prefHeight="26.0" prefWidth="39.0" text="South Africa" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Madagascar" layoutX="618.0" layoutY="553.0" rotate="-66.8" text="Madagascar" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Middle East" layoutX="605.0" layoutY="385.0" prefWidth="45.0" text="Middle East" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="India" layoutX="703.0" layoutY="375.0" text="India" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Indonesia" layoutX="762.0" layoutY="474.0" text="Indonesia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="New Guinea" layoutX="824.0" layoutY="460.0" text="New Guinea" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Western Australia" layoutX="782.0" layoutY="535.0" prefWidth="58.0" text="Western Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Eastern Australia" layoutX="830.0" layoutY="519.0" prefWidth="58.0" text="Eastern Australia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Siam" layoutX="757.0" layoutY="394.0" text="Siam" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="China" layoutX="735.0" layoutY="330.0" text="China" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Mongolia" layoutX="750.0" layoutY="285.0" text="Mongolia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Japan" layoutX="835.0" layoutY="297.0" text="Japan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Kamchatka" layoutX="812.0" layoutY="181.0" text="Kamchatka" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Irkutsk" layoutX="744.0" layoutY="255.0" text="Irkutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Yakutsk" layoutX="759.0" layoutY="185.0" text="Yakutsk" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Siberia" layoutX="710.0" layoutY="215.0" text="Siberia" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Ural" layoutX="671.0" layoutY="220.0" text="Ural" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-                <Label id="Afghanistan" layoutX="649.0" layoutY="300.0" text="Afghanistan" textAlignment="CENTER" textOverrun="CLIP" wrapText="true" />
-            </Pane>
+            <Pane fx:id="mapPane" AnchorPane.leftAnchor="-160.0" AnchorPane.topAnchor="-110.0"></Pane>
         </AnchorPane>
-       <VBox alignment="TOP_CENTER" prefWidth="350.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+       <VBox alignment="TOP_CENTER" prefWidth="325.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
           <children>
-             <JFXTreeTableView fx:id="playersList" styleClass="playersList" minHeight="0.0" opacity="0.7" showRoot="false">
+             <JFXTreeTableView fx:id="playersList" opacity="0.7" showRoot="false" styleClass="playersList">
                <columns>
-                  <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="90.0" prefWidth="90.0" resizable="false" text="Id" />
-                  <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="130.0" prefWidth="130.0" resizable="false" text="Username" />
-                  <TreeTableColumn fx:id="territoriesColumn" editable="false" maxWidth="125.0" prefWidth="125.0" resizable="false" text="Territories" />
+                  <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Id" />
+                  <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="-1.0" minWidth="130.0" prefWidth="-1.0" resizable="false" text="Username" />
+                  <TreeTableColumn fx:id="territoriesColumn" editable="false" maxWidth="125.0" prefWidth="75.0" resizable="false" text="Territories" />
                </columns>
                <effect>
                   <DropShadow />

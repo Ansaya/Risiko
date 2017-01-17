@@ -33,9 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ObservableTerritory extends Territory<ObservableUser> {
 
-    private static Pane mapPane;
-
-    public static void setMapPane(Pane MapPane){ mapPane = MapPane; }
+    private volatile transient Pane mapContainer;
 
     /**
      * SVGPath node corresponding To this Territory
@@ -46,11 +44,6 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      * Currently displayed node list
      */
     private final transient ImageView armyImg = new ImageView();
-
-    /**
-     * Label containing Territory name
-     */
-    private volatile transient Label label;
 
     /**
      * Armies currently placed on the Territory
@@ -101,16 +94,20 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     public int getArmies() { return Armies.add(NewArmies.get()).get(); }
 
     /**
-     * Instance of map Territory with reference To UI Territory
+     * Instance of map Territory with reference to UI Territory
      *
      * @param MapHandler Map handler for this territory
-     * @param Label Label for this Territory in UI
      */
-    public void initTerritory(MapHandler MapHandler, Label Label) {
-        this.label = Label;
-        label.setText(this.Name.toUpperCase());
-        label.setFont(new Font("Trebuchet MS", 8.5));
-        label.setMouseTransparent(true);    // Set label mouse transparent To avoid selection issues
+    public void loadGraphic(MapHandler MapHandler, Pane MapContainer) {
+        this.mapContainer = MapContainer;
+
+        // Name label
+        final Label name = new Label(Name.toUpperCase().replaceAll(" ", "\n"));
+        name.setMouseTransparent(true);
+        name.setRotate(LabelR);
+        name.getStyleClass().add("name");
+
+        // Territory image
         svgTerritory.setContent(this.SvgPath);
         svgTerritory.setStroke(Color.BLACK);
         svgTerritory.setStrokeWidth(1.5f);
@@ -137,12 +134,15 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         final StackPane sp = new StackPane(armyImg, l);
         sp.prefWidth(40.0f);
         sp.prefHeight(40.0f);
-        sp.setLayoutX(getCenterX(svgTerritory) + this.ArmyX);
-        sp.setLayoutY(getCenterY(svgTerritory) + this.ArmyY);
         sp.setMouseTransparent(true);
 
         Platform.runLater(() -> {
-            mapPane.getChildren().addAll(svgTerritory, sp);
+            name.setLayoutX(getCenterX(svgTerritory) + LabelX);
+            name.setLayoutY(getCenterY(svgTerritory) + LabelY);
+            sp.setLayoutX(getCenterX(svgTerritory) + ArmyX);
+            sp.setLayoutY(getCenterY(svgTerritory) + ArmyY);
+
+            mapContainer.getChildren().addAll(name, sp, svgTerritory);
             svgTerritory.toBack();
         });
     }
@@ -186,7 +186,9 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         synchronized (useArmies){
             try {
                 useArmies.wait();
-            } catch (Exception e){}
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
         }
 
         return useArmies.get();
@@ -206,7 +208,9 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         synchronized (useArmies){
             try {
                 useArmies.wait();
-            } catch (Exception e){}
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
         }
 
         return useArmies.get();
@@ -229,8 +233,8 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         list.setSpacing(15);
         list.addAnimatedNode(mainBtn, (expanded)->
                 new ArrayList<KeyValue>(){{ add(new KeyValue(mainBtn.getGraphic().rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
-        list.setLayoutX(getCenterX(label) - 20.0f);
-        list.setLayoutY(getCenterY(label) - 20.0f);
+        list.setLayoutX(getCenterX(svgTerritory) - 20.0f);
+        list.setLayoutY(getCenterY(svgTerritory) - 20.0f);
 
         final EventHandler<MouseEvent> handler = evt -> {
             final int def = Integer.parseInt(((Button) evt.getSource()).getText());
@@ -240,7 +244,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             }
 
             // After choice remove unnecessary UI controls
-            mapPane.getChildren().remove(list);
+            mapContainer.getChildren().remove(list);
         };
 
         final JFXButton btn1 = nodeButton("1", cssClass, false);
@@ -256,20 +260,20 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             list.addAnimatedNode(btn3);
         }
 
-        // Check where To display additional buttons if near window border
+        // Check where to display additional buttons if near window border
         if(list.getLayoutY() < 250.0)
-            list.setRotate(180);
+            list.setRotate(180.0);
         else
-            list.setRotate(0);
+            list.setRotate(0.0);
 
         // Display useArmies list in UI
         if(Platform.isFxApplicationThread()) {
-            mapPane.getChildren().add(list);
+            mapContainer.getChildren().add(list);
             list.animateList();
         }
         else
             Platform.runLater(() -> {
-                mapPane.getChildren().add(list);
+                mapContainer.getChildren().add(list);
                 list.animateList();
             });
     }
@@ -277,9 +281,9 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     /**
      * Button formatter To build node lists
      *
-     * @param Text Text To put inside node
-     * @param cssClass Class identifier To add To animated-option-button-*
-     * @param label Specify To add text as graphic inside button
+     * @param Text Text to put inside node
+     * @param cssClass Class identifier to add to animated-option-button-*
+     * @param label Specify to add text as graphic inside button
      * @return Formatted button as specified
      */
     private JFXButton nodeButton(String Text, String cssClass, boolean label) {
@@ -301,7 +305,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     }
 
     /**
-     * Get X center coordinates of given label in respect To his parent
+     * Get X center coordinates of given node in respect to his parent
      *
      * @param node Node to get center of
      * @return X center position in respect of parent of given node
@@ -311,7 +315,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     }
 
     /**
-     * Get Y center coordinates of given label in respect To his parent
+     * Get Y center coordinates of given node in respect to his parent
      *
      * @param node Node to get center of
      * @return Y center position in respect of parent of given node

@@ -16,7 +16,12 @@
     -fx-text-alignment: center;
 }
 
-.mapContainer {
+.mapContainer .name {
+    -fx-font-family: Trebuchet MS;
+    -fx-text-alignment: center;
+    -fx-text-fill: #292929;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
 }
 
 .selected {

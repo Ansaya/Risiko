@@ -6,12 +6,15 @@ import Game.Connection.*;
 import Game.Connection.Battle;
 import Game.Connection.GameState;
 import Game.Map.Map;
+import Game.Map.Mission;
 import Game.MessageReceiver;
 import Game.Sounds.Sounds;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Map.Territory;
 import com.google.gson.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,9 +33,9 @@ public class Match extends MessageReceiver<MessageType> {
     /**
      * Players' list for this match (contains witnesses too)
      */
-    private final transient HashMap<Integer, Player> players = new HashMap<>();
+    private final transient ObservableMap<Integer, Player> players = FXCollections.observableHashMap();
 
-    public HashMap<Integer, Player> getPlayers() { return players; }
+    public ObservableMap<Integer, Player> getPlayers() { return players; }
 
     /**
      * Add player to this match removing it from lobby
@@ -40,24 +43,27 @@ public class Match extends MessageReceiver<MessageType> {
      * @param Player Player to add to the match
      */
     public void addPlayer(Player Player) {
-        if(currentTurn == null && players.size() >= 6)
+        if(!isStarted() && players.size() >= 6)
             return;
 
         GameController.getInstance().releasePlayer(Player, false);
 
-        if(currentTurn == null)
-            players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(Player, null)));
+        if(!isStarted())
+            sendAll(MessageType.Lobby, new Lobby<>(Player, null));
 
         players.put(Player.id, Player);
         Player.enterMatch(this.Id);
 
-        if(currentTurn == null) {
+        if(!isStarted()) {
             Player.SendMessage(MessageType.Lobby, new Lobby<>(players.values(), null));
         }
         else {
             final ArrayList<Player> playing = new ArrayList<>();
             playersOrder.forEach(id -> playing.add(players.get(id)));
-            Player.SendMessage(MessageType.Lobby, new Lobby<>(playing, null));
+            final Player ai;
+            if((ai = players.get(-1)) != null) playing.add(ai);
+
+            Player.SendMessage(MessageType.Match, new Game.Connection.Match<>(Id, Name, GameMap, playing));
         }
     }
 
@@ -70,12 +76,12 @@ public class Match extends MessageReceiver<MessageType> {
     public void removePlayer(Player Player, boolean Remove) {
         // If player is playing terminate match
         if (Player.isPlaying()) {
+            sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, Player));
             GameController.getInstance().endMatch(this);
             return;
         }
 
         players.remove(Player.id);
-        Player.exitMatch();
 
         if(Remove)
             GameController.getInstance().releasePlayer(Player, true);
@@ -86,7 +92,7 @@ public class Match extends MessageReceiver<MessageType> {
             GameController.getInstance().endMatch(this);
 
         // If match hasn't already started notify other users
-        if(currentTurn == null)
+        if(!isStarted())
             players.forEach((id, p) -> p.SendMessage(MessageType.Lobby, new Lobby<>(null, Player)));
     }
 
@@ -104,6 +110,8 @@ public class Match extends MessageReceiver<MessageType> {
      * Current turn
      */
     private volatile transient Turn currentTurn;
+
+    public boolean isStarted() { return currentTurn != null; }
 
     /**
      * Global matches counter
@@ -134,14 +142,15 @@ public class Match extends MessageReceiver<MessageType> {
 
         // Setup and start match message receiver
         messageHandlers.put(MessageType.Turn, (message) -> {
-            if(currentTurn == null){
+            if(!isStarted())
                 initMatch();
-                return;
+            else if(message.Json.equals("\"Update\"")) // Sent from player who entered the match after start
+                players.get(message.PlayerId).SendMessage(MessageType.MapUpdate, new MapUpdate<>(map.getTerritories()));
+            else {
+                // If a player notified end of his turn, go ahead with next player
+                currentTurn.endTurn();
+                currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
             }
-
-            // If a player notified end of his turn, go ahead with next player
-            currentTurn.endTurn();
-            currentTurn = new Turn(this, nextPlaying(this.currentTurn.getPlaying()), false);
         });
 
         messageHandlers.put(MessageType.Chat, this::routeAll);
@@ -159,14 +168,6 @@ public class Match extends MessageReceiver<MessageType> {
                     routeAll(message);
                     GameController.getInstance().endMatch(this);
                     break;
-                case Defeated:  // Message received from turn instance
-                    // Report defeat to user
-                    gameState.winner.RouteMessage(MessageType.GameState.name() + "#" + message.Json);
-
-                    // Pass user to witness mode
-                    gameState.winner.exitMatch();
-                    gameState.winner.enterMatch(this.Id);
-                    break;
             }
         });
 
@@ -181,12 +182,16 @@ public class Match extends MessageReceiver<MessageType> {
      *
      * @throws UnsupportedOperationException If match has already been initialized or if players number is incorrect
      */
-    public void initMatch() throws UnsupportedOperationException {
+    private void initMatch() throws UnsupportedOperationException {
         if (currentTurn != null)
             throw new UnsupportedOperationException("Match " + Id + ": Match has already been initialized.");
 
         if(players.size() < 2 || players.size() > 6)
             throw new UnsupportedOperationException(String.format("Not possible to start playing with %d users.", players.size()));
+
+        final Player AI = players.size() == 2 ? Player.getAI() : null;
+        if(AI != null)
+            players.put(AI.getId(), AI);
 
         // Setup Players
         final Deck<Color> deckColor = new Deck<>(Color.values());
@@ -195,13 +200,8 @@ public class Match extends MessageReceiver<MessageType> {
             playersOrder.add(player.id);
         });
 
-        Player AI = null;
-        final ArrayList<Player> matchPlayers = new ArrayList<>(players.values());
-
-        if(players.size() == 2) {
-            AI = Player.getAI(Id, deckColor.next());
-            matchPlayers.add(AI);
-        }
+        if(AI != null)
+            playersOrder.removeIf(i -> i == AI.getId());
 
         // Send all players initial setup containing all players and Mission
         players.forEach((id, player) -> {
@@ -217,7 +217,7 @@ public class Match extends MessageReceiver<MessageType> {
                     player.getMission().changeToNumber();
             }
 
-            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, this.Name, map.Name, matchPlayers));
+            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, this.Name, map.Name, players.values()));
         });
 
         // Start first setup turn
@@ -226,16 +226,19 @@ public class Match extends MessageReceiver<MessageType> {
     }
 
     /**
-     * Stop current match thread and returns players to GameController
+     * Stop current match thread and returns players
+     *
+     * @return Players in this match
      */
-    void terminate() {
+    ObservableMap<Integer, Player> terminate() {
         stopExecutor();
 
-        if(currentTurn != null)
+        if(isStarted()) {
             currentTurn.endTurn();
+            currentTurn = null;
+        }
 
-        players.forEach((id, p) -> GameController.getInstance().returnPlayer(p));
-        players.clear();
+        return players;
     }
 
     private void sendAll(MessageType Type, Object Message) {
@@ -250,7 +253,7 @@ public class Match extends MessageReceiver<MessageType> {
      * Get next player in turn orders
      *
      * @param lastPlaying Last player who played
-     * @return Player who has To play now
+     * @return Player who has to play now
      */
     private Player nextPlaying(Player lastPlaying) {
         if(lastPlaying == null)
@@ -339,7 +342,9 @@ public class Match extends MessageReceiver<MessageType> {
                     incoming.notify();
                 }
                 _instance.join();
-            } catch (Exception e) {}
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         /**
@@ -514,11 +519,34 @@ public class Match extends MessageReceiver<MessageType> {
             // Remove defeated armies from defender, else if cannot remove all armies from
             // defender territory change ownership and move armies from attacker territory
             if(!battle.to.canRemoveArmies(lostDef)) {
-                // If player has no more territories, notify defeat to match object
-                if(battle.to.getOwner().getTerritories().size() == 1 && battle.to.getOwner().id != -1)
-                    match.setIncoming(battle.to.getOwner().id,
-                                      MessageType.GameState,
-                                      gson.toJson(new GameState<>(StateType.Defeated, battle.to.getOwner()), MessageType.GameState.getType()));
+                // If player has no more territories, notify defeat to the player and do housekeeping
+                if(battle.to.getOwner().getTerritories().size() == 1) {
+                    // If AI has been defeated simply remove it
+                    if(battle.to.getOwner().id == -1)
+                        match.players.remove(-1);
+                    else { // Else do housekeeping and set player as witness for the match
+                        final Player defeated = battle.to.getOwner();
+                        defeated.SendMessage(MessageType.GameState, new GameState<>(StateType.Defeated, battle.to.getOwner()));
+                        playersOrder.removeIf(id -> id == defeated.getId());
+
+                        // Return cards of defeated player
+                        final Cards c = waitMessage(MessageType.Cards, defeated.id);
+                        if (c == null) return false;
+                        match.map.returnCards(c.combination);
+
+                        // Pass user to witness mode
+                        defeated.exitMatch();
+                        defeated.enterMatch(match.Id);
+
+                        // Check for destroy mission on other players to fix mission type if necessary
+                        match.playersOrder.forEach(id -> {
+                            final Player p = players.get(id);
+                            if (!playing.equals(p))
+                                if (p.getMission().Type == Mission.MissionType.Destroy && p.getMission().Army == defeated.getColor())
+                                    p.getMission().changeToNumber();
+                        });
+                    }
+                }
 
                 // Move armies to attacker to conquered territory and update owner
                 battle.from.canRemoveArmies(atkDice.size());
@@ -545,11 +573,11 @@ public class Match extends MessageReceiver<MessageType> {
             // If no other move is performed complete battle
             // else if armies have been moved update game map
             if(!update.Updated.isEmpty())
-                if(battle.from.canRemoveArmies(update.Updated.get(1).NewArmies))
-                    battle.to.addArmies(update.Updated.get(1).NewArmies);
+                if(battle.from.canRemoveArmies(battle.to.NewArmies))
+                    battle.to.addArmies(battle.to.NewArmies);
 
             // Send new placement to all players
-            match.sendAll(MessageType.MapUpdate, result);
+            match.sendAll(MessageType.MapUpdate, update);
 
             return true;
         }
@@ -641,8 +669,8 @@ public class Match extends MessageReceiver<MessageType> {
             if(beforeAtkTerritories < playing.getTerritories().size())
                 playing.SendMessage(MessageType.Cards, new Cards(match.map.nextCard()));
 
-            // Send empty positioning to request final move
-            playing.SendMessage(MessageType.MapUpdate, new MapUpdate<>(true));
+            // Send empty update to request final move
+            playing.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
             final MapUpdate<Territory> endMove = waitMessage(MessageType.MapUpdate);
             if(endMove == null) return;
 
@@ -660,7 +688,7 @@ public class Match extends MessageReceiver<MessageType> {
         }
     }
 
-    public GsonBuilder getGsonBuilder(GsonBuilder GsonBuilder) {
+    private GsonBuilder getGsonBuilder(GsonBuilder GsonBuilder) {
         GsonBuilder builder = GsonBuilder;
         if(builder == null)
             builder = new GsonBuilder();

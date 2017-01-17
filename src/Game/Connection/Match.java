@@ -18,12 +18,16 @@ public class Match<T extends Player> {
 
     public final Maps GameMap;
 
+    public final boolean IsStarted;
+
     public Match(int Id, String Name, Maps GameMap, Collection<T> Players) {
         this.Id = Id;
         this.Name = Name;
         this.GameMap = GameMap;
         if(Players != null)
             this.Players.addAll(Players);
+
+        IsStarted = false;
     }
 
     public Match(int Id, String Name, Maps GameMap, T Player) {
@@ -32,12 +36,8 @@ public class Match<T extends Player> {
         this.GameMap = GameMap;
         if(Player != null)
             this.Players.add(Player);
-    }
 
-    private Match() {
-        Id = 0;
-        Name = "";
-        GameMap = null;
+        IsStarted = false;
     }
 
     @Override

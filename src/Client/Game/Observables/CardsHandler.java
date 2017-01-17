@@ -37,6 +37,8 @@ public class CardsHandler {
      */
     private final HBox container = new HBox();
 
+    private final ArrayList<Card> cards = new ArrayList<>();
+
     /**
      * Redeem button in dialog
      */
@@ -143,6 +145,7 @@ public class CardsHandler {
         // If combination is valid return initialized Cards message
         if(Card.isCombinationValid(selected)) {
             Sounds.CardTris.play();
+            cards.removeAll(selected);
             return new Cards(selected);
         }
 
@@ -177,5 +180,18 @@ public class CardsHandler {
         }
 
         container.getChildren().add(loadCard(Card));
+        cards.add(Card);
+    }
+
+    /**
+     * Remove all remaining cards from player's hand
+     *
+     * @return Remaining cards
+     */
+    public ArrayList<Card> returnCards() {
+        final ArrayList<Card> remaining = new ArrayList<>(cards);
+        container.getChildren().clear();
+        cards.clear();
+        return remaining;
     }
 }

@@ -5,7 +5,9 @@ import Server.Game.GameController;
 import Server.Game.Match;
 import Server.Game.Player;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -40,6 +42,9 @@ public class Controller implements Initializable {
     private TableColumn<Match, Maps> matchGameMapColumn;
 
     @FXML
+    private TableColumn<Match, Integer> matchPlayersColumn;
+
+    @FXML
     private TextArea consoleView;
 
     private final PrintStream stdOut = System.out;
@@ -61,6 +66,12 @@ public class Controller implements Initializable {
         matchIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
         matchNameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
         matchGameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
+        matchPlayersColumn.setCellValueFactory(data -> {
+            final SimpleIntegerProperty size = new SimpleIntegerProperty();
+            size.bind(Bindings.size(data.getValue().getPlayers()));
+
+            return size.asObject();
+        });
     }
 
     public void initGameController() {

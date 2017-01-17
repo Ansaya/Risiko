@@ -36,7 +36,8 @@
                                 <columns>
                                   <TableColumn fx:id="matchIdColumn" minWidth="75.0" prefWidth="75.0" resizable="false" text="ID" />
                                   <TableColumn fx:id="matchNameColumn" minWidth="150.0" prefWidth="75.0" text="Match name" />
-                                    <TableColumn fx:id="matchGameMapColumn" minWidth="100.0" prefWidth="75.0" text="Game map" />
+                                    <TableColumn fx:id="matchGameMapColumn" minWidth="125.0" prefWidth="125.0" text="Game map" />
+                                    <TableColumn fx:id="matchPlayersColumn" minWidth="75.0" prefWidth="75.0" text="Players" />
                                 </columns>
                               </TableView>
                            </children>
