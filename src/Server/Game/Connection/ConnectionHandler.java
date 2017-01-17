@@ -26,8 +26,8 @@ public class ConnectionHandler implements Runnable {
     private final AtomicInteger playerCounter = new AtomicInteger(0);
 
     private final Consumer<Socket> welcomeAction = newConn -> {
-        String username = "";
-        int id = 0;
+        String username;
+        int id;
         try {
             username = (new BufferedReader(new InputStreamReader(newConn.getInputStream()))).readLine();
 
@@ -43,16 +43,16 @@ public class ConnectionHandler implements Runnable {
             (new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
         } catch (Exception e) {
             System.err.println("Connection handler: Error during username request.");
+            e.printStackTrace();
+            return;
         }
 
         System.out.println("Connection handler: New user connected.");
         GameController.getInstance().addPlayer(id, username, newConn);
-        System.out.println("Connection handler: User passed To game controller.");
+        System.out.println("Connection handler: User passed to game controller.");
     };
 
     private final Thread reception= new Thread(this, "ConnectionHandler-Reception");
-
-    private ConnectionHandler() {}
 
     public void Listen(int port) {
         if(listen)
@@ -76,7 +76,11 @@ public class ConnectionHandler implements Runnable {
         try {
             server.close();
             reception.join();
-        } catch (Exception e) {}
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Connection handler: Exception during termination.");
+            e.printStackTrace();
+            return;
+        }
 
         System.out.println("Connection handler: Terminated.");
     }
@@ -93,8 +97,12 @@ public class ConnectionHandler implements Runnable {
                 welcome.start();
 
             } catch (Exception e) {
-                if(!listen)
+                if(!listen && e instanceof IOException)
                     break;
+                else {
+                    System.err.println("Connection handler: Bad connection handling");
+                    e.printStackTrace();
+                }
             }
         }
     }

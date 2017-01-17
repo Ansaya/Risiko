@@ -1,24 +1,21 @@
 package Client.Game.Observables;
 
 import Client.Main;
-import Client.UI.MatchController;
 import Game.Connection.Cards;
 import Game.Map.Card;
-import Game.Map.Territories;
+import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-
 import java.util.ArrayList;
 
 /**
@@ -32,13 +29,15 @@ public class CardsHandler {
     private final JFXDialog cardsDialog = new JFXDialog();
 
     public void setCardsButton(Button CardsBtn) {
-        CardsBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(cardsDialog));
+        CardsBtn.setOnMouseClicked(evt -> Main.showDialog(cardsDialog));
     }
 
     /**
      * Cards container
      */
     private final HBox container = new HBox();
+
+    private final ArrayList<Card> cards = new ArrayList<>();
 
     /**
      * Redeem button in dialog
@@ -48,10 +47,9 @@ public class CardsHandler {
     /**
      * List of selected cards
      */
-    private final ArrayList<Territories> selected = new ArrayList<>();
+    private final ArrayList<Card> selected = new ArrayList<>();
 
     public CardsHandler() {
-
         /* Container setup */
         container.setSpacing(15.0f);
         container.setPadding(new Insets(0, 7.5, 0, 22.5));
@@ -62,28 +60,12 @@ public class CardsHandler {
         final JFXButton closeBtn = new JFXButton("Close");
         closeBtn.setButtonType(JFXButton.ButtonType.RAISED);
         closeBtn.setStyle("-fx-background-color: #44B449");
-        closeBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
-            synchronized (selected){
-                selected.notify();
-            }
-            cardsDialog.close();
-        });
+        closeBtn.setOnMouseClicked(this::closeDialog);
 
         /* Redeem cards button setup */
         redeemBtn.setButtonType(JFXButton.ButtonType.RAISED);
         redeemBtn.setStyle("-fx-background-color: red");
-        redeemBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
-            redeemBtn.setDisable(true);
-            container.getChildren().forEach(card -> {
-                if(card.getStyleClass().remove("card-selected"))
-                    selected.add(Territories.valueOf(card.getId()));
-            });
-
-            synchronized (selected){
-                selected.notify();
-            }
-            cardsDialog.close();
-        });
+        redeemBtn.setOnMouseClicked(this::closeDialog);
         redeemBtn.setDisable(true);
 
         /* Layout setup */
@@ -93,36 +75,39 @@ public class CardsHandler {
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
         cardsDialog.setContent(dl);
-        cardsDialog.addEventFilter(DialogEvent.DIALOG_CLOSE_REQUEST, evt -> {
-            synchronized (selected){
-                selected.notify();
-            }
-        });
+        cardsDialog.setOnDialogClosed(this::closeDialog);
+    }
+
+    private void closeDialog(Event Event) {
+        synchronized (selected){
+            selected.notify();
+        }
+        cardsDialog.close();
     }
 
     /**
      * Initialize card object
      *
-     * @param Territory Territory To use for card initialization
+     * @param Card Card to initialize
      * @return Initialized card
      */
-    private AnchorPane getCard(Territories Territory) {
+    private ImageView loadCard(Card Card) {
+        final ImageView card = new ImageView(Card.getImage());
+        card.setPreserveRatio(true);
+        card.setSmooth(true);
+        card.setCache(true);
+        card.setX(137.0f);
+        card.setY(212.0f);
 
-        final String img = MatchController.class.getResource("Cards/" + Territory.name() + ".jpg").toExternalForm();
-        final AnchorPane card = new AnchorPane();
-        card.setPrefSize(137.0f, 212.0f);
-        card.setStyle("-fx-background-image: url('" + img + "');" +
-                "-fx-background-position: center center;" +
-                "-fx-background-repeat: no-repeat;" +
-                "-fx-background-size: 137 212;");
-
-        card.setId(Territory.name());
-
-        card.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+        card.setOnMouseClicked(evt -> {
             Node source = (Node) evt.getSource();
 
-            if(!source.getStyleClass().remove("card-selected"))
+            if(!source.getStyleClass().remove("card-selected")) {
                 source.getStyleClass().add("card-selected");
+                selected.add(Card);
+            }
+            else
+                selected.remove(Card);
         });
 
         return card;
@@ -138,6 +123,8 @@ public class CardsHandler {
         if(container.getChildren().size() < 3)
             return new Cards();
 
+        selected.clear();
+
         Platform.runLater(() -> {
             redeemBtn.setDisable(false);
             Main.showDialog(cardsDialog);
@@ -146,7 +133,9 @@ public class CardsHandler {
         synchronized (selected) {
             try {
                 selected.wait();
-            } catch (Exception e) {}
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         // If no cards are selected and less than five cards are present, return empty message
@@ -154,8 +143,11 @@ public class CardsHandler {
             return new Cards();
 
         // If combination is valid return initialized Cards message
-        if(Card.isCombinationValid(selected))
+        if(Card.isCombinationValid(selected)) {
+            Sounds.CardTris.play();
+            cards.removeAll(selected);
             return new Cards(selected);
+        }
 
         // Else show error dialog and retry
         Main.showDialog("Error message", "Combination are of three cards only:\n" +
@@ -168,8 +160,9 @@ public class CardsHandler {
         synchronized (Main.dialogClosed){
             try {
                 Main.dialogClosed.wait();
-            } catch (Exception e) {}
-
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         return requestCombination();
@@ -178,14 +171,27 @@ public class CardsHandler {
     /**
      * Add new card To the list
      *
-     * @param Territory Territory relative To the card To add
+     * @param Card Card to add
      */
-    public void addCard(Territories Territory) {
+    public void addCard(Card Card) {
         if(!Platform.isFxApplicationThread()) {
-            Platform.runLater(() -> addCard(Territory));
+            Platform.runLater(() -> addCard(Card));
             return;
         }
 
-        container.getChildren().add(getCard(Territory));
+        container.getChildren().add(loadCard(Card));
+        cards.add(Card);
+    }
+
+    /**
+     * Remove all remaining cards from player's hand
+     *
+     * @return Remaining cards
+     */
+    public ArrayList<Card> returnCards() {
+        final ArrayList<Card> remaining = new ArrayList<>(cards);
+        container.getChildren().clear();
+        cards.clear();
+        return remaining;
     }
 }

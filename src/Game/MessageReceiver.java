@@ -9,43 +9,48 @@ import java.util.function.Consumer;
  */
 public abstract class MessageReceiver<T> {
 
-    private volatile boolean listen = false;
+    private transient volatile boolean execute = false;
 
-    private final ArrayList<Message> queue = new ArrayList<>();
+    private transient final ArrayList<Message> queue = new ArrayList<>();
 
-    protected final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
+    protected transient final HashMap<T, Consumer<Message>> messageHandlers = new HashMap<>();
 
-    protected Consumer<Message> defaultHandler = null;
+    protected transient Consumer<Message> defaultHandler = null;
 
-    private final String name;
+    private transient final String name;
 
-    private final Thread _instance = new Thread(this::executor);
+    private transient volatile Thread _instance;
 
     public MessageReceiver(String Name) {
         this.name = Name;
-        _instance.setName(Name + "-Executor");
     }
 
     public void startExecutor(){
-        if(listen)
+        System.out.println(name + ": Executor start request.");
+        if(execute)
             return;
 
-        listen = true;
+        execute = true;
+        _instance = new Thread(this::executor, name + "-Executor");
         _instance.start();
     }
 
     public void stopExecutor() {
-        if(!listen)
+        System.out.println(name + ": Executor stop request.");
+        if(!execute)
             return;
 
-        listen = false;
+        execute = false;
         synchronized (queue){
             queue.notify();
         }
 
         try {
             _instance.join();
-        } catch (Exception e) {}
+        } catch (InterruptedException e) {
+            System.err.println(name + ": Interrupted exception during executor join.");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -72,7 +77,7 @@ public abstract class MessageReceiver<T> {
     }
 
     private void executor() {
-        while (listen) {
+        while (execute) {
             try {
                 if (queue.isEmpty())
                     synchronized (queue) { queue.wait(); }
@@ -95,9 +100,10 @@ public abstract class MessageReceiver<T> {
                 action.setDaemon(true);
                 action.start();
             } catch (Exception e){
-                if(!listen) break;
+                if(!execute) break;
             }
         }
+        System.out.println(name + ": Executor stopped.");
     }
 
     public class Message {

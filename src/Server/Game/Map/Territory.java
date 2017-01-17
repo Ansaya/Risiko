@@ -1,18 +1,14 @@
 package Server.Game.Map;
 
-import Game.Map.Territories;
 import Server.Game.Player;
-import javafx.application.Platform;
 
 /**
- * Instance of a Territory on the map
+ * Instance of a territory on the map
  */
-public class Territory {
-
-    public final Territories Territory;
+public class Territory extends Game.Map.Territory<Player> {
 
     /**
-     * Armies placed on this Territory
+     * Armies placed on this territory
      */
     private volatile int Armies = 0;
 
@@ -32,22 +28,18 @@ public class Territory {
 
     public Player getOwner() { return owner; }
 
-    public Territory(Territories Territory) {
-        this.Territory = Territory;
-    }
-
     /**
-     * Add Armies To this Territory
+     * Add Armies to this territory
      *
-     * @param toAdd Armies To add
+     * @param toAdd Armies to add
      */
     public void addArmies(int toAdd) { Armies += toAdd; }
 
     /**
-     * Removes Armies From this Territory if is possible
+     * Removes armies from this territory if is possible
      *
-     * @param toRemove Armies To remove
-     * @return True if Armies have been removed, false if cannot remove requested number of Armies
+     * @param toRemove Armies to remove
+     * @return True if armies have been removed, false if cannot remove requested number of armies
      */
     public boolean canRemoveArmies(int toRemove) {
         if(toRemove >= this.Armies)
@@ -55,18 +47,5 @@ public class Territory {
 
         this.Armies -= toRemove;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return Territory.toString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if(other instanceof Territory)
-            return ((Territory)other).Territory == this.Territory;
-
-        return other instanceof Territories && other == this.Territory;
     }
 }

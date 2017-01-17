@@ -2,6 +2,7 @@ package Client.Game;
 
 import Client.Game.Connection.Serializer.ObservableUserSerializer;
 import Client.Main;
+import Client.UI.ChatBox.ChatBox;
 import Game.Connection.Mission;
 import Game.Connection.Serializer.IntegerPropertySerializer;
 import Game.Connection.Serializer.StringPropertySerializer;
@@ -9,6 +10,7 @@ import Client.Game.Observables.*;
 import Game.Connection.*;
 import Game.MessageReceiver;
 import Client.Game.Connection.MessageType;
+import Game.Sounds.Sounds;
 import Game.StateType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -20,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -58,14 +59,14 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     /* Chat section */
 
-    private volatile Consumer<Chat<ObservableUser>> addChatEntry = null;
+    private volatile ChatBox chatBox;
 
-    /**
-     * Set method reference to add new message to chatbos in UI
-     *
-     * @param AddChatEntry Method reference
-     */
-    public void setChatEntry(Consumer<Chat<ObservableUser>> AddChatEntry) { addChatEntry = AddChatEntry; }
+    public ChatBox getChatBox() {
+        if(chatBox == null)
+            chatBox = new ChatBox(2);
+
+        return chatBox;
+    }
 
     /* Chat section end */
 
@@ -77,6 +78,11 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     public ObservableUser getUser() { return this.user; }
 
+    /* User section end */
+
+    /* UI Handlers */
+    private volatile boolean inMatch = false;
+
     private volatile Consumer<Lobby<ObservableUser>> updateUsers = null;
 
     /**
@@ -86,10 +92,9 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
      */
     public void setUpdateUsers(Consumer<Lobby<ObservableUser>> UpdateUsers) { updateUsers = UpdateUsers; }
 
-    /* User section end */
+    private volatile Consumer<MatchLobby<Match<ObservableUser>>> updateMatches = null;
 
-    /* UI Handlers */
-    private volatile boolean inMatch = false;
+    public void setUpdateMatches(Consumer<MatchLobby<Match<ObservableUser>>> UpdateMatches) { updateMatches = UpdateMatches; }
 
     private volatile MapHandler mapHandler;
 
@@ -119,13 +124,17 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for incoming chat messages
         messageHandlers.put(MessageType.Chat, (message) -> {
-            // Get chat object
             final Chat<ObservableUser> chat = gson.fromJson(message.Json, MessageType.Chat.getType());
-
-            addChatEntry.accept(chat);
+            chatBox.addChat(chat);
         });
 
-        // Handler for userList in lobby
+        // Handler for matches list
+        messageHandlers.put(MessageType.MatchLobby, (message) -> {
+           final MatchLobby<Match<ObservableUser>> matchLobby = gson.fromJson(message.Json, MessageType.MatchLobby.getType());
+           updateMatches.accept(matchLobby);
+        });
+
+        // Handler for user list in match room
         messageHandlers.put(MessageType.Lobby, (message) -> {
             System.out.println("GameController: Lobby message: " + message.Json);
             final Lobby<ObservableUser> lobbyUsers = gson.fromJson(message.Json, MessageType.Lobby.getType());
@@ -134,31 +143,27 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Handler for match initialization
         messageHandlers.put(MessageType.Match, (message) -> {
+            stopExecutor();
             System.out.println("GameController: Match message: " + message.Json);
             final Match<ObservableUser> match = gson.fromJson(message.Json, MessageType.Match.getType());
 
-            stopExecutor();
             Main.toMatch(match);
             inMatch = true;
         });
 
         // Handler for positioning message
         messageHandlers.put(MessageType.Positioning, message -> {
-            System.out.println("GameController: Positioning message: " + message.Json);
             final Positioning pos = gson.fromJson(message.Json, MessageType.Positioning.getType());
-
             SendMessage(MessageType.MapUpdate, mapHandler.positionArmies(pos.newArmies));
         });
 
         messageHandlers.put(MessageType.Mission, (message) -> {
             final Mission mission = gson.fromJson(message.Json, MessageType.Mission.getType());
-
             mapHandler.setMission(mission.Mission);
         });
 
         // Handler for map updates
         messageHandlers.put(MessageType.MapUpdate, (message) -> {
-            System.out.println("GameController: MapUpdate message: " + message.Json);
             mapHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType()));
         });
 
@@ -166,9 +171,9 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         messageHandlers.put(MessageType.Cards, (message) -> {
             final Cards cards = gson.fromJson(message.Json, MessageType.Cards.getType());
 
-            // If message is not empty add the card To user's list
+            // If message is not empty add the card to user's list
             if(!cards.combination.isEmpty()) {
-                // Add card To user local cards
+                // Add card to user local cards
                 cardsHandler.addCard(cards.combination.get(0));
 
                 // Notify user
@@ -178,14 +183,13 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                 return;
             }
 
-            // Else ask user To play a combination of cards
-            // Return response To server
+            // Else ask user to play a combination of cards and
+            // return response to server
             SendMessage(MessageType.Cards, cardsHandler.requestCombination());
         });
 
-        // Handler for attacked Territory
+        // Handler for attacked territory
         messageHandlers.put(MessageType.Battle, (message) -> {
-            System.out.println("GameController: Battle message: " + message.Json);
             final Battle<ObservableTerritory> battle = gson.fromJson(message.Json, MessageType.Battle.getType());
 
             if(battle.from == null){
@@ -199,45 +203,50 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             }
         });
 
-        // Handler for special move
-        messageHandlers.put(MessageType.SpecialMoving, (message) -> {
-            System.out.println("GameController: Special moving message: " + message.Json);
-            // Request user To move Armies and send response to server
-            SendMessage(MessageType.SpecialMoving, mapHandler.specialMoving(gson.fromJson(message.Json, MessageType.SpecialMoving.getType())));
-        });
-
         // Handler for game state changes
         messageHandlers.put(MessageType.GameState, (message) -> {
+            stopExecutor();
             System.out.println("GameController: GameState message: " + message.Json);
-            // If a GameState message is received than match is no longer valid, so go back To lobby
-            Main.toLobby();
-            user.territories.set(0);
-            user.color = null;
+
+            final GameState<ObservableUser> gameState = gson.fromJson(message.Json, MessageType.GameState.getType());
+
+            user.Territories.set(0);
+            user.Color = null;
+
+            switch (gameState.state){
+                case Winner:
+                    Main.toLobby();
+                    if(gameState.winner.equals(user)) {
+                        Main.showDialog("Game state message", "You won the match!", "Close");
+                        Sounds.Victory.play();
+                    }
+                    else {
+                        Main.showDialog("Game state message",
+                                "You lost this match. The winner is " + gameState.winner.Username.get(),
+                                "Close");
+                    }
+                    break;
+                case Abandoned:
+                    Main.toLobby();
+                    Main.showDialog("Game state message", "Player " + gameState.winner.Username.get() + " left the game.", "Close");
+                    break;
+                case Defeated:
+                    Main.showDialog("Game state message", "You have been defeated!", "Close");
+
+                    // Return cards to server
+                    SendMessage(MessageType.Cards, new Cards(cardsHandler.returnCards()));
+                    return;
+            }
+
             mapHandler = null;
             cardsHandler = null;
-
-           final GameState<ObservableUser> gameState = gson.fromJson(message.Json, MessageType.GameState.getType());
-
-           switch (gameState.state){
-               case Winner:
-                   if(gameState.winner.equals(user))
-                       Main.showDialog("Game state message", "You won the match!", "Close");
-                   else
-                       Main.showDialog("Game state message",
-                                        "You lost this match. The winner is " + gameState.winner.username.get(),
-                                        "Close");
-                   break;
-               case Abandoned:
-                   Main.showDialog("Game state message", "Player " + gameState.winner.username.get() + " left the game.", "Close");
-                   break;
-           }
         });
     }
 
     /**
      * Setup and start connection with the server
      *
-     * @param Username Username choose From user
+     * @param Username Username choose from user
      */
     public void InitConnection(String Username) throws Exception {
         try {
@@ -249,8 +258,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             throw new Exception("Cannot connect with the server");
         }
 
-        // Try connecting To server
-        // Send username To the server
+        // Try connecting to server
+        // Send username to the server
         this.send.println(Username);
 
         String incoming = receive.readLine();
@@ -262,7 +271,9 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // Set user for this client
         this.user = new ObservableUser(Integer.valueOf(incoming.split("[#]")[1]), Username, null);
-        System.out.println("Got id " + user.id.get() + " from server.");
+        System.out.println("Got id " + user.Id.get() + " from server.");
+
+        this.chatBox = new ChatBox(user.getId());
 
         // If connection is successfully established start listening and receiving
         _threadInstance.start();
@@ -277,7 +288,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         listen = false;
 
-        // Send close connection notification To server
+        // Send close connection notification to server
         if(fromClient)
             send.println("End");
 
@@ -287,7 +298,9 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         try {
             connection.close();
             _threadInstance.join();
-        } catch (Exception e) {}
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
 
         // If finalizing exit
         if(fromClient) {
@@ -304,15 +317,16 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     }
 
     /**
-     * Leave current match and go back To lobby
+     * Leave current match and go back to lobby
      */
     public void AbortMatch() {
         // If player is not in a match return
         if(!inMatch)
             return;
 
-        SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));
         Main.toLobby();
+
+        SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));
     }
 
     @Override
@@ -321,7 +335,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         // Incoming message buffer
         String Packet;
 
-        // Listen To the server until necessary
+        // Listen to the server until necessary
         while (listen) {
 
             try {
@@ -331,16 +345,19 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                         return;
                     }
 
-                    System.out.println("GameController: Received <- " + Packet);
-
-                    String[] info = Packet.split("[#]");
+                    String[] info = Packet.split("[#]", 2);
 
                     this.setIncoming(0, MessageType.valueOf(info[0]), info[1]);
                 }
 
             }catch (Exception e) {
-                System.err.println("GamerController: Server connection lost");
-                break;
+                if(e instanceof IOException) {
+                    System.err.println("GamerController: Server connection lost");
+                    break;
+                }
+
+                System.err.println("GameController: Message not recognized.");
+                e.printStackTrace();
             }
         }
 
@@ -353,32 +370,31 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     }
 
     /**
-     * Send a message To the server
+     * Send a message to the server
      *
      * @param Type Type of message
      * @param MessageObj Object of specified type
      */
     public void SendMessage(MessageType Type, Object MessageObj) {
+        if(gson == null)
+            return;
 
         // Build packet string as MessageType#SerializedObject
-        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
+        RouteMessage(Type.toString() + "#" + gson.toJson(MessageObj, Type.getType()));
+    }
+
+    /**
+     * Send given string directly
+     *
+     * @param packet String to send to the server
+     */
+    private void RouteMessage(String packet) {
+        if(send == null)
+            return;
 
         synchronized (send) {
             send.println(packet);
         }
         System.out.println("GameController: Sent -> " + packet);
-    }
-
-    /**
-     * Send passed string directly
-     *
-     * @param packet String To send To the client
-     */
-    private void RouteMessage(String packet) {
-
-        synchronized (send) {
-            send.println(packet);
-        }
-        System.out.println("Sent To server: " + packet);
     }
 }

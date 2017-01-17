@@ -5,9 +5,9 @@ import Client.Game.GameController;
 import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
-import Game.Connection.SpecialMoving;
+import Game.Map.Map;
+import Game.Map.Maps;
 import Game.Map.Mission;
-import Game.Map.Territories;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
@@ -15,14 +15,16 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+
 import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
 
 /**
@@ -39,7 +41,7 @@ public class MapHandler {
 
     public void setPhaseButton(Button PhaseBtn) {
         endPhaseBtn = PhaseBtn;
-        endPhaseBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> {
+        endPhaseBtn.setOnMouseClicked(evt -> {
             endPhaseBtn.setDisable(true);
             endPhase();
         });
@@ -67,17 +69,20 @@ public class MapHandler {
     }
 
     public void setMissionButton(Button MissionBtn) {
-        MissionBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> Main.showDialog(getMissionDialog()));
+        MissionBtn.setOnMouseClicked(evt -> Main.showDialog(getMissionDialog()));
     }
+
+    private volatile BiConsumer<Collection<Integer>, Collection<Integer>> showDice;
+
+    public void setShowDice(BiConsumer<Collection<Integer>, Collection<Integer>> ShowDice) { showDice = ShowDice; }
 
     private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
 
-    /**
-     * Territories displayed in mapPane
-     */
-    public final HashMap<Territories, ObservableTerritory> territories = new HashMap<>();
+    public final Map<ObservableTerritory> map;
 
-    private final ArrayList<SelectedTerritory> selectedQueue = new ArrayList<>();
+    private final ObservableUser nullUser = new ObservableUser(-100, "NullUser", null);
+
+    private final AtomicReference<SelectedTerritory> selected = new AtomicReference<>();
 
     private volatile boolean canSelect = false;
 
@@ -85,32 +90,26 @@ public class MapHandler {
         if(!canSelect)
             return;
 
-        synchronized (selectedQueue) {
-            selectedQueue.add(new SelectedTerritory(Selected, IsRightClick));
-            selectedQueue.notify();
+        synchronized (selected) {
+            selected.set(new SelectedTerritory(Selected, IsRightClick));
+            selected.notify();
         }
     }
 
     private SelectedTerritory waitSelected(){
-        synchronized (selectedQueue){
-            try {
-                selectedQueue.wait();
-            } catch (Exception e) {
-                System.err.println("MapHandler: Interrupted exception");
-                return null;
-            }
+        try {
+            waitOn(selected, "MapHandler: Interrupted exception");
+        } catch (InterruptedException e) {
+            return null;
         }
 
-        if(selectedQueue.isEmpty())
-            return null;
-
-        return selectedQueue.remove(0);
+        return selected.get();
     }
 
     private SelectedTerritory waitSelected(ObservableUser Owner, boolean Exclude) {
         SelectedTerritory st;
         if(Owner == null)
-            Owner = new ObservableUser(-100, "NullUser", null);
+            Owner = nullUser;
 
         while ((st = waitSelected()) != null){
             if(Owner.equals(st.Selected.getOwner()) ^ Exclude)
@@ -122,8 +121,9 @@ public class MapHandler {
 
     private void endPhase() {
         canSelect = false;
-        synchronized (selectedQueue){
-            selectedQueue.notify();
+        selected.set(null);
+        synchronized (selected){
+            selected.notify();
         }
     }
 
@@ -159,27 +159,28 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(Pane MapPane, ArrayList<ObservableUser> UsersList) {
+    public MapHandler(Maps MapName, Pane MapContainer, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
 
-        ObservableTerritory.setMapPane(MapPane);
+        try {
+            map = new Map<>(MapName, ObservableTerritory.class);
+            map.loadGraphic();
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new ClassNotFoundException("Can not load requested map.");
+        }
+
         final SVGPath connections = new SVGPath();
-        connections.setContent(Territories.ConnectionPath);
+        connections.setContent(map.ConnectionsPath);
         connections.setStroke(Color.BLACK);
-        MapPane.getChildren().add(connections);
+        MapContainer.getChildren().add(connections);
 
         if(UsersList != null)
-            UsersList.forEach(u -> usersList.put(u.id.get(), u));
+            UsersList.forEach(u -> usersList.put(u.Id.get(), u));
 
-        MapPane.getChildren().forEach(l -> {
-            if(l instanceof Label) {
-                Territories t = Territories.valueOf(l.getId());
-                territories.put(t, new ObservableTerritory(this, t, (Label)l));
-            }
-        });
+        map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
     }
 
     /**
-     * Update current map with received information from server
+     * Update current map with received information from server. Trigger special move or end turn move if present
      *
      * @param MapUpdate MapUpdate message from server
      */
@@ -189,20 +190,43 @@ public class MapHandler {
             return;
         }
 
-        MapUpdate.updated.forEach((u) -> {
-            synchronized (territories) {
-                ObservableTerritory t = territories.get(u.Territory);
+        // Play relative update sound
+        MapUpdate.Sound.play();
+
+        MapUpdate.Updated.forEach((u) -> {
+            synchronized (map) {
+                ObservableTerritory t = map.getTerritory(u.Name);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
                 if (!t.getOwner().equals(u.getOwner()))
-                    t.setOwner(usersList.get(u.getOwner().id.get()));
+                    t.setOwner(usersList.get(u.getOwner().Id.get()));
             }
         });
 
-        if(attackPhase.get())
-            synchronized (attackPhase){
+        // If update has dice display dice result in UI
+        if(MapUpdate.AttackDice != null && showDice != null)
+            showDice.accept(MapUpdate.AttackDice, MapUpdate.DefenceDice);
+
+        // If update has move
+        if (MapUpdate.HasMove) {
+            final Thread move;
+
+            // If player is in attack phase has to perform special move
+            if(attackPhase.get())
+                move = new Thread(() -> specialMove(map.getTerritory(MapUpdate.Updated.get(0).Name), map.getTerritory(MapUpdate.Updated.get(1).Name)));
+            else if(MapUpdate.Updated.isEmpty()) { // Else if update is empty has to perform end turn movement
+                move = new Thread(this::endTurnMove);
+            }
+            else // Else HasMove is for another player
+                return;
+
+            move.setDaemon(true);
+            move.start();
+        } else if(attackPhase.get()) { // Else if update has no move, notify attackPhase to go ahead if in attack phase
+            synchronized (attackPhase) {
                 attackPhase.notify();
             }
+        }
     }
 
     /**
@@ -226,7 +250,7 @@ public class MapHandler {
 
         Main.showDialog("Positioning message", "You have " + NewArmies + " new armies to place.", "Place armies");
 
-        // Display positioning controls only for territories owned From current user
+        // Display positioning controls only for territories owned from current user
         final ObservableUser current = gameController.getUser();
 
         // Handle user interaction
@@ -234,15 +258,14 @@ public class MapHandler {
         while (canSelect){
             SelectedTerritory st;
 
-            // If setup wait for an empty Territory To be selected
+            // If setup wait for an empty territory to be selected
             if(isSetup)
                 st = waitSelected(null, false);
             else // Else only current user territories can be selected
                 st = waitSelected(current, false);
 
             // End phase button has been pressed
-            if(st == null)
-                break;
+            if(st == null) break;
 
             if(st.IsRightClick)
                 removeArmyFrom(st.Selected, false);
@@ -250,7 +273,7 @@ public class MapHandler {
                 addArmyTo(st.Selected, false);
         }
 
-        // Disable button and remove Armies label
+        // Disable button and remove armies label
         Platform.runLater(() -> {
             newArmiesLabel.setVisible(false);
             newArmies.set(0);
@@ -258,19 +281,18 @@ public class MapHandler {
 
         // Check for updated territories
         final MapUpdate<ObservableTerritory> update = new MapUpdate<>();
-        territories.forEach((territory, obTerritory) -> {
-            // Add Territory To update only if modified
-            if(obTerritory.NewArmies.get() != 0)
-                update.updated.add(obTerritory);
+        map.getTerritories().forEach(territory -> {
+            // Add territory to update only if modified
+            if(territory.NewArmies.get() != 0)
+                update.Updated.add(territory);
         });
 
-        // Return update message To be sent back To the server
+        // Return update message to be sent back to the server
         return update;
     }
 
     /**
      * Handle all events relative to attack phase and send end phase message back to server at the end
-     *
      */
     public void attackPhase(){
         Platform.runLater(() -> {
@@ -288,26 +310,43 @@ public class MapHandler {
 
         canSelect = true;
         while (canSelect) {
-            // Get territory To attack
+            // Get territory to attack
             SelectedTerritory st = waitSelected(current, true);
             if(st == null) break;
             final ObservableTerritory defender = st.Selected;
             defender.select(Defense);
 
             // Get attacker territory
-            st = waitSelected(current, false);
+            st = waitSelected();
             if(st == null) break;
-            // Disable selection To avoid errors
+            if(!st.Selected.getOwner().equals(current)){
+                defender.select(None);
+                if(!st.Selected.equals(defender)){
+                    synchronized (selected) {
+                        selected.notify();
+                    }
+                }
+                continue;
+            }
+            // Disable selection to avoid errors
             canSelect = false;
             final ObservableTerritory attacker = st.Selected;
             attacker.select(Attack);
 
             // If territories are not adjacent show error
-            if(!defender.Territory.isAdjacent(attacker.Territory)){
+            if(!defender.isAdjacent(attacker)){
                 Main.showDialog("Attack error", "You can't start battle between two non adjacent territories.", "Continue");
+                synchronized (selected) {
+                    selected.set(new SelectedTerritory(defender, false));
+                    selected.notify();
+                }
             }
             else if(attacker.Armies.get() == 1){ // If not enough armies are present show error
                 Main.showDialog("Attack error", "You can't start battle from territory with one army only", "Continue");
+                synchronized (selected) {
+                    selected.set(new SelectedTerritory(defender, false));
+                    selected.notify();
+                }
             }
             else { // Else perform battle
                 Platform.runLater(() -> endPhaseBtn.setDisable(true));
@@ -323,18 +362,24 @@ public class MapHandler {
                 // Send battle to server
                 gameController.SendMessage(MessageType.Battle, new Battle<>(attacker, defender, atkArmies));
 
-                // Wait for battle completion
+                // Wait for map update and special move message, if present
                 synchronized (attackPhase) {
                     try {
                         attackPhase.wait();
-                    } catch (Exception e) {}
+                    } catch (InterruptedException e) {
+                        System.out.println("Map handler: Interrupted exception in attack phase.");
+                        e.printStackTrace();
+                        return;
+                    }
                 }
 
                 Platform.runLater(() -> endPhaseBtn.setDisable(false));
             }
 
+            // Deselect territories
             defender.select(None);
             attacker.select(None);
+
             // Enable selection again
             canSelect = true;
         }
@@ -345,43 +390,34 @@ public class MapHandler {
     /**
      * Enable positioning controls to let the user move armies to newly conquered territory from attacking territory
      *
-     * @param SpecialMoving SpecialMoving message received from server
-     * @return Response message with updated displacement to send back to server
+     * @param From Attacker territory
+     * @param To Newly conquered territory
      */
-    public SpecialMoving<ObservableTerritory> specialMoving(SpecialMoving<ObservableTerritory> SpecialMoving) {
-        if(SpecialMoving.From == null)
-            return endTurnMove();
-
+    private void specialMove(ObservableTerritory From, ObservableTerritory To) {
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
             endPhaseBtn.setText("Continue");
         });
 
-        // Get territories from local map
-        final ObservableTerritory from = territories.get(SpecialMoving.From.Territory);
-        final ObservableTerritory to = territories.get(SpecialMoving.To.Territory);
-
-        // Update territories to after battle state
+        // Set armies as new armies to enable movement
         Platform.runLater(() -> {
-            synchronized (territories) {
-                from.Armies.set(1);
-                from.NewArmies.set(SpecialMoving.From.Armies.get() - 1);
-                to.Armies.set(SpecialMoving.To.Armies.get());
-                to.setOwner(usersList.get(from.getOwner().id.get()));
+            synchronized (map) {
+                From.NewArmies.set(From.getArmies() - 1);
+                From.Armies.set(1);
             }
         });
+        final ObservableUser current = gameController.getUser();
 
         canSelect = true;
         while (canSelect){
-            SelectedTerritory st = waitSelected();
+            SelectedTerritory st = waitSelected(current, false);
 
             // User has pressed continue button
-            if(st == null)
-                break;
+            if(st == null) break;
 
             // Can select only 'to' or 'from'
-            if(!st.Selected.equals(from) && !st.Selected.equals(to)) {
+            if(!st.Selected.equals(From) && !st.Selected.equals(To)) {
                 Main.showDialog("Special moving error", "Perform this move only between highlighted territories.", "Continue");
                 continue;
             }
@@ -397,22 +433,19 @@ public class MapHandler {
         // Notify attackPhase to go ahead with execution
         synchronized (attackPhase){
             attackPhase.notify();
+
+            // If user has moved armies return new displacement
+            if(To.NewArmies.get() != 0)
+                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(From, To));
+            else
+                gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
         }
-
-        // If user has not moved Armies return null response
-        if(to.NewArmies.get() == 0)
-            return new SpecialMoving<>(null, null);
-
-        // Else return new displacement
-        return new SpecialMoving<>(from, to);
     }
 
     /**
      * Enable positioning controls between two selected territories to perform final movement at the end of turn
-     *
-     * @return Updated territories state after moving
      */
-    private SpecialMoving<ObservableTerritory> endTurnMove() {
+    private void endTurnMove() {
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
@@ -436,49 +469,61 @@ public class MapHandler {
 
             st = waitSelected(current, false);
             if(st == null) break;
+            if(st.Selected.equals(to)){
+                to.select(None);
+                continue;
+            }
 
             from = st.Selected;
             from.select(Normal);
 
             // Show errors if territories are not adjacent or from territory has only one army
-            if(!from.Territory.isAdjacent(to.Territory)) {
+            if(!from.isAdjacent(to)) {
                 Main.showDialog("Moving error", "You can't move armies between two non adjacent territories.", "Continue");
             }
-            else if (from.Armies.get() == 1){
+            else if (from.Armies.get() == 1) {
                 Main.showDialog("Moving error", "You can't move armies from territory with one army only", "Continue");
             }
-            else{
-                // Else handle movement til endPhaseBtn is pressed
+            else {
+                boolean isFrom;
+                int fromArmies = from.getArmies();
+
+                // Else handle movement until endPhaseBtn is pressed
                 while (canSelect) {
-                    Platform.runLater(() -> endPhaseBtn.setText("Continue"));
-
                     st = waitSelected(current, false);
-                    if(st == null) break;
 
-                    boolean isFrom = st.Selected.equals(from);
+                    // If end trn button is pressed end cycle
+                    if(st == null){
+                        canSelect = false;
+                        break;
+                    }
+
+                    if(!(isFrom = st.Selected.equals(from)) && !st.Selected.equals(to)){
+                        Main.showDialog("Moving error",
+                                "You can move armies between the two selected territory only. To change your selection put armies back to their territories.",
+                                "Continue");
+                        continue;
+                    }
 
                     if(st.IsRightClick)
                         removeArmyFrom(st.Selected, isFrom);
                     else
                         addArmyTo(st.Selected, isFrom);
 
-                    if(to.NewArmies.get() != 0)
-                        Platform.runLater(() -> endPhaseBtn.setText("End Turn"));
+                    // If armies are set back to starting territories perform another selection
+                    if(from.getArmies() == fromArmies)
+                        break;
                 }
-
-                // If nothing changed expect another selection
-                if(to.NewArmies.get() == 0)
-                    canSelect = true;
             }
 
             to.select(None);
             from.select(None);
         }
 
-        if(to == null || to.NewArmies.get() == 0)
-            return new SpecialMoving<>(null, null);
-
-        return new SpecialMoving<>(from, to);
+        if(to != null && to.NewArmies.get() != 0)
+            gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(from, to));
+        else
+            gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
     }
 
     /**
@@ -488,7 +533,7 @@ public class MapHandler {
      * @return Updated battle message to send back to server
      */
     public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
-        Battle.defArmies = territories.get(Battle.to.Territory).requestDefense(Battle);
+        Battle.defArmies = map.getTerritory(Battle.to.Name).requestDefense(Battle);
 
         return Battle;
     }
@@ -500,11 +545,13 @@ public class MapHandler {
      * @param IsMoving True if adding directly to Armies field, false to add to NewArmies field
      */
     private void addArmyTo(ObservableTerritory Territory, boolean IsMoving) {
-        System.out.println("User want to add an army to " + Territory.Territory.toString());
+        System.out.println("User want to add an army to " + Territory.toString());
 
         // If no armies can be moved return
         if(newArmies.get() == 0)
             return;
+
+        final Object wait = new Object();
 
         if(IsMoving){
             // Else perform movement
@@ -512,17 +559,19 @@ public class MapHandler {
                 synchronized (Territory.Armies){
                     Territory.Armies.set(Territory.Armies.add(1).get());
                     removeNewArmy();
-                    Territory.Armies.notify();
+                }
+
+                synchronized (wait){
+                    wait.notify();
                 }
             });
 
             // Wait for FXThread to update values
-            synchronized (Territory.Armies){
-                try {
-                    Territory.Armies.wait();
-                } catch (Exception e) {}
+            try {
+                waitOn(wait, "Map handler: Interrupted exception while adding army");
+            } catch (InterruptedException e) {
+                return;
             }
-
             return;
         }
 
@@ -530,32 +579,37 @@ public class MapHandler {
         Platform.runLater(() -> {
             synchronized (Territory.NewArmies){
                 Territory.NewArmies.set(Territory.NewArmies.add(removeNewArmy()).get());
-                Territory.NewArmies.notify();
+            }
+
+            synchronized (wait){
+                wait.notify();
             }
         });
 
         // Wait for FXThread to update values
-        synchronized (Territory.NewArmies){
-            try {
-                Territory.NewArmies.wait();
-            } catch (Exception e) {}
+        try {
+            waitOn(wait, "Map handler: Interrupted exception while adding army");
+        } catch (InterruptedException e) {
+            return;
         }
 
         // If owner is null then we are in setup phase, so update owner and end phase after choice
-        if(Territory.NewArmies.get() != 0 && Territory.getOwner() == null) {
-            Territory.setOwner(usersList.get(gameController.getUser().id.get()));
+        if(Territory.NewArmies.get() != 0 && Territory.getOwner().equals(nullUser)) {
+            Territory.setOwner(usersList.get(gameController.getUser().Id.get()));
             canSelect = false;
         }
     }
 
     /**
-     * Remove an army to specified terrtory and increment global armies counter
+     * Remove an army to specified territory and increment global armies counter
      *
      * @param Territory Territory to update
      * @param IsMoving True if removing directly from Armies field, false to remove from NewArmies field
      */
     private void removeArmyFrom(ObservableTerritory Territory, boolean IsMoving) {
-        System.out.println("User want to remove an army from " + Territory.Territory.toString());
+        System.out.println("User want to remove an army from " + Territory.toString());
+
+        final Object wait = new Object();
 
         if(IsMoving){
             // If no army can be moved return
@@ -567,17 +621,19 @@ public class MapHandler {
                 synchronized (Territory.Armies){
                     Territory.Armies.set(Territory.Armies.subtract(1).get());
                     addNewArmy();
-                    Territory.Armies.notify();
+                }
+
+                synchronized (wait){
+                    wait.notify();
                 }
             });
 
             // Wait for FXThread to update values
-            synchronized (Territory.Armies){
-                try {
-                    Territory.Armies.wait();
-                } catch (Exception e) {}
+            try {
+                waitOn(wait, "Map handler: Interrupted exception while removing army");
+            } catch (InterruptedException e) {
+                return;
             }
-
             return;
         }
 
@@ -589,15 +645,35 @@ public class MapHandler {
             synchronized (Territory.NewArmies) {
                 Territory.NewArmies.set(Territory.NewArmies.subtract(1).get());
                 addNewArmy();
-                Territory.NewArmies.notify();
+            }
+
+            synchronized (wait){
+                wait.notify();
             }
         });
 
         // Wait for FXThread to update values
-        synchronized (Territory.NewArmies){
+        try {
+            waitOn(wait, "Map handler: Interrupted exception while removing army");
+        } catch (InterruptedException e) {}
+    }
+
+    /**
+     * Wait for notification on given object. Print specified message to stderr in case of exception
+     *
+     * @param Obj Object to wait on
+     * @param ErrorMsg Error message to print in case of exception
+     */
+    private void waitOn(Object Obj, String ErrorMsg) throws InterruptedException {
+        synchronized (Obj){
             try {
-                Territory.NewArmies.wait();
-            } catch (Exception e) {}
+                Obj.wait();
+            } catch (InterruptedException e) {
+                System.err.println(ErrorMsg);
+                e.printStackTrace();
+
+                throw e;
+            }
         }
     }
 

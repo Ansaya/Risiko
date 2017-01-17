@@ -1,9 +1,11 @@
 package Game.Connection;
 
+import Game.Map.Territory;
+
 /**
  * Battle packet
  */
-public class Battle<T> {
+public class Battle<T extends Territory> {
 
     /**
      * Attacked territory

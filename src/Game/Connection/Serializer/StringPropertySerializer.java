@@ -6,7 +6,7 @@ import javafx.beans.property.StringProperty;
 import java.lang.reflect.Type;
 
 /**
- * Created by fiore on 06/12/2016.
+ * StringProperty serializer to simplify serialization
  */
 public class StringPropertySerializer implements JsonSerializer<StringProperty>, JsonDeserializer<StringProperty> {
     @Override

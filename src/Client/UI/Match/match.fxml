@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXTreeTableView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Match.MatchController">
+
+    <AnchorPane fx:id="parent" style="-fx-background-color: darkgrey;">
+
+        <AnchorPane fx:id="worldMap" styleClass="mapContainer" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="25.0">
+            <Pane fx:id="mapPane" AnchorPane.leftAnchor="-160.0" AnchorPane.topAnchor="-110.0"></Pane>
+        </AnchorPane>
+       <VBox alignment="TOP_CENTER" prefWidth="325.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+          <children>
+             <JFXTreeTableView fx:id="playersList" opacity="0.7" showRoot="false" styleClass="playersList">
+               <columns>
+                  <TreeTableColumn fx:id="idColumn" editable="false" maxWidth="70.0" minWidth="70.0" prefWidth="70.0" resizable="false" text="Id" />
+                  <TreeTableColumn fx:id="usernameColumn" editable="false" maxWidth="-1.0" minWidth="130.0" prefWidth="-1.0" resizable="false" text="Username" />
+                  <TreeTableColumn fx:id="territoriesColumn" editable="false" maxWidth="125.0" prefWidth="75.0" resizable="false" text="Territories" />
+               </columns>
+               <effect>
+                  <DropShadow />
+               </effect></JFXTreeTableView>
+            <HBox spacing="20.0">
+               <children>
+                  <JFXButton fx:id="endTurnBtn" buttonType="RAISED" prefWidth="125.0" ripplerFill="#da0000" style="-fx-background-color: red;" text="End turn" textAlignment="CENTER" textOverrun="CENTER_ELLIPSIS" wrapText="true">
+                     <font>
+                        <Font name="Trebuchet MS" size="14.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </padding>
+                  </JFXButton>
+                  <Label fx:id="newArmiesLabel" alignment="CENTER" prefHeight="25.0" text="Available armies: ">
+                     <font>
+                        <Font name="Trebuchet MS" size="16.0" />
+                     </font>
+                  </Label>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets left="7.5" right="7.5" />
+               </padding>
+            </HBox>
+            <HBox spacing="20.0">
+               <padding>
+                  <Insets left="7.5" right="7.5" />
+               </padding>
+               <children>
+                  <JFXButton fx:id="cardsBtn" buttonType="RAISED" prefHeight="25.0" prefWidth="125.0" ripplerFill="#ffd000" style="-fx-background-color: yellow;" text="Cards">
+                     <font>
+                        <Font name="Trebuchet MS" size="14.0" />
+                     </font>
+                  </JFXButton>
+                  <JFXButton fx:id="missionBtn" buttonType="RAISED" prefHeight="25.0" prefWidth="125.0" ripplerFill="#0035e4" style="-fx-background-color: lightblue;" text="Mission" textAlignment="CENTER">
+                     <font>
+                        <Font name="Trebuchet MS" size="14.0" />
+                     </font>
+                  </JFXButton>
+               </children>
+            </HBox>
+          </children>
+       </VBox>
+    </AnchorPane>
+</StackPane>

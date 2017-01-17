@@ -1,10 +1,17 @@
 package Server.UI;
 
+import Game.Map.Maps;
+import Server.Game.GameController;
+import Server.Game.Match;
+import Server.Game.Player;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeTableView;
+import javafx.scene.control.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -14,10 +21,28 @@ import java.util.ResourceBundle;
 public class Controller implements Initializable {
 
     @FXML
-    private TreeTableView playersTable;
+    private TableView playersTable;
 
     @FXML
-    private TreeTableView matchesTable;
+    private TableColumn<Player, Integer> playerIdColumn;
+
+    @FXML
+    private TableColumn<Player, String> playerUsernameColumn;
+
+    @FXML
+    private TableView matchesTable;
+
+    @FXML
+    private TableColumn<Match, Integer> matchIdColumn;
+
+    @FXML
+    private TableColumn<Match, String> matchNameColumn;
+
+    @FXML
+    private TableColumn<Match, Maps> matchGameMapColumn;
+
+    @FXML
+    private TableColumn<Match, Integer> matchPlayersColumn;
 
     @FXML
     private TextArea consoleView;
@@ -34,14 +59,28 @@ public class Controller implements Initializable {
 
         System.setOut(p);
         System.setErr(p);
+
+        playerIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getId()));
+        playerUsernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
+
+        matchIdColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
+        matchNameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
+        matchGameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
+        matchPlayersColumn.setCellValueFactory(data -> {
+            final SimpleIntegerProperty size = new SimpleIntegerProperty();
+            size.bind(Bindings.size(data.getValue().getPlayers()));
+
+            return size.asObject();
+        });
     }
 
-    @Override
-    public void finalize() throws Throwable {
+    public void initGameController() {
+        GameController.getInstance().init(playersTable.getItems(), matchesTable.getItems());
+    }
+
+    public void resetStdOut() {
         System.setOut(stdOut);
         System.setErr(stdErr);
-
-        super.finalize();
     }
 
     private static class Console extends OutputStream {
@@ -52,15 +91,13 @@ public class Controller implements Initializable {
         }
 
         @Override
-        public void write(byte[] buffer, int offset, int length) throws IOException
-        {
+        public void write(byte[] buffer, int offset, int length) throws IOException {
             final String text = new String (buffer, offset, length);
             Platform.runLater(() -> output.appendText(text));
         }
 
         @Override
-        public void write(int b) throws IOException
-        {
+        public void write(int b) throws IOException {
             write (new byte [] {(byte)b}, 0, 1);
         }
     }

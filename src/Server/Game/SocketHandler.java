@@ -2,6 +2,7 @@ package Server.Game;
 
 import Server.Game.Connection.MessageType;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,7 +32,7 @@ public abstract class SocketHandler implements Runnable {
     /**
      * Serializer/deserializer for socket messages
      */
-    final transient Gson gson = new Gson();
+    final transient Gson gson;
 
     private final transient String name;
 
@@ -67,6 +68,10 @@ public abstract class SocketHandler implements Runnable {
         this.receive = br;
         this.send = pw;
 
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Match.class, new GameController.MatchSerializer());
+        gson = builder.create();
+
         this.listen = true;
         _instance = new Thread(this);
         if(Name != null)
@@ -79,6 +84,7 @@ public abstract class SocketHandler implements Runnable {
         name = null;
         receive = null;
         send = null;
+        gson = null;
         _instance = null;
     }
 
@@ -90,36 +96,38 @@ public abstract class SocketHandler implements Runnable {
             this.listen = false;
             connection.close();
             _instance.join();
-        } catch (Exception e) {}
+        } catch (IOException | InterruptedException e) {
+            System.err.println(name + ": Exception during socket handler join.");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public abstract void run();
 
     /**
-     * Send a message To the client
+     * Send a message to the client
      *
      * @param Type Type of message
      * @param MessageObj Object of specified type
      */
     protected void SendMessage(MessageType Type, Object MessageObj) {
+        if(gson == null)
+            return;
 
-        // Build packet string as MessageType-SerializedObject
-        String packet = Type.toString() + "#" + gson.toJson(MessageObj, Type.getType());
-
-        synchronized (send) {
-            send.println(packet);
-        }
-
-        System.out.println(name + ": Sent -> " + packet);
+        // Build packet string as MessageType#SerializedObject
+        RouteMessage(Type.toString() + "#" + gson.toJson(MessageObj, Type.getType()));
     }
 
     /**
      * Send passed string directly
      *
-     * @param packet String To send To the client
+     * @param packet String to send to the client
      */
     protected void RouteMessage(String packet) {
+        if(send == null)
+            return;
+
         synchronized (send) {
             send.println(packet);
         }

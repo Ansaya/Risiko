@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<StackPane prefHeight="768.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Login.LoginController">
+    <AnchorPane fx:id="parent">
+      <HBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+             <VBox alignment="CENTER" prefWidth="200.0" spacing="20.0">
+                <children>
+                   <JFXTextField fx:id="usernameField" alignment="BASELINE_CENTER" focusColor="#00a7ff" labelFloat="true" maxWidth="200.0" prefHeight="40.0" promptText="Username" style="-fx-text-fill: whitesmoke; -fx-highlight-text-fill: whitesmoke; -fx-prompt-text-fill: whitesmoke;" unFocusColor="#00a7ff">
+                      <font>
+                         <Font name="Trebuchet MS" size="16.0" />
+                      </font>
+                   </JFXTextField>
+                   <JFXButton fx:id="loginBtn" buttonType="RAISED" ripplerFill="#1bcc00" style="-fx-background-color: #47cc00;" text="Login" textAlignment="CENTER">
+                      <font>
+                         <Font name="Trebuchet MS" size="14.0" />
+                      </font>
+                      <VBox.margin>
+                         <Insets />
+                      </VBox.margin>
+                   </JFXButton>
+                  <JFXButton fx:id="settingsBtn" buttonType="RAISED" ripplerFill="#005aff" style="-fx-background-color: #0070ff;" text="Settings">
+                     <font>
+                        <Font name="Trebuchet MS" size="14.0" />
+                     </font>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                  </JFXButton>
+                </children>
+             </VBox>
+         </children>
+      </HBox>
+    </AnchorPane>
+</StackPane>

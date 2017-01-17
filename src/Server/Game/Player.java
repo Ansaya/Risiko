@@ -1,12 +1,13 @@
 package Server.Game;
 
 import Game.Map.Army.Color;
+import Game.Map.Mission;
 import Game.Connection.GameState;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
-import Game.Map.Mission;
 import Server.Game.Map.Territory;
 import javafx.application.Platform;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,17 +16,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Player relative To a match
  */
-public class Player extends SocketHandler {
+public class Player extends SocketHandler implements Game.Player {
 
     /**
      * Player's unique id
      */
     public final int id;
 
+    @Override
+    public int getId() {
+        return id;
+    }
+
     /**
      * Username choose From
      */
-    public final String username;
+    private final String username;
+
+    public String getUsername() { return username; }
 
     /**
      * Id of match the player is inside
@@ -71,26 +79,17 @@ public class Player extends SocketHandler {
 
     /**
      * Private constructor for AI player
-     *
-     * @param MatchId Match where the AI is required
-     * @param Color Color for the AI
      */
-    private Player(int MatchId, Color Color){
+    private Player(){
         id = -1;
         username = "Computer AI";
-        matchId.set(MatchId);
-        color = Color;
-        isPlaying.set(true);
     }
 
     /**
      * Instance an AI static player
-     *
-     * @param MatchId Match where the AI player is needed
-     * @param Color Color of AI on map
      */
-    static Player getAI(int MatchId, Color Color) {
-        return new Player(MatchId, Color);
+    public static Player getAI() {
+        return new Player();
     }
 
     @Override
@@ -110,7 +109,7 @@ public class Player extends SocketHandler {
 
                     System.out.println("Player-" + id + ": Received <- " + incoming);
 
-                    String[] info = incoming.split("[#]");
+                    String[] info = incoming.split("[#]", 2);
 
                     if (matchId.get() == -1) {
                         GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);
@@ -119,9 +118,14 @@ public class Player extends SocketHandler {
                     }
                 }
             }catch (Exception e){
-                // Handle loss of connection
-                System.err.println("Player-" + id + ": Connection lost");
-                break;
+                if(e instanceof IOException) {
+                    // Handle loss of connection
+                    System.err.println("Player-" + id + ": Connection lost");
+                    break;
+                }
+
+                System.err.println("Player-" + id + ": Message not recognized.");
+                e.printStackTrace();
             }
         }
 
@@ -136,20 +140,20 @@ public class Player extends SocketHandler {
         send.println("End");
 
         if(!fromServer) {
-            if (matchId.get() != -1)
-                GameController.getInstance().getMatch(matchId.get())
-                        .setIncoming(this.id,
-                                     MessageType.GameState,
-                                     gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
+            final Match match = matchId.get() != -1 ? GameController.getInstance().getMatch(matchId.get()) : null;
+
+            if(match != null)
+                match.setIncoming(id, MessageType.GameState,
+                        gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
             else
-                GameController.getInstance().releasePlayer(this.id);
+                GameController.getInstance().releasePlayer(this, true);
         }
 
         super.closeConnection();
     }
 
     /**
-     * Setup player To participate a match
+     * Setup player to participate a match
      *
      * @param Color Player color in the match
      * @param MatchId Match this player is participating
@@ -164,17 +168,17 @@ public class Player extends SocketHandler {
     }
 
     /**
-     * Setup player To witness a running match
+     * Add player to match
      *
      * @param MatchId Match id the player is watching
      */
-    synchronized void witnessMatch(int MatchId) {
+    synchronized void enterMatch(int MatchId) {
         matchId.set(MatchId);
         isPlaying.set(false);
     }
 
     /**
-     * Reset match fields and bring player back To lobby
+     * Reset match fields and bring player back to lobby
      */
     synchronized void exitMatch() {
         matchId.set(-1);

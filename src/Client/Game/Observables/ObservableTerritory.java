@@ -2,7 +2,7 @@ package Client.Game.Observables;
 
 import Client.Main;
 import Game.Connection.Battle;
-import Game.Map.Territories;
+import Game.Map.Territory;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXNodesList;
 import javafx.animation.Interpolator;
@@ -25,20 +25,15 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
-
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Observable Territory class
  */
-public class ObservableTerritory {
+public class ObservableTerritory extends Territory<ObservableUser> {
 
-    public final Territories Territory;
-
-    private static Pane mapPane;
-
-    public static void setMapPane(Pane MapPane){ mapPane = MapPane; }
+    private volatile transient Pane mapContainer;
 
     /**
      * SVGPath node corresponding To this Territory
@@ -49,11 +44,6 @@ public class ObservableTerritory {
      * Currently displayed node list
      */
     private final transient ImageView armyImg = new ImageView();
-
-    /**
-     * Label containing Territory name
-     */
-    private final transient Label label;
 
     /**
      * Armies currently placed on the Territory
@@ -78,44 +68,54 @@ public class ObservableTerritory {
      * @param Owner New owner of this Territory
      */
     public void setOwner(ObservableUser Owner) {
-        synchronized (owner.territories){
-            owner.territories.set(owner.territories.subtract(1).get());
+        synchronized (owner.Territories){
+            owner.Territories.set(owner.Territories.subtract(1).get());
         }
 
         owner = Owner;
 
-        synchronized (owner.territories){
-            owner.territories.set(owner.territories.add(1).get());
+        synchronized (owner.Territories){
+            owner.Territories.set(owner.Territories.add(1).get());
         }
 
-        if(Platform.isFxApplicationThread())
-            svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0));
+        if(Platform.isFxApplicationThread()) {
+            svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
+            armyImg.setImage(owner.Color.armyImg);
+        }
         else
-            Platform.runLater(() -> svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.color.hexColor, 5.0, 5.0, 0, 0)));
+            Platform.runLater(() -> {
+                svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
+                armyImg.setImage(owner.Color.armyImg);
+            });
     }
 
     public ObservableUser getOwner() { return owner; }
 
+    public int getArmies() { return Armies.add(NewArmies.get()).get(); }
+
     /**
-     * Instance of map Territory with reference To UI Territory
+     * Instance of map Territory with reference to UI Territory
      *
-     * @param Territory Territory associated To this object
-     * @param Label Label for this Territory in UI
+     * @param MapHandler Map handler for this territory
      */
-    public ObservableTerritory(MapHandler MapHandler, Territories Territory, Label Label) {
-        this.Territory = Territory;
-        this.label = Label;
-        label.setText(Territory.toString().toUpperCase());
-        label.setFont(new Font("Trebuchet MS", 8.5));
-        label.setMouseTransparent(true);    // Set label mouse transparent To avoid selection issues
-        svgTerritory.setContent(this.Territory.svgPath);
+    public void loadGraphic(MapHandler MapHandler, Pane MapContainer) {
+        this.mapContainer = MapContainer;
+
+        // Name label
+        final Label name = new Label(Name.toUpperCase().replaceAll(" ", "\n"));
+        name.setMouseTransparent(true);
+        name.setRotate(LabelR);
+        name.getStyleClass().add("name");
+
+        // Territory image
+        svgTerritory.setContent(this.SvgPath);
         svgTerritory.setStroke(Color.BLACK);
         svgTerritory.setStrokeWidth(1.5f);
-        svgTerritory.setFill(this.Territory.continent.hexColor);
+        svgTerritory.setFill(this.Area.Color);
         // Add event handler for selection
         svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(this, evt.getButton().equals(MouseButton.SECONDARY)));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(Territory.continent.hexColor.darker()));
-        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(Territory.continent.hexColor));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(this.Area.Color.darker()));
+        svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(this.Area.Color));
 
         /* Main badge construction */
         final Label l = new Label();
@@ -125,7 +125,8 @@ public class ObservableTerritory {
         l.setAlignment(Pos.BOTTOM_RIGHT);
         l.setPrefHeight(40.0f);
         l.setPrefWidth(40.0f);
-        armyImg.setImage(Game.Map.Army.Color.PURPLE.armyImg);
+        l.visibleProperty().bind(Armies.isNotEqualTo(0));
+
         armyImg.setSmooth(true);
         armyImg.setCache(true);
         armyImg.setPreserveRatio(true);
@@ -133,11 +134,15 @@ public class ObservableTerritory {
         final StackPane sp = new StackPane(armyImg, l);
         sp.prefWidth(40.0f);
         sp.prefHeight(40.0f);
-        sp.setLayoutX(getCenterX(svgTerritory) + Territory.armyX);
-        sp.setLayoutY(getCenterY(svgTerritory) + Territory.armyY);
+        sp.setMouseTransparent(true);
 
         Platform.runLater(() -> {
-            mapPane.getChildren().addAll(svgTerritory, sp);
+            name.setLayoutX(getCenterX(svgTerritory) + LabelX);
+            name.setLayoutY(getCenterY(svgTerritory) + LabelY);
+            sp.setLayoutX(getCenterX(svgTerritory) + ArmyX);
+            sp.setLayoutY(getCenterY(svgTerritory) + ArmyY);
+
+            mapContainer.getChildren().addAll(name, sp, svgTerritory);
             svgTerritory.toBack();
         });
     }
@@ -169,7 +174,7 @@ public class ObservableTerritory {
         // Request is not sent From server if Armies are less then two
 
         // Message shown To the user
-        final String popupInfo = "Player " + battle.from.owner.username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
+        final String popupInfo = "Player " + battle.from.owner.Username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
                 " armies to " + battle.to.toString() + ".\r\nChoose how many defending armies to use.";
 
         Platform.runLater(() -> {
@@ -181,7 +186,9 @@ public class ObservableTerritory {
         synchronized (useArmies){
             try {
                 useArmies.wait();
-            } catch (Exception e){}
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
         }
 
         return useArmies.get();
@@ -201,7 +208,9 @@ public class ObservableTerritory {
         synchronized (useArmies){
             try {
                 useArmies.wait();
-            } catch (Exception e){}
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
         }
 
         return useArmies.get();
@@ -224,8 +233,8 @@ public class ObservableTerritory {
         list.setSpacing(15);
         list.addAnimatedNode(mainBtn, (expanded)->
                 new ArrayList<KeyValue>(){{ add(new KeyValue(mainBtn.getGraphic().rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
-        list.setLayoutX(getCenterX(label) - 20.0f);
-        list.setLayoutY(getCenterY(label) - 20.0f);
+        list.setLayoutX(getCenterX(svgTerritory) - 20.0f);
+        list.setLayoutY(getCenterY(svgTerritory) - 20.0f);
 
         final EventHandler<MouseEvent> handler = evt -> {
             final int def = Integer.parseInt(((Button) evt.getSource()).getText());
@@ -235,7 +244,7 @@ public class ObservableTerritory {
             }
 
             // After choice remove unnecessary UI controls
-            mapPane.getChildren().remove(list);
+            mapContainer.getChildren().remove(list);
         };
 
         final JFXButton btn1 = nodeButton("1", cssClass, false);
@@ -251,20 +260,20 @@ public class ObservableTerritory {
             list.addAnimatedNode(btn3);
         }
 
-        // Check where To display additional buttons if near window border
+        // Check where to display additional buttons if near window border
         if(list.getLayoutY() < 250.0)
-            list.setRotate(180);
+            list.setRotate(180.0);
         else
-            list.setRotate(0);
+            list.setRotate(0.0);
 
         // Display useArmies list in UI
         if(Platform.isFxApplicationThread()) {
-            mapPane.getChildren().add(list);
+            mapContainer.getChildren().add(list);
             list.animateList();
         }
         else
             Platform.runLater(() -> {
-                mapPane.getChildren().add(list);
+                mapContainer.getChildren().add(list);
                 list.animateList();
             });
     }
@@ -272,9 +281,9 @@ public class ObservableTerritory {
     /**
      * Button formatter To build node lists
      *
-     * @param Text Text To put inside node
-     * @param cssClass Class identifier To add To animated-option-button-*
-     * @param label Specify To add text as graphic inside button
+     * @param Text Text to put inside node
+     * @param cssClass Class identifier to add to animated-option-button-*
+     * @param label Specify to add text as graphic inside button
      * @return Formatted button as specified
      */
     private JFXButton nodeButton(String Text, String cssClass, boolean label) {
@@ -296,7 +305,7 @@ public class ObservableTerritory {
     }
 
     /**
-     * Get X center coordinates of given label in respect To his parent
+     * Get X center coordinates of given node in respect to his parent
      *
      * @param node Node to get center of
      * @return X center position in respect of parent of given node
@@ -306,26 +315,13 @@ public class ObservableTerritory {
     }
 
     /**
-     * Get Y center coordinates of given label in respect To his parent
+     * Get Y center coordinates of given node in respect to his parent
      *
      * @param node Node to get center of
      * @return Y center position in respect of parent of given node
      */
     private double getCenterY(Node node) {
         return node.getBoundsInParent().getMinY() + (node.getBoundsInLocal().getHeight() / 2);
-    }
-
-    @Override
-    public String toString() {
-        return Territory.toString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if(other instanceof ObservableTerritory)
-            return ((ObservableTerritory)other).Territory == this.Territory;
-
-        return other instanceof Territories && other == this.Territory;
     }
 
     public enum SelectionType {

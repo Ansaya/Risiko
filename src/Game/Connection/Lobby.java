@@ -1,22 +1,24 @@
 package Game.Connection;
 
+import Game.Player;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Lobby packet
  */
-public class Lobby<T> {
+public class Lobby<T extends Player> {
 
     public final ArrayList<T> toAdd = new ArrayList<>();
 
     public final ArrayList<T> toRemove = new ArrayList<>();
 
-    public Lobby(ArrayList<T> ToAdd, ArrayList<T> ToRemove) {
+    public Lobby(Collection<T> ToAdd, Collection<T> ToRemove) {
         if(ToAdd != null)
-            ToAdd.forEach((p) -> toAdd.add(p));
+            toAdd.addAll(ToAdd);
 
         if(ToRemove != null)
-            ToRemove.forEach((p) -> toRemove.add(p));
+            toRemove.addAll(ToRemove);
     }
 
     public Lobby(T ToAdd, T ToRemove) {
