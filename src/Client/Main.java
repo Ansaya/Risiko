@@ -178,14 +178,14 @@ public class Main extends Application {
         window.setMinWidth(1067.0);
         window.setMinHeight(600.0);
 
-        toLogin();
+        //toLogin();
 
-        /*toMatch(new Match<>(0, "Test match", Maps.RealWorldMap, Arrays.asList(
+        toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),
                 new ObservableUser(4, "Giocatore4", Color.GREEN),
-                new ObservableUser(5, "Giocatore5", Color.YELLOW))));*/
+                new ObservableUser(5, "Giocatore5", Color.YELLOW))));
     }
 
 
