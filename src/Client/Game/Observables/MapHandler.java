@@ -65,11 +65,11 @@ public class MapHandler {
     public void setMission(Mission Mission) {
         mission = Mission;
 
-        Main.showDialog("Mission", "You received your mission to win the game", "Continue");
+        Main.showDialog(resources.getString("mission"), resources.getString("missionReceived"), resources.getString("continue"));
     }
 
     private JFXDialog getMissionDialog() {
-        return Main.getDialog("Mission", mission != null ? mission.Description : "Mission not yet received.", "Continue");
+        return Main.getDialog(resources.getString("mission"), mission != null ? mission.getDescription(resources.getLocale()) : resources.getString("missionNotReceived"), resources.getString("continue"));
     }
 
     public void setMissionButton(Button MissionBtn) {
@@ -169,7 +169,7 @@ public class MapHandler {
 
         try {
             map = new Map<>(Match.GameMap, ObservableTerritory.class);
-            map.loadGraphic();
+            map.loadGraphic(resources.getLocale());
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ClassNotFoundException(resources.getString("mapLoadError"));
         }
@@ -459,7 +459,6 @@ public class MapHandler {
      * Enable positioning controls between two selected territories to perform final movement at the end of turn
      */
     private void endTurnMove() {
-        System.out.println("EndturnMovement");
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
@@ -551,6 +550,16 @@ public class MapHandler {
      * @return Updated battle message to send back to server
      */
     public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
+
+        // Message shown to the user
+        final String popupInfo = String.format(resources.getString("defensePopup"),
+                Battle.from.getOwner().Username.get(),
+                Battle.atkArmies,
+                Battle.from.toString(),
+                Battle.to.toString());
+
+        Main.showDialog(resources.getString("defensePopupTitle"), popupInfo, resources.getString("continue"));
+
         Battle.defArmies = map.getTerritory(Battle.to.Name).requestDefense(Battle);
 
         return Battle;

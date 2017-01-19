@@ -8,6 +8,9 @@ import java.util.Arrays;
  * Created by fiore on 18/12/2016.
  */
 public class Area {
+
+    private final transient String name;
+
     public final String Name;
 
     public final Color Color;
@@ -16,8 +19,9 @@ public class Area {
 
     public final ArrayList<Territory> territories;
 
-    private Area(String Name, String hexColor, int BonusArmies, ArrayList<Territory> Territories) {
-        this.Name = Name;
+    private Area(String name, String hexColor, int BonusArmies, ArrayList<Territory> Territories) {
+        this.name = name;
+        this.Name = "";
         this.Color = javafx.scene.paint.Color.web(hexColor);
         this.BonusArmies = BonusArmies;
         this.territories = Territories;
@@ -40,7 +44,7 @@ public class Area {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Area && ((Area)other).Name.equals(this.Name);
+        return other instanceof Area && ((Area)other).name.equals(this.name);
     }
 
     @Override

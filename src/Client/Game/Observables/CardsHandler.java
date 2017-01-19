@@ -98,7 +98,7 @@ public class CardsHandler {
      * @return Initialized card
      */
     private ImageView loadCard(Card Card) {
-        final ImageView card = new ImageView(Card.getImage());
+        final ImageView card = new ImageView(Card.getImage(resources.getLocale()));
         card.setPreserveRatio(true);
         card.setSmooth(true);
         card.setCache(true);

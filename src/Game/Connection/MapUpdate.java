@@ -31,7 +31,7 @@ public class MapUpdate<T extends Territory> {
      */
     @SafeVarargs
     public MapUpdate(T... Updated) {
-        if(Updated != null) {
+        if(Updated.length > 0) {
             this.Updated.addAll(Arrays.asList(Updated));
             HasMove = false;
         }

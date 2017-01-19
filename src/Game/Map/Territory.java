@@ -8,7 +8,15 @@ import java.util.ArrayList;
  */
 public abstract class Territory<T extends Player> {
 
-    public final String Name;
+    /**
+     * Identifier for this territory
+     */
+    private final String name;
+
+    /**
+     * UI localized name
+     */
+    public final transient String Name;
 
     public final transient Area Area;
 
@@ -37,6 +45,7 @@ public abstract class Territory<T extends Player> {
     }
 
     public Territory() {
+        name = "";
         Name = "";
         Area = null;
         SvgPath = "";
@@ -51,12 +60,12 @@ public abstract class Territory<T extends Player> {
     @Override
     public final boolean equals(Object other) {
         if(other instanceof String)
-            return other.equals(this.Name);
-        return other instanceof Territory && ((Territory)other).Name.equals(this.Name);
+            return other.equals(this.name);
+        return other instanceof Territory && ((Territory)other).name.equals(this.name);
     }
 
     @Override
     public final String toString() {
-        return this.Name;
+        return Name;
     }
 }

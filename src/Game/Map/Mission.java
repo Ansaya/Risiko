@@ -3,6 +3,8 @@ package Game.Map;
 import Game.Map.Army.Color;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * Created by fiore on 19/12/2016.
@@ -10,7 +12,11 @@ import java.util.ArrayList;
 public class Mission {
     public final String Name;
 
-    public final String Description;
+    private final Maps map;
+
+    public String getDescription(Locale Locale) {
+        return ResourceBundle.getBundle(map + ".Resources", Locale).getString(Name);
+    }
 
     public final transient ArrayList<Territory> ToConquer;
 
@@ -20,9 +26,9 @@ public class Mission {
 
     public final MissionType Type;
 
-    private Mission(String Name, String Description, ArrayList<Territory> Territories, int Number, Color Army, MissionType Type) {
+    private Mission(Maps Map, String Name, ArrayList<Territory> Territories, int Number, Color Army, MissionType Type) {
+        this.map = Map;
         this.Name = Name;
-        this.Description = Description;
         this.ToConquer = Territories;
         this.Number = Number;
         this.Army = Army;
@@ -40,7 +46,9 @@ public class Mission {
             final Field type = Mission.class.getDeclaredField("Type");
             type.setAccessible(true);
             type.set(this, MissionType.Number);
-        } catch (NoSuchFieldException | IllegalAccessException e) {}
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     public enum MissionType {

@@ -102,7 +102,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         this.mapContainer = MapContainer;
 
         // Name label
-        final Label name = new Label(Name.toUpperCase().replaceAll(" ", "\n"));
+        final Label name = new Label(toString().toUpperCase().replaceAll(" ", "\n"));
         name.setMouseTransparent(true);
         name.setRotate(LabelR);
         name.getStyleClass().add("name");
@@ -165,24 +165,17 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     }
 
     /**
-     * Show popup in UI and return the number of Armies used To useArmies From an battle
+     * Show popup in UI and return the number of armies used to useArmies from an battle
      *
-     * @param battle Battle message received From server
-     * @return Number of Armies defending the Territory
+     * @param battle Battle message received from server
+     * @return Number of armies defending the territory
      */
     public int requestDefense(Battle<ObservableTerritory> battle) {
-        // Request is not sent From server if Armies are less then two
+        // Request is not sent from server if armies are less then two
 
-        // Message shown To the user
-        final String popupInfo = "Player " + battle.from.owner.Username.get() + " is attacking from " + battle.from.toString() + " with " + battle.atkArmies +
-                " armies to " + battle.to.toString() + ".\r\nChoose how many defending armies to use.";
+        Platform.runLater(() -> showList(false));
 
-        Platform.runLater(() -> {
-            Main.showDialog("You are under attack!", popupInfo, "Go ahead");
-            showList(false);
-        });
-
-        // Wait for useArmies To be updated
+        // Wait for useArmies to be updated
         synchronized (useArmies){
             try {
                 useArmies.wait();
@@ -195,16 +188,16 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     }
 
     /**
-     * Show attack list To user and return chosen number of attacking armies
+     * Show attack list to user and return chosen number of attacking armies
      *
-     * @return Number of armies To use for battle
+     * @return Number of armies to use for battle
      */
     public int requestAttack() {
-        // Request is not sent From MapHandler if Armies are less then three
+        // Request is not sent from MapHandler if armies are less then three
 
         Platform.runLater(() -> showList(true));
 
-        // Wait for useArmies To be updated
+        // Wait for useArmies to be updated
         synchronized (useArmies){
             try {
                 useArmies.wait();

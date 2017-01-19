@@ -1,13 +1,18 @@
 package Game.Map;
 
 import javafx.scene.image.Image;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * Card object
  */
 public class Card {
-    public final String Name;
+    private final String name;
+
+    public transient String Name;
 
     public final Figure Figure;
 
@@ -15,19 +20,22 @@ public class Card {
 
     /**
      * Get image relative to this card
-     * @return
+     *
+     * @param Locale Language to load
+     * @return Card image
      */
-    public Image getImage() {
+    public Image getImage(Locale Locale) {
         if(image == null)
-            loadGraphic();
+            loadGraphic(Locale);
 
         return image;
     }
 
     private Maps mapName;
 
-    private Card(String Name, Figure Figure, Maps MapName){
-        this.Name = Name;
+    private Card(String name, Figure Figure, Maps MapName){
+        this.name = name;
+        this.Name = "";
         this.Figure = Figure;
         this.image = null;
         this.mapName = MapName;
@@ -36,12 +44,14 @@ public class Card {
     /**
      * Load card image from resources
      */
-    public void loadGraphic() {
+    public void loadGraphic(Locale Locale) {
         try {
             this.image = new Image(Card.class.getResource(mapName.name() + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        Name = ResourceBundle.getBundle(mapName + ".Resources", Locale).getString(name);
     }
 
     /**
