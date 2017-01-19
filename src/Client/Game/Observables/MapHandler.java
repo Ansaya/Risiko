@@ -5,6 +5,7 @@ import Client.Game.GameController;
 import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
+import Game.Connection.Match;
 import Game.Map.Map;
 import Game.Map.Maps;
 import Game.Map.Mission;
@@ -21,6 +22,7 @@ import javafx.scene.shape.SVGPath;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -32,7 +34,9 @@ import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
  */
 public class MapHandler {
 
-    private final GameController gameController = GameController.getInstance();
+    private final GameController gameController;
+
+    private final ResourceBundle resources;
 
     /**
      * Button to control phase completion
@@ -52,7 +56,7 @@ public class MapHandler {
 
     public void  setArmiesLabel(Label ArmiesLabel) {
         newArmiesLabel = ArmiesLabel;
-        newArmiesLabel.textProperty().bind((new SimpleStringProperty("Armies:  ")).concat(newArmies));
+        newArmiesLabel.textProperty().bind((new SimpleStringProperty(resources.getString("armies") + ":  ")).concat(newArmies));
         newArmiesLabel.setVisible(false);
     }
 
@@ -159,13 +163,15 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(Maps MapName, Pane MapContainer, ArrayList<ObservableUser> UsersList) throws ClassNotFoundException {
+    public MapHandler(GameController GC, Match<ObservableUser> Match, Pane MapContainer) throws ClassNotFoundException {
+        this.gameController = GC;
+        this.resources = GC.getResources();
 
         try {
-            map = new Map<>(MapName, ObservableTerritory.class);
+            map = new Map<>(Match.GameMap, ObservableTerritory.class);
             map.loadGraphic();
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new ClassNotFoundException("Can not load requested map.");
+            throw new ClassNotFoundException(resources.getString("mapLoadError"));
         }
 
         final SVGPath connections = new SVGPath();
@@ -173,8 +179,7 @@ public class MapHandler {
         connections.setStroke(Color.BLACK);
         MapContainer.getChildren().add(connections);
 
-        if(UsersList != null)
-            UsersList.forEach(u -> usersList.put(u.Id.get(), u));
+        Match.Players.forEach(u -> usersList.put(u.Id.get(), u));
 
         map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
     }
@@ -242,13 +247,15 @@ public class MapHandler {
         Platform.runLater(() -> {
             if(!isSetup) {
                 endPhaseBtn.setDisable(false);
-                endPhaseBtn.setText("End displacement");
+                endPhaseBtn.setText(resources.getString("endDisplacement"));
             }
             newArmiesLabel.setVisible(true);
             newArmies.set(NewArmies);
         });
 
-        Main.showDialog("Positioning message", "You have " + NewArmies + " new armies to place.", "Place armies");
+        Main.showDialog(resources.getString("positioningMessageTitle"),
+                String.format(resources.getString("positioningMessage"), NewArmies),
+                resources.getString("placeArmies"));
 
         // Display positioning controls only for territories owned from current user
         final ObservableUser current = gameController.getUser();
@@ -297,16 +304,16 @@ public class MapHandler {
     public void attackPhase(){
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
-            endPhaseBtn.setText("End attack phase");
+            endPhaseBtn.setText(resources.getString("endAttackPhase"));
         });
 
         attackPhase.set(true);
 
         final ObservableUser current = gameController.getUser();
 
-        Main.showDialog("Attack phase",
-                           "Select territory to attack, then your attacking territory and select how many armies to use from the prompt.",
-                         "Continue");
+        Main.showDialog(resources.getString("attackMessageTitle"),
+                           resources.getString("attackMessage"),
+                         resources.getString("continue"));
 
         canSelect = true;
         while (canSelect) {
@@ -335,14 +342,18 @@ public class MapHandler {
 
             // If territories are not adjacent show error
             if(!defender.isAdjacent(attacker)){
-                Main.showDialog("Attack error", "You can't start battle between two non adjacent territories.", "Continue");
+                Main.showDialog(resources.getString("attackErrorTitle"),
+                        resources.getString("attackErrorAdjacent"),
+                        resources.getString("continue"));
                 synchronized (selected) {
                     selected.set(new SelectedTerritory(defender, false));
                     selected.notify();
                 }
             }
             else if(attacker.Armies.get() == 1){ // If not enough armies are present show error
-                Main.showDialog("Attack error", "You can't start battle from territory with one army only", "Continue");
+                Main.showDialog(resources.getString("attackErrorTitle"),
+                        resources.getString("attackErrorArmies"),
+                        resources.getString("continue"));
                 synchronized (selected) {
                     selected.set(new SelectedTerritory(defender, false));
                     selected.notify();
@@ -397,7 +408,7 @@ public class MapHandler {
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
-            endPhaseBtn.setText("Continue");
+            endPhaseBtn.setText(resources.getString("continue"));
         });
 
         // Set armies as new armies to enable movement
@@ -418,7 +429,9 @@ public class MapHandler {
 
             // Can select only 'to' or 'from'
             if(!st.Selected.equals(From) && !st.Selected.equals(To)) {
-                Main.showDialog("Special moving error", "Perform this move only between highlighted territories.", "Continue");
+                Main.showDialog(resources.getString("specialMoveErrorTitle"),
+                        resources.getString("specialMoveError"),
+                        resources.getString("continue"));
                 continue;
             }
 
@@ -428,7 +441,7 @@ public class MapHandler {
                 addArmyTo(st.Selected, false);
         }
 
-        Platform.runLater(() -> endPhaseBtn.setText("End attack phase"));
+        Platform.runLater(() -> endPhaseBtn.setText(resources.getString("endAttackPhase")));
 
         // Notify attackPhase to go ahead with execution
         synchronized (attackPhase){
@@ -446,13 +459,14 @@ public class MapHandler {
      * Enable positioning controls between two selected territories to perform final movement at the end of turn
      */
     private void endTurnMove() {
+        System.out.println("EndturnMovement");
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
-            endPhaseBtn.setText("End turn");
-            Main.showDialog("Positioning message",
-                               "At the of your turn you can move armies between two adjacent territories",
-                             "Continue");
+            endPhaseBtn.setText(resources.getString("endTurn"));
+            Main.showDialog(resources.getString("positioningMessageTitle"),
+                    resources.getString("endTurnMessage"),
+                    resources.getString("continue"));
         });
 
         final ObservableUser current = gameController.getUser();
@@ -479,10 +493,14 @@ public class MapHandler {
 
             // Show errors if territories are not adjacent or from territory has only one army
             if(!from.isAdjacent(to)) {
-                Main.showDialog("Moving error", "You can't move armies between two non adjacent territories.", "Continue");
+                Main.showDialog(resources.getString("movingErrorTitle"),
+                        resources.getString("movingErrorAdjacent"),
+                        resources.getString("continue"));
             }
             else if (from.Armies.get() == 1) {
-                Main.showDialog("Moving error", "You can't move armies from territory with one army only", "Continue");
+                Main.showDialog(resources.getString("movingErrorTitle"),
+                        resources.getString("movingErrorArmies"),
+                        resources.getString("continue"));
             }
             else {
                 boolean isFrom;
@@ -499,9 +517,9 @@ public class MapHandler {
                     }
 
                     if(!(isFrom = st.Selected.equals(from)) && !st.Selected.equals(to)){
-                        Main.showDialog("Moving error",
-                                "You can move armies between the two selected territory only. To change your selection put armies back to their territories.",
-                                "Continue");
+                        Main.showDialog(resources.getString("movingErrorTitle"),
+                                resources.getString("movingErrorTerritory"),
+                                resources.getString("continue"));
                         continue;
                     }
 

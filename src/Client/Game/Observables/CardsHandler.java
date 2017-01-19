@@ -17,11 +17,14 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 
 /**
  * Handler for cards in UI
  */
 public class CardsHandler {
+
+    private final ResourceBundle resources;
 
     /**
      * Dialog containing cards UI objects
@@ -42,14 +45,16 @@ public class CardsHandler {
     /**
      * Redeem button in dialog
      */
-    private final JFXButton redeemBtn = new JFXButton("Redeem");
+    private final JFXButton redeemBtn;
 
     /**
      * List of selected cards
      */
     private final ArrayList<Card> selected = new ArrayList<>();
 
-    public CardsHandler() {
+    public CardsHandler(ResourceBundle Resources) {
+        this.resources = Resources;
+
         /* Container setup */
         container.setSpacing(15.0f);
         container.setPadding(new Insets(0, 7.5, 0, 22.5));
@@ -57,12 +62,13 @@ public class CardsHandler {
         container.setPrefHeight(227.0f);
 
         /* Close button setup */
-        final JFXButton closeBtn = new JFXButton("Close");
+        final JFXButton closeBtn = new JFXButton(resources.getString("close"));
         closeBtn.setButtonType(JFXButton.ButtonType.RAISED);
         closeBtn.setStyle("-fx-background-color: #44B449");
         closeBtn.setOnMouseClicked(this::closeDialog);
 
         /* Redeem cards button setup */
+        redeemBtn = new JFXButton(resources.getString("redeem"));
         redeemBtn.setButtonType(JFXButton.ButtonType.RAISED);
         redeemBtn.setStyle("-fx-background-color: red");
         redeemBtn.setOnMouseClicked(this::closeDialog);
@@ -70,7 +76,7 @@ public class CardsHandler {
 
         /* Layout setup */
         final JFXDialogLayout dl = new JFXDialogLayout();
-        dl.setHeading(new Label("     Territories cards"));
+        dl.setHeading(new Label("     " + resources.getString("cardsTitle")));
         dl.setBody(container);
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
@@ -150,12 +156,9 @@ public class CardsHandler {
         }
 
         // Else show error dialog and retry
-        Main.showDialog("Error message", "Combination are of three cards only:\n" +
-                                                      " - three infantry, cavalry or artillery\n" +
-                                                      " - two infantry, cavalry, or artillery and one jolly\n" +
-                                                      " - one infantry, one cavalry and one artillery\n" +
-                                                      "If you have five cards you must select a combination To redeem.",
-                         "Continue");
+        Main.showDialog(resources.getString("cardsErrorTitle"),
+                resources.getString("cardsErrorMessage"),
+                resources.getString("continue"));
 
         synchronized (Main.dialogClosed){
             try {
@@ -169,7 +172,7 @@ public class CardsHandler {
     }
 
     /**
-     * Add new card To the list
+     * Add new card to the list
      *
      * @param Card Card to add
      */
@@ -181,6 +184,11 @@ public class CardsHandler {
 
         container.getChildren().add(loadCard(Card));
         cards.add(Card);
+
+        // Notify user
+        Main.showDialog(resources.getString("cardsTitle"),
+                String.format(resources.getString("cardsMessage"), Card.toString()),
+                resources.getString("continue"));
     }
 
     /**

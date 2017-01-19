@@ -38,11 +38,13 @@ public class LobbyController implements Initializable {
 
     private final PlayersTable playersTable = new PlayersTable();
 
+    private volatile GameController gameController;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
         // Create match label
-        final Label createLabel = new Label("Create new match");
+        final Label createLabel = new Label(resources.getString("createMatchLabel"));
         createLabel.setFont(Main.globalFont);
 
         // New match name text field
@@ -55,7 +57,7 @@ public class LobbyController implements Initializable {
         map.getSelectionModel().select(0);
 
         // New match creation button
-        final JFXButton createMatchBtn = new JFXButton("Create match", new ImageView(LobbyController.class.getResource("match.png").toExternalForm()));
+        final JFXButton createMatchBtn = new JFXButton(resources.getString("createMatchBtn"), new ImageView(LobbyController.class.getResource("match.png").toExternalForm()));
         createMatchBtn.setFont(Main.globalFont);
         createMatchBtn.setPadding(new Insets(5.0, 10.0, 10.0, 5.0));
         createMatchBtn.setButtonType(JFXButton.ButtonType.RAISED);
@@ -78,24 +80,24 @@ public class LobbyController implements Initializable {
         newMatchBox.visibleProperty().bind(matchTable.visibleProperty());
 
         // Start match button
-        final JFXButton startMatchBtn = new JFXButton("Start match", new ImageView(LobbyController.class.getResource("game.png").toExternalForm()));
+        final JFXButton startMatchBtn = new JFXButton(resources.getString("startMatchBtn"), new ImageView(LobbyController.class.getResource("game.png").toExternalForm()));
         startMatchBtn.setButtonType(JFXButton.ButtonType.RAISED);
         startMatchBtn.setFont(Main.globalFont);
         startMatchBtn.setPadding(new Insets(10.0, 20.0, 10.0, 20.0));
         startMatchBtn.setStyle("-fx-background-color: #44B449");
         startMatchBtn.setOnMouseClicked(evt -> {
             if(playersTable.getItems().size() > 1)
-                GameController.getInstance().SendMessage(MessageType.Turn, "");
+                gameController.SendMessage(MessageType.Turn, "");
         });
 
         // Exit match room button
-        final JFXButton exitMatchBtn = new JFXButton("Exit match", new ImageView(LobbyController.class.getResource("exit.png").toExternalForm()));
+        final JFXButton exitMatchBtn = new JFXButton(resources.getString("exitMatchBtn"), new ImageView(LobbyController.class.getResource("exit.png").toExternalForm()));
         exitMatchBtn.setButtonType(JFXButton.ButtonType.RAISED);
         exitMatchBtn.setFont(Main.globalFont);
         exitMatchBtn.setPadding(new Insets(10.0, 20.0, 10.0, 20.0));
         exitMatchBtn.setStyle("-fx-background-color: #03A9F4");
         exitMatchBtn.setOnMouseClicked(evt ->
-                GameController.getInstance().SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, GameController.getInstance().getUser())));
+                gameController.SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, gameController.getUser())));
 
         // Match room buttons container
         final VBox matchRoomBox = new VBox(startMatchBtn, exitMatchBtn);
@@ -122,17 +124,18 @@ public class LobbyController implements Initializable {
         matchTable.setVisible(true);
     }
 
-    public void setGameController() {
-        GameController.getInstance().setUpdateMatches(this::update);
-        GameController.getInstance().setUpdateUsers(this::update);
-        GameController.getInstance().startExecutor();
+    public void setGameController(GameController GC) {
+        this.gameController = GC;
+        GC.setUpdateMatches(this::update);
+        GC.setUpdateUsers(this::update);
+        GC.startExecutor();
     }
 
     private void createMatch(String Name, Maps Map) {
         if(Name.equals(""))
             return;
 
-        GameController.getInstance().SendMessage(MessageType.Match, new Match<>(0, Name, Map, GameController.getInstance().getUser()));
+        gameController.SendMessage(MessageType.Match, new Match<>(0, Name, Map, gameController.getUser()));
     }
 
     /**
@@ -185,8 +188,7 @@ public class LobbyController implements Initializable {
                         if(match.Players.size() == 6 && !match.IsStarted)
                             return;
 
-                        final Match request = new Match<>(match.Id, match.Name, match.GameMap, GameController.getInstance().getUser());
-                        GameController.getInstance().SendMessage(MessageType.Match, request);
+                        gameController.SendMessage(MessageType.Match, new Match<>(match.Id, match.Name, match.GameMap, gameController.getUser()));
                     }
                 });
 
@@ -237,29 +239,6 @@ public class LobbyController implements Initializable {
             setVisible(true);
             getItems().removeIf(ToRemove::contains);
             getItems().addAll(ToAdd);
-        }
-
-        public void addUserColor() {
-            idColumn.setCellFactory(tr -> {
-                final ImageView iv = new ImageView();
-                iv.setPreserveRatio(true);
-                iv.setY(30.0);
-
-                final TableCell<ObservableUser, Integer> idCell = new TableCell<ObservableUser, Integer>() {
-                    public void updateItem(ObservableUser item, boolean empty) {
-                        if(item != null)
-                            iv.setImage(item.getColor().armyImg);
-                    }
-                };
-
-                idCell.setGraphic(iv);
-
-                return idCell;
-            });
-        }
-
-        public void removeUserColor() {
-            idColumn.setCellValueFactory(data -> data.getValue().Id.asObject());
         }
     }
 }

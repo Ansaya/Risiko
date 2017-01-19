@@ -20,7 +20,7 @@
                          <Font name="Trebuchet MS" size="16.0" />
                       </font>
                    </JFXTextField>
-                   <JFXButton fx:id="loginBtn" buttonType="RAISED" ripplerFill="#1bcc00" style="-fx-background-color: #47cc00;" text="Login" textAlignment="CENTER">
+                   <JFXButton fx:id="loginBtn" buttonType="RAISED" ripplerFill="#1bcc00" style="-fx-background-color: #47cc00;" text="%login" textAlignment="CENTER">
                       <font>
                          <Font name="Trebuchet MS" size="14.0" />
                       </font>
@@ -28,7 +28,7 @@
                          <Insets />
                       </VBox.margin>
                    </JFXButton>
-                  <JFXButton fx:id="settingsBtn" buttonType="RAISED" ripplerFill="#005aff" style="-fx-background-color: #0070ff;" text="Settings">
+                  <JFXButton fx:id="settingsBtn" buttonType="RAISED" ripplerFill="#005aff" style="-fx-background-color: #0070ff;" text="%settings">
                      <font>
                         <Font name="Trebuchet MS" size="14.0" />
                      </font>

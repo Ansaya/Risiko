@@ -28,12 +28,19 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 
 public class Main extends Application {
 
     private static Stage window;
 
     private static StackPane parent;
+
+    private static GameController gameController;
+
+    public static void setGameController(GameController GC) { gameController = GC; }
 
     public static final Object dialogClosed = new Object();
 
@@ -44,6 +51,7 @@ public class Main extends Application {
         }
 
         FXMLLoader loader = new FXMLLoader();
+        loader.setResources(gameController.getResources());
         Parent root = null;
         try {
             root = loader.load(MatchController.class.getResource("match.fxml").openStream());
@@ -55,14 +63,14 @@ public class Main extends Application {
 
         MatchController mc = loader.getController();
         try {
-            mc.setGameController(Match);
+            mc.setGameController(gameController, Match);
         } catch (ClassNotFoundException e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
         }
 
         parent = (StackPane) root;
-        final ChatBox cb = GameController.getInstance().getChatBox();
+        final ChatBox cb = gameController.getChatBox();
         ((AnchorPane)parent.getChildren().get(0)).getChildren().add(cb);
         AnchorPane.setRightAnchor(cb, 25.0);
         AnchorPane.setBottomAnchor(cb, 0.0);
@@ -81,6 +89,7 @@ public class Main extends Application {
         }
 
         FXMLLoader loader = new FXMLLoader();
+        loader.setResources(gameController.getResources());
         Parent root = null;
         try {
             root = loader.load(LobbyController.class.getResource("lobby.fxml").openStream());
@@ -91,10 +100,10 @@ public class Main extends Application {
         }
 
         LobbyController lc = loader.getController();
-        lc.setGameController();
+        lc.setGameController(gameController);
 
         parent = (StackPane) root;
-        final ChatBox cb = GameController.getInstance().getChatBox();
+        final ChatBox cb = gameController.getChatBox();
         ((AnchorPane)parent.getChildren().get(0)).getChildren().add(cb);
         AnchorPane.setRightAnchor(cb, 25.0);
         AnchorPane.setBottomAnchor(cb, 0.0);
@@ -112,6 +121,7 @@ public class Main extends Application {
         }
 
         FXMLLoader loader = new FXMLLoader();
+        loader.setResources(gameController.getResources());
         Parent root = null;
         try {
             root = loader.load(LoginController.class.getResource("login.fxml").openStream());
@@ -120,7 +130,8 @@ public class Main extends Application {
             e.printStackTrace();
         }
 
-        //loader.getController();
+        LoginController lc = loader.getController();
+        lc.setGameController(gameController);
         parent = (StackPane) root;
 
         window.setTitle("Risiko - Login");
@@ -178,25 +189,28 @@ public class Main extends Application {
         window.setMinWidth(1067.0);
         window.setMinHeight(600.0);
 
-        //toLogin();
+        gameController = new GameController();
 
-        toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                gameController.StopConnection(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }));
+
+        toLogin();
+
+        /*toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),
                 new ObservableUser(4, "Giocatore4", Color.GREEN),
-                new ObservableUser(5, "Giocatore5", Color.YELLOW))));
+                new ObservableUser(5, "Giocatore5", Color.YELLOW))));*/
     }
 
 
     public static void main(String[] args) {
         launch(args);
-    }
-
-    @Override
-    public void stop() throws Exception {
-        GameController.getInstance().StopConnection(true);
-
-        super.stop();
     }
 }

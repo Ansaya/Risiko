@@ -22,22 +22,29 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.function.Consumer;
+import java.util.prefs.Preferences;
 
 /**
  * Handle communication with the server
  */
 public class GameController extends MessageReceiver<MessageType> implements Runnable {
 
-    private static GameController _instance = new GameController();
-
-    public static GameController getInstance() { return _instance; }
-
     private final String serverAddress = "localhost";
+
+    private volatile ResourceBundle resources;
+
+    public void setLocale(Locale Language) {
+        resources = ResourceBundle.getBundle("Client.UI.Resources", Language);
+    }
+
+    public ResourceBundle getResources() { return resources; }
 
     /* Connection section */
     /**
-     * Connection To the server
+     * Connection to the server
      */
     private Socket connection;
 
@@ -63,7 +70,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
     public ChatBox getChatBox() {
         if(chatBox == null)
-            chatBox = new ChatBox(2);
+            chatBox = new ChatBox(-10, this::SendChat);
 
         return chatBox;
     }
@@ -113,8 +120,10 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     /**
      * Initializer for all message handlers
      */
-    private GameController() {
+    public GameController() {
         super("GameController");
+
+        setLocale(new Locale(Preferences.userNodeForPackage(Client.Main.class).get("language", "it")));
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
@@ -175,11 +184,6 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             if(!cards.combination.isEmpty()) {
                 // Add card to user local cards
                 cardsHandler.addCard(cards.combination.get(0));
-
-                // Notify user
-                Main.showDialog("Territories cards",
-                                  "You received " + cards.combination.get(0).toString() + " card!",
-                                "Continue");
                 return;
             }
 
@@ -217,21 +221,28 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                 case Winner:
                     Main.toLobby();
                     if(gameState.winner.equals(user)) {
-                        Main.showDialog("Game state message", "You won the match!", "Close");
+                        Main.showDialog(resources.getString("gameStateMessage"),
+                                resources.getString("victoryMessage"),
+                                resources.getString("close"));
                         Sounds.Victory.play();
                     }
                     else {
-                        Main.showDialog("Game state message",
-                                "You lost this match. The winner is " + gameState.winner.Username.get(),
-                                "Close");
+                        Main.showDialog(resources.getString("gameStateMessage"),
+                                resources.getString("lostMessage") + gameState.winner.Username.get(),
+                                resources.getString("close"));
                     }
                     break;
                 case Abandoned:
                     Main.toLobby();
-                    Main.showDialog("Game state message", "Player " + gameState.winner.Username.get() + " left the game.", "Close");
+                    Main.showDialog(resources.getString("gameStateMessage"),
+                            gameState.winner.Username.get() + resources.getString("abandonedMessage"),
+                            resources.getString("close"));
                     break;
                 case Defeated:
-                    Main.showDialog("Game state message", "You have been defeated!", "Close");
+                    Main.showDialog(resources.getString("gameStateMessage"),
+                            resources.getString("defeatedMessage"),
+
+                            resources.getString("close"));
 
                     // Return cards to server
                     SendMessage(MessageType.Cards, new Cards(cardsHandler.returnCards()));
@@ -255,7 +266,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
             this.send = new PrintWriter(connection.getOutputStream(), true);
             this.listen = true;
         } catch (IOException e) {
-            throw new Exception("Cannot connect with the server");
+            throw new Exception(resources.getString("initError"));
         }
 
         // Try connecting to server
@@ -267,13 +278,13 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
         // If server doesn't respond notify the user
         if(!incoming.startsWith("OK"))
-            throw new Exception("Wrong response from server.");
+            throw new Exception(resources.getString("wrongResponse"));
 
         // Set user for this client
         this.user = new ObservableUser(Integer.valueOf(incoming.split("[#]")[1]), Username, null);
         System.out.println("Got id " + user.Id.get() + " from server.");
 
-        this.chatBox = new ChatBox(user.getId());
+        this.chatBox = new ChatBox(user.getId(), this::SendChat);
 
         // If connection is successfully established start listening and receiving
         _threadInstance.start();
@@ -309,11 +320,11 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         }
 
         // Else reset object for new connection attempt
-        _instance = new GameController();
+        Main.setGameController(new GameController());
 
         Main.toLogin();
 
-        Main.showDialog("Application error", "There has been a problem with server connection.", "Close");
+        Main.showDialog(resources.getString("applicationErrorTitle"), resources.getString("connectionError"), resources.getString("close"));
     }
 
     /**

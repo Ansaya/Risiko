@@ -1,6 +1,5 @@
 package Client.UI.ChatBox;
 
-import Client.Game.GameController;
 import Client.Game.Observables.ObservableUser;
 import Client.Main;
 import Game.Connection.Chat;
@@ -20,6 +19,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
+import java.util.function.Consumer;
+
 /**
  * Created by fiore on 10/01/2017.
  */
@@ -37,7 +38,7 @@ public class ChatBox extends TitledPane {
 
     private final int userId;
 
-    public ChatBox(int UserId) {
+    public ChatBox(int UserId, Consumer<String> SendChat) {
         this.setText("Chat");
         this.setFont(Main.globalFont);
 
@@ -60,7 +61,7 @@ public class ChatBox extends TitledPane {
 
         EventHandler sendMessage = (evt) -> {
             if(!chatInput.getText().trim().equals(""))
-                GameController.getInstance().SendChat(chatInput.getText().trim());
+                SendChat.accept(chatInput.getText().trim());
             chatInput.clear();
         };
 

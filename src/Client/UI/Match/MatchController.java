@@ -9,7 +9,6 @@ import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -38,14 +37,16 @@ public class MatchController implements Initializable {
     @FXML
     private AnchorPane parent;
 
-    private CardsHandler cardsHandler;
+    private volatile GameController gameController;
+
+    private volatile CardsHandler cardsHandler;
 
     /* Map */
     private final AnchorPane mapAP = new AnchorPane();
 
     private Pane mapContainer = new Pane();
 
-    private MapHandler mapHandler;
+    private volatile MapHandler mapHandler;
 
     private double mapRatio = 1.0;
 
@@ -173,8 +174,8 @@ public class MatchController implements Initializable {
         mapContainer.getTransforms().add(newScale);
     }
 
-    private void setMapHandler(Match<ObservableUser> Match) throws ClassNotFoundException {
-        final ObservableUser current = GameController.getInstance().getUser();
+    private void setMapHandler(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
+        final ObservableUser current = gameController.getUser();
         final AtomicBoolean imPlaying = new AtomicBoolean(false);
         Match.Players.forEach(u -> {
             if (u.equals(current)) {
@@ -190,7 +191,7 @@ public class MatchController implements Initializable {
         });
         playersList.setMaxHeight(35.0 * Match.Players.size() + 27.0);
 
-        mapHandler = new MapHandler(Match.GameMap, mapContainer, Match.Players);
+        mapHandler = new MapHandler(GC, Match, mapContainer);
         mapPrefWidth = mapHandler.map.PrefWidth;
         mapPrefHeight = mapHandler.map.PrefHeight;
         mapRatio = mapPrefWidth / mapPrefHeight;
@@ -201,20 +202,21 @@ public class MatchController implements Initializable {
 
         // If user is not a player request update for current map conditions
         if(!imPlaying.get())
-            GameController.getInstance().SendMessage(MessageType.Turn, "Update");
+            gameController.SendMessage(MessageType.Turn, "Update");
     }
 
-    private void setCardsHandler() {
-        cardsHandler = new CardsHandler();
+    private void setCardsHandler(GameController GC) {
+        cardsHandler = new CardsHandler(GC.getResources());
         cardsHandler.setCardsButton(cardsBtn);
     }
 
-    public void setGameController(Match<ObservableUser> Match) throws ClassNotFoundException {
-        setMapHandler(Match);
-        GameController.getInstance().setMapHandler(mapHandler);
-        setCardsHandler();
-        GameController.getInstance().setCardsHandler(cardsHandler);
-        GameController.getInstance().startExecutor();
+    public void setGameController(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
+        this.gameController = GC;
+        setMapHandler(GC, Match);
+        GC.setMapHandler(mapHandler);
+        setCardsHandler(GC);
+        GC.setCardsHandler(cardsHandler);
+        GC.startExecutor();
     }
 
     private class DiceBox extends HBox {
