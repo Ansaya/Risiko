@@ -23,6 +23,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import java.net.URL;
+import java.util.Collection;
 import java.util.ResourceBundle;
 
 /**
@@ -210,7 +211,7 @@ public class LobbyController implements Initializable {
         }
     }
 
-    private class PlayersTable extends TableView<ObservableUser> {
+    public class PlayersTable extends TableView<ObservableUser> {
 
         private final TableColumn<ObservableUser, Integer> idColumn = new TableColumn<>("ID");
 
@@ -224,14 +225,18 @@ public class LobbyController implements Initializable {
         }
 
         public void updateTable(Lobby<ObservableUser> Update) {
+            updateTable(Update.toAdd, Update.toRemove);
+        }
+
+        public void updateTable(Collection<ObservableUser> ToAdd, Collection<ObservableUser> ToRemove) {
             if(!Platform.isFxApplicationThread()) {
-                Platform.runLater(() -> updateTable(Update));
+                Platform.runLater(() -> updateTable(ToAdd, ToRemove));
                 return;
             }
 
             setVisible(true);
-            getItems().removeIf(Update.toRemove::contains);
-            getItems().addAll(Update.toAdd);
+            getItems().removeIf(ToRemove::contains);
+            getItems().addAll(ToAdd);
         }
 
         public void addUserColor() {

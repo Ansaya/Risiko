@@ -55,7 +55,7 @@ public class Main extends Application {
 
         MatchController mc = loader.getController();
         try {
-            mc.setGameController(Match.GameMap, Match.Players);
+            mc.setGameController(Match);
         } catch (ClassNotFoundException e) {
             showDialog("Loading error", "There has been an error loading the map", "Continue");
             return;
@@ -71,7 +71,7 @@ public class Main extends Application {
         window.setScene(new Scene(root, 1067, 600));
         window.show();
 
-        mc.updateMapSize(1067, 600);
+        Platform.runLater(() -> mc.updateMapSize(1067, 600));
     }
 
     public static void toLobby() {
