@@ -176,8 +176,7 @@ public class MapHandler {
 
         Match.Players.forEach(u -> usersList.put(u.Id.get(), u));
 
-        //ObservableTerritory.setList(MapContainer, GC.getUser().Color);
-        ObservableTerritory.setList(MapContainer, Game.Map.Army.Color.BLUE);
+        ObservableTerritory.setList(MapContainer, GC.getUser().Color);
         map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
     }
 

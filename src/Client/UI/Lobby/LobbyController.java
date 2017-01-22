@@ -26,6 +26,7 @@ import javafx.util.Callback;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -58,19 +59,8 @@ public class LobbyController implements Initializable {
 
         // New match map selector
         final JFXComboBox<Maps> map = new JFXComboBox<>(FXCollections.observableArrayList(Maps.values()));
-        map.setCellFactory(new Callback<ListView<Maps>, ListCell<Maps>>() {
-            @Override
-            public ListCell<Maps> call(ListView<Maps> param) {
-                return new ListCell<Maps>() {
-                    @Override
-                    public void updateItem(Maps item, boolean isEmpty) {
-                        super.updateItem(item, isEmpty);
-                        if(item != null)
-                            setText(Maps.getName(item, resources.getLocale()));
-                    }
-                };
-            }
-        });
+        map.setCellFactory(lv -> getDefaultCell(resources.getLocale()));
+        map.setButtonCell(getDefaultCell(resources.getLocale()));
         map.getSelectionModel().select(0);
 
         // New match creation button
@@ -153,6 +143,17 @@ public class LobbyController implements Initializable {
             return;
 
         gameController.SendMessage(MessageType.Match, new Match<>(0, Name, Map, gameController.getUser()));
+    }
+
+    private ListCell<Maps> getDefaultCell(Locale Locale) {
+        return new ListCell<Maps>() {
+            @Override
+            public void updateItem(Maps item, boolean empty) {
+                super.updateItem(item, empty);
+                if(item != null && !empty)
+                    setText(Maps.getName(item, Locale));
+            }
+        };
     }
 
     /**
