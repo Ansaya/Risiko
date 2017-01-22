@@ -9,6 +9,7 @@ import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -105,7 +106,7 @@ public class MatchController implements Initializable {
         /* Players table setup */
         usernameColumn.setCellValueFactory(data -> data.getValue().getValue().Username);
         usernameColumn.setSortable(false);
-        territoriesColumn.setCellValueFactory(data -> data.getValue().getValue().Territories.asObject());
+        territoriesColumn.setCellValueFactory(data -> Bindings.size(data.getValue().getValue().Territories).asObject());
         territoriesColumn.setSortable(false);
 
         playersList.setRoot(usersRoot);

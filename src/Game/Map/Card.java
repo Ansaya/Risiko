@@ -10,7 +10,7 @@ import java.util.ResourceBundle;
  * Card object
  */
 public class Card {
-    private final String name;
+    public final String Id;
 
     public transient String Name;
 
@@ -31,14 +31,14 @@ public class Card {
         return image;
     }
 
-    private Maps mapName;
+    private Maps mapId;
 
-    private Card(String name, Figure Figure, Maps MapName){
-        this.name = name;
+    private Card(String Id, Figure Figure, Maps mapId){
+        this.Id = Id;
         this.Name = "";
         this.Figure = Figure;
         this.image = null;
-        this.mapName = MapName;
+        this.mapId = mapId;
     }
 
     /**
@@ -46,12 +46,12 @@ public class Card {
      */
     public void loadGraphic(Locale Locale) {
         try {
-            this.image = new Image(Card.class.getResource(mapName.name() + "\\Cards\\" + Name.replaceAll(" ", "") + ".jpg").openStream());
+            this.image = new Image(Card.class.getResource(mapId.name() + "\\Cards\\" + Id + ".jpg").openStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        Name = ResourceBundle.getBundle(mapName + ".Resources", Locale).getString(name);
+        Name = ResourceBundle.getBundle(mapId + ".Resources", Locale).getString(Id);
     }
 
     /**

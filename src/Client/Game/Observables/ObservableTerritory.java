@@ -1,102 +1,80 @@
 package Client.Game.Observables;
 
-import Client.Main;
-import Game.Connection.Battle;
+import Client.UI.Match.Army.ArmyBadge;
+import Client.UI.Match.Army.ArmyList;
 import Game.Map.Territory;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXNodesList;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyValue;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.event.EventHandler;
-import javafx.geometry.Pos;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.InnerShadow;
-import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.text.Font;
-import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Observable Territory class
  */
 public class ObservableTerritory extends Territory<ObservableUser> {
 
+    private static ArmyList al;
+
+    public static void setList(Pane MapContainer, Game.Map.Army.Color Army) {
+        al = ArmyList.getArmyList(Army);
+        al.getList().setVisible(false);
+        Platform.runLater(() -> MapContainer.getChildren().add(al.getList()));
+    }
+
     private volatile transient Pane mapContainer;
 
     /**
-     * SVGPath node corresponding To this Territory
+     * SVGPath node corresponding to this territory
      */
     private final transient SVGPath svgTerritory = new SVGPath();
 
     /**
-     * Currently displayed node list
-     */
-    private final transient ImageView armyImg = new ImageView();
-
-    /**
-     * Armies currently placed on the Territory
+     * Armies currently placed on the territory
      */
     public final IntegerProperty Armies = new SimpleIntegerProperty(0);
 
     /**
-     * Armies placed during positioning phase not yet submitted To server
+     * Armies placed during positioning phase not yet submitted to server
      */
     public final IntegerProperty NewArmies = new SimpleIntegerProperty(0);
 
-    /**
-     * Defending Armies choose form user
-     */
-    private transient final AtomicInteger useArmies = new AtomicInteger(1);
-
-    private volatile ObservableUser owner = new ObservableUser(-100, "NullUser", null);
+    private final SimpleObjectProperty<ObservableUser> owner = new SimpleObjectProperty<>(new ObservableUser(-100, "NullUser", null));
 
     /**
-     * Updates current owner and Territory color
+     * Updates current owner and territory color
      *
-     * @param Owner New owner of this Territory
+     * @param Owner New owner of this territory
      */
+    @Override
     public void setOwner(ObservableUser Owner) {
-        synchronized (owner.Territories){
-            owner.Territories.set(owner.Territories.subtract(1).get());
-        }
-
-        owner = Owner;
-
-        synchronized (owner.Territories){
-            owner.Territories.set(owner.Territories.add(1).get());
-        }
-
-        if(Platform.isFxApplicationThread()) {
-            svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
-            armyImg.setImage(owner.Color.armyImg);
-        }
-        else
-            Platform.runLater(() -> {
-                svgTerritory.setEffect(new InnerShadow(BlurType.GAUSSIAN, owner.Color.hexColor, 5.0, 5.0, 0, 0));
-                armyImg.setImage(owner.Color.armyImg);
-            });
+        owner.get().Territories.remove(this);
+        owner.set(Owner);
+        owner.get().Territories.add(this);
     }
 
-    public ObservableUser getOwner() { return owner; }
+    @Override
+    public ObservableUser getOwner() { return owner.getValue(); }
 
-    public int getArmies() { return Armies.add(NewArmies.get()).get(); }
+    public int getArmies() { return Armies.add(NewArmies).getValue().intValue(); }
 
     /**
-     * Instance of map Territory with reference to UI Territory
+     * Initialize UI territory context
      *
      * @param MapHandler Map handler for this territory
+     * @param MapContainer Container pane for this territory
      */
     public void loadGraphic(MapHandler MapHandler, Pane MapContainer) {
         this.mapContainer = MapContainer;
@@ -112,37 +90,32 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         svgTerritory.setStroke(Color.BLACK);
         svgTerritory.setStrokeWidth(1.5f);
         svgTerritory.setFill(this.Area.Color);
+        final InnerShadow is = new InnerShadow(BlurType.GAUSSIAN, Color.TRANSPARENT, 5.0, 1.0, 0, 0);
+        svgTerritory.setEffect(is);
+
         // Add event handler for selection
         svgTerritory.addEventFilter(MouseEvent.MOUSE_CLICKED, evt -> MapHandler.selected(this, evt.getButton().equals(MouseButton.SECONDARY)));
         svgTerritory.addEventFilter(MouseEvent.MOUSE_ENTERED, evt -> svgTerritory.setFill(this.Area.Color.darker()));
         svgTerritory.addEventFilter(MouseEvent.MOUSE_EXITED, evt -> svgTerritory.setFill(this.Area.Color));
 
-        /* Main badge construction */
-        final Label l = new Label();
-        l.textProperty().bind(Armies.add(NewArmies).asString());
-        l.setTextFill(Color.WHITE);
-        l.setFont(new Font("Arial Black", 20.0));
-        l.setAlignment(Pos.BOTTOM_RIGHT);
-        l.setPrefHeight(40.0f);
-        l.setPrefWidth(40.0f);
-        l.visibleProperty().bind(Armies.isNotEqualTo(0));
+        final ArmyBadge ab = ArmyBadge.getBadge(Armies.add(NewArmies), isRight -> MapHandler.selected(this, isRight));
+        final StackPane badge = ab.getBadge();
+        badge.setMouseTransparent(true);
 
-        armyImg.setSmooth(true);
-        armyImg.setCache(true);
-        armyImg.setPreserveRatio(true);
+        owner.addListener((ob, old, newOwner) -> {
+            if(newOwner.Color == null) return;
 
-        final StackPane sp = new StackPane(armyImg, l);
-        sp.prefWidth(40.0f);
-        sp.prefHeight(40.0f);
-        sp.setMouseTransparent(true);
+            ab.getImageProperty().set(newOwner.Color.armyImg);
+            is.setColor(newOwner.Color.hexColor);
+        });
 
         Platform.runLater(() -> {
             name.setLayoutX(getCenterX(svgTerritory) + LabelX);
             name.setLayoutY(getCenterY(svgTerritory) + LabelY);
-            sp.setLayoutX(getCenterX(svgTerritory) + ArmyX);
-            sp.setLayoutY(getCenterY(svgTerritory) + ArmyY);
+            badge.setLayoutX(getCenterX(svgTerritory) + ArmyX);
+            badge.setLayoutY(getCenterY(svgTerritory) + ArmyY);
 
-            mapContainer.getChildren().addAll(name, sp, svgTerritory);
+            mapContainer.getChildren().addAll(name, badge, svgTerritory);
             svgTerritory.toBack();
         });
     }
@@ -165,136 +138,23 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     }
 
     /**
-     * Show popup in UI and return the number of armies used to useArmies from an battle
+     * Popup selection list for this territory and returns selected number of armies
      *
-     * @param battle Battle message received from server
-     * @return Number of armies defending the territory
+     * @return Selected armies
      */
-    public int requestDefense(Battle<ObservableTerritory> battle) {
-        // Request is not sent from server if armies are less then two
+    public int requestNumber(boolean isAttack) {
+        final int armies = getArmies();
+        if(armies == 1) return 1;
 
-        Platform.runLater(() -> showList(false));
+        Armies.set(1);
 
-        // Wait for useArmies to be updated
-        synchronized (useArmies){
-            try {
-                useArmies.wait();
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }
+        final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX,
+                getCenterY(svgTerritory) + ArmyY,
+                Math.min(armies, isAttack ? 3 : 2));
 
-        return useArmies.get();
-    }
+        Armies.set(armies);
 
-    /**
-     * Show attack list to user and return chosen number of attacking armies
-     *
-     * @return Number of armies to use for battle
-     */
-    public int requestAttack() {
-        // Request is not sent from MapHandler if armies are less then three
-
-        Platform.runLater(() -> showList(true));
-
-        // Wait for useArmies to be updated
-        synchronized (useArmies){
-            try {
-                useArmies.wait();
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }
-
-        return useArmies.get();
-    }
-
-    /**
-     * Setup and show defense/attack node list with buttons and event handlers
-     */
-    private void showList(boolean isAttack) {
-        String cssClass = "def";
-        String text = "Defense";
-        if(isAttack) {
-            cssClass = "atk";
-            text = "Attack";
-        }
-
-        // Buttons setup
-        final JFXNodesList list = new JFXNodesList();
-        final JFXButton mainBtn = nodeButton(text, cssClass, true);
-        list.setSpacing(15);
-        list.addAnimatedNode(mainBtn, (expanded)->
-                new ArrayList<KeyValue>(){{ add(new KeyValue(mainBtn.getGraphic().rotateProperty(), expanded? 360:0 , Interpolator.EASE_BOTH));}});
-        list.setLayoutX(getCenterX(svgTerritory) - 20.0f);
-        list.setLayoutY(getCenterY(svgTerritory) - 20.0f);
-
-        final EventHandler<MouseEvent> handler = evt -> {
-            final int def = Integer.parseInt(((Button) evt.getSource()).getText());
-            synchronized (useArmies) {
-                useArmies.set(def);
-                useArmies.notify();
-            }
-
-            // After choice remove unnecessary UI controls
-            mapContainer.getChildren().remove(list);
-        };
-
-        final JFXButton btn1 = nodeButton("1", cssClass, false);
-        final JFXButton btn2 = nodeButton("2", cssClass, false);
-        btn1.addEventFilter(MouseEvent.MOUSE_CLICKED, handler);
-        btn2.addEventFilter(MouseEvent.MOUSE_CLICKED, handler);
-        list.addAnimatedNode(btn1);
-        list.addAnimatedNode(btn2);
-
-        if(isAttack && Armies.get() > 3){
-            final JFXButton btn3 = nodeButton("3", cssClass, false);
-            btn3.addEventFilter(MouseEvent.MOUSE_CLICKED, handler);
-            list.addAnimatedNode(btn3);
-        }
-
-        // Check where to display additional buttons if near window border
-        if(list.getLayoutY() < 250.0)
-            list.setRotate(180.0);
-        else
-            list.setRotate(0.0);
-
-        // Display useArmies list in UI
-        if(Platform.isFxApplicationThread()) {
-            mapContainer.getChildren().add(list);
-            list.animateList();
-        }
-        else
-            Platform.runLater(() -> {
-                mapContainer.getChildren().add(list);
-                list.animateList();
-            });
-    }
-
-    /**
-     * Button formatter To build node lists
-     *
-     * @param Text Text to put inside node
-     * @param cssClass Class identifier to add to animated-option-button-*
-     * @param label Specify to add text as graphic inside button
-     * @return Formatted button as specified
-     */
-    private JFXButton nodeButton(String Text, String cssClass, boolean label) {
-        final JFXButton btn = new JFXButton();
-        btn.setButtonType(JFXButton.ButtonType.RAISED);
-        btn.getStyleClass().add("animated-option-button-" + cssClass);
-
-        if(label) {
-            final Label l = new Label(Text);
-            l.setTextFill(Color.WHITE);
-            btn.setGraphic(l);
-        }
-        else {
-            btn.setText(Text);
-            btn.getStyleClass().add("animated-option-button-selector");
-        }
-
-        return btn;
+        return selected;
     }
 
     /**

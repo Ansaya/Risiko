@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Map<T extends Territory> {
 
-    public final Maps Name;
+    public final Maps Id;
 
     public final double PrefWidth;
 
@@ -25,11 +25,15 @@ public class Map<T extends Territory> {
 
     private final HashMap<String, T> territories;
 
-    public T getTerritory(String Name) {
-        return territories.get(Name);
+    public T getTerritory(Territory Territory) {
+        return getTerritory(Territory.Id);
     }
 
-    public ArrayList<String> getTerritoryNames() {
+    public T getTerritory(String Id) {
+        return territories.get(Id);
+    }
+
+    public ArrayList<String> getTerritoryIds() {
         return new ArrayList<>(territories.keySet());
     }
 
@@ -46,16 +50,16 @@ public class Map<T extends Territory> {
     /**
      * Load requested map from relative json file
      *
-     * @param Name Name of the map
+     * @param Id Name of the map
      * @param TerritoryExtender Type of territory class to use for this map
      * @throws NoSuchFieldException If map can not be found
      */
-    public Map(Maps Name, Class<T> TerritoryExtender) throws NoSuchFieldException {
+    public Map(Maps Id, Class<T> TerritoryExtender) throws NoSuchFieldException {
         // Load json map filed from resources
-        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name.name() + "/" + Name.name() + ".json")));
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Id.name() + "/" + Id.name() + ".json")));
 
         // Initialize all fields to empty value
-        this.Name = Name;
+        this.Id = Id;
         this.PrefWidth = map.get("prefWidth").getAsDouble();
         this.PrefHeight = map.get("prefHeight").getAsDouble();
         this.areas = new HashMap<>();
@@ -75,10 +79,10 @@ public class Map<T extends Territory> {
         areaConstructor.setAccessible(true);
 
         // Gain access to all final/private fields of Territory class
-        final Field territoryname = Territory.class.getDeclaredField("name");
+        final Field territoryId = Territory.class.getDeclaredField("Id");
         final Field territoryAdjacent = Territory.class.getDeclaredField("adjacent");
         final Field territoryArea = Territory.class.getDeclaredField("Area");
-        territoryname.setAccessible(true);
+        territoryId.setAccessible(true);
         territoryAdjacent.setAccessible(true);
         territoryArea.setAccessible(true);
 
@@ -90,22 +94,14 @@ public class Map<T extends Territory> {
             T territory;
             try {
                 territory = TerritoryExtender.newInstance();
+                territoryId.set(territory, jt.get("Id").getAsString());
             } catch (IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
                 return;
             }
-
-            // Initialize all fields available
-            try {
-                territoryname.set(territory, jt.get("name").getAsString());
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-                return;
-            }
-
             // If no svgPath, it is only a card
             if(jt.has("SvgPath"))
-                territories.put(territory.Name, territory);
+                territories.put(territory.Id, territory);
         });
 
         // Initialize all areas with initialized territories
@@ -118,16 +114,16 @@ public class Map<T extends Territory> {
 
             Area area;
             try {
-                area = areaConstructor.newInstance(ja.get("name").getAsString(),
+                area = areaConstructor.newInstance(ja.get("Id").getAsString(),
                         ja.get("Color").getAsString(),
                         ja.get("BonusArmies").getAsInt(),
-                        states/*.toArray(new Territory[states.size()])*/);
+                        states);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
                 return;
             }
 
-            areas.put(area.Name, area);
+            areas.put(area.Id, area);
         });
 
         // Complete territories initialization with adjacent territories and areas
@@ -136,7 +132,7 @@ public class Map<T extends Territory> {
             if(!jt.has("adjacent"))
                 return;
 
-            T territory = this.territories.get(jt.get("name").getAsString());
+            T territory = this.territories.get(jt.get("Id").getAsString());
 
             final ArrayList<T> adjacent = new ArrayList<>();
             jt.getAsJsonArray("adjacent").forEach(a -> adjacent.add(this.territories.get(a.getAsString())));
@@ -157,8 +153,8 @@ public class Map<T extends Territory> {
      * @throws IllegalAccessException Cannot access territory properties
      */
     public void loadGraphic(Locale Locale) throws NoSuchFieldException, IllegalAccessException {
-        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
-        final ResourceBundle resources = ResourceBundle.getBundle("Resources", Locale);
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Id + "/" + Id + ".json")));
+        final ResourceBundle resources = ResourceBundle.getBundle("Game.Map." + Id + ".Resources", Locale);
 
         // Gain access to map connection field
         final Field connPath = Map.class.getDeclaredField("ConnectionsPath");
@@ -168,7 +164,6 @@ public class Map<T extends Territory> {
             connPath.set(this, map.get("connectionsPath").getAsString());
 
         // Gain access to territory fields
-        final Field territoryname = Territory.class.getDeclaredField("name");
         final Field territoryName = Territory.class.getDeclaredField("Name");
         final Field territorySvgPath = Territory.class.getDeclaredField("SvgPath");
         final Field territoryArmyX = Territory.class.getDeclaredField("ArmyX");
@@ -176,7 +171,6 @@ public class Map<T extends Territory> {
         final Field territoryLabelX = Territory.class.getDeclaredField("LabelX");
         final Field territoryLabelY = Territory.class.getDeclaredField("LabelY");
         final Field territoryLabelR = Territory.class.getDeclaredField("LabelR");
-        territoryname.setAccessible(true);
         territoryName.setAccessible(true);
         territorySvgPath.setAccessible(true);
         territoryArmyX.setAccessible(true);
@@ -186,17 +180,18 @@ public class Map<T extends Territory> {
         territoryLabelR.setAccessible(true);
 
         // Gain access to area name field
-        final Field areaname = Area.class.getDeclaredField("name");
-        areaname.setAccessible(true);
+        final Field areaName = Area.class.getDeclaredField("Name");
+        areaName.setAccessible(true);
 
         // Load graphic for each territory
         final JsonArray jTerritories = map.getAsJsonArray("territories");
         jTerritories.forEach(t -> {
             JsonObject jt = t.getAsJsonObject();
-            Territory territory = territories.get(jt.get("name").getAsString());
+            Territory territory = territories.get(jt.get("Id").getAsString());
+            if(territory == null) return;
 
             try {
-                territoryName.set(territory, resources.getString(territoryname.get(territory).toString()));
+                territoryName.set(territory, resources.getString(territory.Id));
                 if (jt.has("SvgPath"))
                     territorySvgPath.set(territory, jt.get("SvgPath").getAsString());
                 if (jt.has("ArmyX"))
@@ -216,7 +211,7 @@ public class Map<T extends Territory> {
 
         areas.forEach((name, area) -> {
             try {
-                areaname.set(area, resources.getString(areaname.get(area).toString()));
+                areaName.set(area, resources.getString(area.Id));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -231,7 +226,7 @@ public class Map<T extends Territory> {
      */
     private void loadMissionDeck() throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException {
         // Load json map filed from resources
-        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Id + "/" + Id + ".json")));
 
         final ArrayList<Mission> missions = new ArrayList<>();
 
@@ -263,8 +258,8 @@ public class Map<T extends Territory> {
                 army = Color.valueOf(jm.get("Army").getAsString());
 
             try {
-                mission = missionConstructor.newInstance(this.Name,
-                        jm.get("Name").getAsString(),
+                mission = missionConstructor.newInstance(this.Id,
+                        jm.get("Id").getAsString(),
                         toConquer.size() > 0 ? toConquer : null,
                         number,
                         army,
@@ -288,7 +283,7 @@ public class Map<T extends Territory> {
      */
     private void loadCardDeck() throws NoSuchFieldException, NoSuchMethodException, IllegalAccessException {
         // Load json map filed from resources
-        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Name + "/" + Name + ".json")));
+        final JsonObject map = (JsonObject) (new JsonParser()).parse(new InputStreamReader(Map.class.getResourceAsStream(Id + "/" + Id + ".json")));
 
         final ArrayList<Card> cards = new ArrayList<>();
 
@@ -307,7 +302,7 @@ public class Map<T extends Territory> {
 
             if(jt.has("Card"))
                 try {
-                    cards.add(cardConstructor.newInstance(jt.get("name").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Name));
+                    cards.add(cardConstructor.newInstance(jt.get("Id").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Id));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }

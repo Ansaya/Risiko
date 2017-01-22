@@ -11,7 +11,7 @@ public abstract class Territory<T extends Player> {
     /**
      * Identifier for this territory
      */
-    private final String name;
+    public final String Id;
 
     /**
      * UI localized name
@@ -45,7 +45,7 @@ public abstract class Territory<T extends Player> {
     }
 
     public Territory() {
-        name = "";
+        Id = "";
         Name = "";
         Area = null;
         SvgPath = "";
@@ -60,12 +60,12 @@ public abstract class Territory<T extends Player> {
     @Override
     public final boolean equals(Object other) {
         if(other instanceof String)
-            return other.equals(this.name);
-        return other instanceof Territory && ((Territory)other).name.equals(this.name);
+            return other.equals(this.Id);
+        return other instanceof Territory && ((Territory)other).Id.equals(this.Id);
     }
 
     @Override
     public final String toString() {
-        return Name;
+        return Name.equals("") ? Id : Name;
     }
 }

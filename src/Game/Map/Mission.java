@@ -10,12 +10,12 @@ import java.util.ResourceBundle;
  * Created by fiore on 19/12/2016.
  */
 public class Mission {
-    public final String Name;
+    public final String Id;
 
-    private final Maps map;
+    private final Maps mapId;
 
     public String getDescription(Locale Locale) {
-        return ResourceBundle.getBundle(map + ".Resources", Locale).getString(Name);
+        return ResourceBundle.getBundle("Game.Map." + mapId + ".Resources", Locale).getString(Id);
     }
 
     public final transient ArrayList<Territory> ToConquer;
@@ -26,9 +26,9 @@ public class Mission {
 
     public final MissionType Type;
 
-    private Mission(Maps Map, String Name, ArrayList<Territory> Territories, int Number, Color Army, MissionType Type) {
-        this.map = Map;
-        this.Name = Name;
+    private Mission(Maps MapId, String Id, ArrayList<Territory> Territories, int Number, Color Army, MissionType Type) {
+        this.mapId = MapId;
+        this.Id = Id;
         this.ToConquer = Territories;
         this.Number = Number;
         this.Army = Army;

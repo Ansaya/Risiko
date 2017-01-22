@@ -22,6 +22,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.ResourceBundle;
@@ -34,14 +36,16 @@ public class LobbyController implements Initializable {
     @FXML
     private AnchorPane parent;
 
-    private final MatchTable matchTable = new MatchTable();
+    private volatile MatchTable matchTable;
 
-    private final PlayersTable playersTable = new PlayersTable();
+    private volatile PlayersTable playersTable;
 
     private volatile GameController gameController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        matchTable = new MatchTable(resources);
+        playersTable = new PlayersTable(resources);
 
         // Create match label
         final Label createLabel = new Label(resources.getString("createMatchLabel"));
@@ -54,6 +58,19 @@ public class LobbyController implements Initializable {
 
         // New match map selector
         final JFXComboBox<Maps> map = new JFXComboBox<>(FXCollections.observableArrayList(Maps.values()));
+        map.setCellFactory(new Callback<ListView<Maps>, ListCell<Maps>>() {
+            @Override
+            public ListCell<Maps> call(ListView<Maps> param) {
+                return new ListCell<Maps>() {
+                    @Override
+                    public void updateItem(Maps item, boolean isEmpty) {
+                        super.updateItem(item, isEmpty);
+                        if(item != null)
+                            setText(Maps.getName(item, resources.getLocale()));
+                    }
+                };
+            }
+        });
         map.getSelectionModel().select(0);
 
         // New match creation button
@@ -169,11 +186,11 @@ public class LobbyController implements Initializable {
 
     private class MatchTable extends TableView<Match> {
 
-        public MatchTable() {
-            final TableColumn<Match, Integer> idColumn = new TableColumn<>("ID");
-            final TableColumn<Match, String> nameColumn = new TableColumn<>("Match");
-            final TableColumn<Match, Maps> gameMapColumn = new TableColumn<>("Game map");
-            final TableColumn<Match, String> playersColumn = new TableColumn<>("Players");
+        public MatchTable(ResourceBundle resources) {
+            final TableColumn<Match, Integer> idColumn = new TableColumn<>(resources.getString("id"));
+            final TableColumn<Match, String> nameColumn = new TableColumn<>(resources.getString("match"));
+            final TableColumn<Match, Maps> gameMapColumn = new TableColumn<>(resources.getString("gameMap"));
+            final TableColumn<Match, String> playersColumn = new TableColumn<>(resources.getString("players"));
             idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
             nameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
             gameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
@@ -215,11 +232,14 @@ public class LobbyController implements Initializable {
 
     public class PlayersTable extends TableView<ObservableUser> {
 
-        private final TableColumn<ObservableUser, Integer> idColumn = new TableColumn<>("ID");
+        private final TableColumn<ObservableUser, Integer> idColumn;
 
-        private final TableColumn<ObservableUser, String> usernameColumn = new TableColumn<>("Username");
+        private final TableColumn<ObservableUser, String> usernameColumn;
 
-        public PlayersTable() {
+        public PlayersTable(ResourceBundle resources) {
+            idColumn = new TableColumn<>(resources.getString("id"));
+            usernameColumn = new TableColumn<>(resources.getString("username"));
+
             idColumn.setCellValueFactory(data -> data.getValue().Id.asObject());
             usernameColumn.setCellValueFactory(data -> data.getValue().Username);
 

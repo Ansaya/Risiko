@@ -2,11 +2,15 @@ package Client.Game.Observables;
 
 import Game.Map.Army.Color;
 import Game.Player;
+import Server.Game.Map.Territory;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import java.util.ArrayList;
 
 /**
  * Observable class of simplified user
@@ -28,7 +32,7 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> implemen
         return Color;
     }
 
-    public final IntegerProperty Territories = new SimpleIntegerProperty(0);
+    public final transient ObservableList<ObservableTerritory> Territories = FXCollections.observableArrayList(new ArrayList<ObservableTerritory>());
 
     public ObservableUser(int userId, String username, Color Color) {
         this.Id.set(userId);

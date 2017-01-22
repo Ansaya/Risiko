@@ -2,16 +2,15 @@ package Game.Map;
 
 import javafx.scene.paint.Color;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by fiore on 18/12/2016.
  */
 public class Area {
 
-    private final transient String name;
+    public final String Id;
 
-    public final String Name;
+    public final transient String Name;
 
     public final Color Color;
 
@@ -19,8 +18,8 @@ public class Area {
 
     public final ArrayList<Territory> territories;
 
-    private Area(String name, String hexColor, int BonusArmies, ArrayList<Territory> Territories) {
-        this.name = name;
+    private Area(String Id, String hexColor, int BonusArmies, ArrayList<Territory> Territories) {
+        this.Id = Id;
         this.Name = "";
         this.Color = javafx.scene.paint.Color.web(hexColor);
         this.BonusArmies = BonusArmies;
@@ -44,7 +43,7 @@ public class Area {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Area && ((Area)other).name.equals(this.name);
+        return other instanceof Area && ((Area)other).Id.equals(this.Id);
     }
 
     @Override

@@ -11,8 +11,7 @@ import java.lang.reflect.Type;
 public class ObservableUserSerializer implements JsonSerializer<ObservableUser>, JsonDeserializer<ObservableUser> {
     @Override
     public JsonElement serialize(ObservableUser src, Type typeOfSrc, JsonSerializationContext context) {
-
-        JsonObject obj = new JsonObject();
+        final JsonObject obj = new JsonObject();
         obj.addProperty("id", src.Id.get());
         obj.addProperty("username", src.Username.get());
         if(src.Color != null)

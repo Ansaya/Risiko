@@ -136,7 +136,6 @@ public class Main extends Application {
 
         window.setTitle("Risiko - Login");
         window.setScene(new Scene(root, 1067, 600));
-        window.setResizable(false);
         window.show();
     }
 
@@ -166,11 +165,7 @@ public class Main extends Application {
     }
 
     public static void showDialog(String Heading, String Body, String BtnText) {
-        final JFXDialog dialog = getDialog(Heading, Body, BtnText);
-        if(Platform.isFxApplicationThread())
-            dialog.show(parent);
-        else
-            Platform.runLater(() -> dialog.show(parent));
+        showDialog(getDialog(Heading, Body, BtnText));
     }
 
     public static void showDialog(JFXDialog Dialog) {
@@ -191,17 +186,9 @@ public class Main extends Application {
 
         gameController = new GameController();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                gameController.StopConnection(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }));
-
         toLogin();
 
-        /*toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
+        /*toMatch(new Match<>(0, "Test match", Maps.RealWorldMap, Arrays.asList(
                 new ObservableUser(1, "Giocatore1", Color.BLACK),
                 new ObservableUser(2, "Giocatore2", Color.RED),
                 new ObservableUser(3, "Giocatore3", Color.BLUE),
@@ -212,5 +199,13 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if(gameController != null)
+            gameController.StopConnection(true);
+
+        super.stop();
     }
 }

@@ -37,9 +37,6 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
-
-        //args = new String[] { "risiko.jar", "console" };
-
         final ArrayList<String> Args = new ArrayList<>(Arrays.asList(args));
 
         if(Args.contains("console")) {
@@ -50,6 +47,7 @@ public class Main extends Application {
                 try {
                     terminate();
                 } catch (Exception e) {
+                    System.err.println("Shutdown error.");
                     e.printStackTrace();
                 }
             }));

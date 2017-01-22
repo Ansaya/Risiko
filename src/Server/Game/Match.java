@@ -51,7 +51,7 @@ public class Match extends MessageReceiver<MessageType> {
         if(!isStarted())
             sendAll(MessageType.Lobby, new Lobby<>(Player, null));
 
-        players.put(Player.id, Player);
+        players.put(Player.getId(), Player);
         Player.enterMatch(this.Id);
 
         if(!isStarted()) {
@@ -81,7 +81,7 @@ public class Match extends MessageReceiver<MessageType> {
             return;
         }
 
-        players.remove(Player.id);
+        players.remove(Player.getId());
 
         if(Remove)
             GameController.getInstance().releasePlayer(Player, true);
@@ -197,7 +197,7 @@ public class Match extends MessageReceiver<MessageType> {
         final Deck<Color> deckColor = new Deck<>(Color.values());
         players.forEach((id, player) -> {
             player.initMatch(deckColor.next(), this.Id, map.nextMission());
-            playersOrder.add(player.id);
+            playersOrder.add(player.getId());
         });
 
         if(AI != null)
@@ -217,7 +217,7 @@ public class Match extends MessageReceiver<MessageType> {
                     player.getMission().changeToNumber();
             }
 
-            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, this.Name, map.Name, players.values()));
+            player.SendMessage(MessageType.Match, new Game.Connection.Match<>(this.Id, this.Name, map.Id, players.values()));
         });
 
         // Start first setup turn
@@ -259,7 +259,7 @@ public class Match extends MessageReceiver<MessageType> {
         if(lastPlaying == null)
             return players.get(playersOrder.get(0));
 
-        int current = playersOrder.indexOf(lastPlaying.id);
+        int current = playersOrder.indexOf(lastPlaying.getId());
 
         // If current was last of the row, return first again
         if(current == (playersOrder.size() - 1))
@@ -392,7 +392,7 @@ public class Match extends MessageReceiver<MessageType> {
          * @return Deserialized message
          */
         private <T> T waitMessage(MessageType Type) {
-            return waitMessage(Type, playing.id);
+            return waitMessage(Type, playing.getId());
         }
 
 
@@ -405,7 +405,7 @@ public class Match extends MessageReceiver<MessageType> {
 
             // Save last player id to trigger ai choice during initial phase
             int lastId = match.playersOrder.get(match.playersOrder.size() - 1);
-            final ArrayList<String> toGo = match.map.getTerritoryNames();
+            final ArrayList<String> toGo = match.map.getTerritoryIds();
 
             /* Territories choice */
 
@@ -414,7 +414,7 @@ public class Match extends MessageReceiver<MessageType> {
                 (last = match.nextPlaying(last)).SendMessage(MessageType.Positioning, new Positioning(1));
 
                 // Get chosen territory
-                MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.id);
+                MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, last.getId());
                 if(update == null) return;
 
                 // Update game map
@@ -424,18 +424,18 @@ public class Match extends MessageReceiver<MessageType> {
                 toUpdate.setOwner(last);
 
                 // Remove it from remaining territories
-                toGo.remove(toUpdate.Name);
+                toGo.remove(toUpdate.Id);
 
                 // Send update to all players
                 match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
 
                 // At the end of the row chose one for AI if only two players are in match
-                if(AI != null && last.id == lastId){
+                if(AI != null && last.getId() == lastId){
                     // Get random territory from remaining
                     toUpdate = match.map.getTerritory(toGo.get((new Random()).nextInt(toGo.size())));
                     toUpdate.addArmies(3);
                     toUpdate.setOwner(AI);
-                    toGo.remove(toUpdate.Name);
+                    toGo.remove(toUpdate.Id);
                     match.sendAll(MessageType.MapUpdate, new MapUpdate<>(toUpdate));
                 }
             }
@@ -522,7 +522,7 @@ public class Match extends MessageReceiver<MessageType> {
                 // If player has no more territories, notify defeat to the player and do housekeeping
                 if(battle.to.getOwner().getTerritories().size() == 1) {
                     // If AI has been defeated simply remove it
-                    if(battle.to.getOwner().id == -1)
+                    if(battle.to.getOwner().getId() == -1)
                         match.players.remove(-1);
                     else { // Else do housekeeping and set player as witness for the match
                         final Player defeated = battle.to.getOwner();
@@ -530,7 +530,7 @@ public class Match extends MessageReceiver<MessageType> {
                         playersOrder.removeIf(id -> id == defeated.getId());
 
                         // Return cards of defeated player
-                        final Cards c = waitMessage(MessageType.Cards, defeated.id);
+                        final Cards c = waitMessage(MessageType.Cards, defeated.getId());
                         if (c == null) return false;
                         match.map.returnCards(c.combination);
 
@@ -566,7 +566,7 @@ public class Match extends MessageReceiver<MessageType> {
 
             // Else if there are some armies which can be moved to new territory
             // wait for response from attacker
-            final MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, playing.id);
+            final MapUpdate<Territory> update = waitMessage(MessageType.MapUpdate, playing.getId());
 
             if(update == null) return false;
 
@@ -637,7 +637,7 @@ public class Match extends MessageReceiver<MessageType> {
                 // If more than one army is present on defender territory ask player how many he want to use
                 if(newBattle.to.getArmies() > 1) {
                     // Get defender player id
-                    int defenderId = newBattle.to.getOwner().id;
+                    int defenderId = newBattle.to.getOwner().getId();
 
                     // If attacking AI territory use maximum number of defending armies
                     if(defenderId == -1)
@@ -658,7 +658,7 @@ public class Match extends MessageReceiver<MessageType> {
                 // After each battle check if mission completed
                 if(match.map.checkMission(playing, playing.getMission())){
                     // If player wins notify match object and return
-                    match.setIncoming(playing.id,
+                    match.setIncoming(playing.getId(),
                                       MessageType.GameState,
                                       gson.toJson(new GameState<>(StateType.Winner, playing), MessageType.GameState.getType()));
                     return;
@@ -676,15 +676,16 @@ public class Match extends MessageReceiver<MessageType> {
 
             // If final move is performed update map and players
             if(!endMove.Updated.isEmpty()){
-                endMove.Updated.get(0).canRemoveArmies(endMove.Updated.get(1).NewArmies);
-                endMove.Updated.get(1).addArmies(endMove.Updated.get(1).NewArmies);
-                endMove.Updated.get(1).NewArmies = 0;
+                final Territory from = endMove.Updated.get(0), to = endMove.Updated.get(1);
+                from.canRemoveArmies(to.NewArmies);
+                to.addArmies(to.NewArmies);
+                to.NewArmies = 0;
 
                 match.sendAll(MessageType.MapUpdate, endMove);
             }
 
             // Notify end of turn when completed
-            match.setIncoming(playing.id, MessageType.Turn, "");
+            match.setIncoming(playing.getId(), MessageType.Turn, "");
         }
     }
 
@@ -725,11 +726,11 @@ public class Match extends MessageReceiver<MessageType> {
         public Territory deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
             final JsonObject jt = json.getAsJsonObject();
-            final Territory t = map.getTerritory(jt.get("Name").getAsString());
+            final Territory t = map.getTerritory(jt.get("Id").getAsString());
             if(jt.has("NewArmies"))
                 t.NewArmies = jt.get("NewArmies").getAsInt();
 
-            return map.getTerritory(json.getAsJsonObject().get("Name").getAsString());
+            return t;
         }
     }
 

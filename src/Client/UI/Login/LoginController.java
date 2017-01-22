@@ -82,7 +82,6 @@ public class LoginController implements Initializable {
                     @Override
                     public void updateItem(Locale item, boolean empty) {
                         super.updateItem(item, empty);
-
                         if(item != null)
                             setText(item.getDisplayName(item));
                     }

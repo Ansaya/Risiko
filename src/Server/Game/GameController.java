@@ -188,7 +188,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // Clean player and put it back to lobby
         Player.exitMatch();
-        lobby.put(Player.id, Player);
+        lobby.put(Player.getId(), Player);
 
         //Send current matches to player
         Player.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
@@ -201,7 +201,7 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param Remove True if player has exited, false if player has entered a match
      */
     void releasePlayer(Player Player, boolean Remove) {
-        lobby.remove(Player.id);
+        lobby.remove(Player.getId());
 
         if(Remove && players != null)
             players.removeIf(Player::equals);

@@ -7,7 +7,6 @@ import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
 import Game.Connection.Match;
 import Game.Map.Map;
-import Game.Map.Maps;
 import Game.Map.Mission;
 import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
@@ -19,14 +18,12 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-
 import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
 
 /**
@@ -68,12 +65,10 @@ public class MapHandler {
         Main.showDialog(resources.getString("mission"), resources.getString("missionReceived"), resources.getString("continue"));
     }
 
-    private JFXDialog getMissionDialog() {
-        return Main.getDialog(resources.getString("mission"), mission != null ? mission.getDescription(resources.getLocale()) : resources.getString("missionNotReceived"), resources.getString("continue"));
-    }
-
     public void setMissionButton(Button MissionBtn) {
-        MissionBtn.setOnMouseClicked(evt -> Main.showDialog(getMissionDialog()));
+        MissionBtn.setOnMouseClicked(evt -> Main.showDialog(resources.getString("mission"),
+                mission != null ? mission.getDescription(resources.getLocale()) : resources.getString("missionNotReceived"),
+                resources.getString("continue")));
     }
 
     private volatile BiConsumer<Collection<Integer>, Collection<Integer>> showDice;
@@ -181,6 +176,8 @@ public class MapHandler {
 
         Match.Players.forEach(u -> usersList.put(u.Id.get(), u));
 
+        //ObservableTerritory.setList(MapContainer, GC.getUser().Color);
+        ObservableTerritory.setList(MapContainer, Game.Map.Army.Color.BLUE);
         map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
     }
 
@@ -200,7 +197,7 @@ public class MapHandler {
 
         MapUpdate.Updated.forEach((u) -> {
             synchronized (map) {
-                ObservableTerritory t = map.getTerritory(u.Name);
+                ObservableTerritory t = map.getTerritory(u);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
                 if (!t.getOwner().equals(u.getOwner()))
@@ -218,7 +215,7 @@ public class MapHandler {
 
             // If player is in attack phase has to perform special move
             if(attackPhase.get())
-                move = new Thread(() -> specialMove(map.getTerritory(MapUpdate.Updated.get(0).Name), map.getTerritory(MapUpdate.Updated.get(1).Name)));
+                move = new Thread(() -> specialMove(map.getTerritory(MapUpdate.Updated.get(0)), map.getTerritory(MapUpdate.Updated.get(1))));
             else if(MapUpdate.Updated.isEmpty()) { // Else if update is empty has to perform end turn movement
                 move = new Thread(this::endTurnMove);
             }
@@ -368,7 +365,7 @@ public class MapHandler {
                 // If only two armies on territory only one can attack
                 // else ask player how many to use
                 if (attacker.Armies.get() > 2)
-                    atkArmies = attacker.requestAttack();
+                    atkArmies = attacker.requestNumber(true);
 
                 // Send battle to server
                 gameController.SendMessage(MessageType.Battle, new Battle<>(attacker, defender, atkArmies));
@@ -551,16 +548,18 @@ public class MapHandler {
      */
     public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
 
+        final ObservableTerritory from = map.getTerritory(Battle.from), to = map.getTerritory(Battle.to);
+
         // Message shown to the user
         final String popupInfo = String.format(resources.getString("defensePopup"),
-                Battle.from.getOwner().Username.get(),
+                from.getOwner().Username.get(),
                 Battle.atkArmies,
-                Battle.from.toString(),
-                Battle.to.toString());
+                from.toString(),
+                to.toString());
 
         Main.showDialog(resources.getString("defensePopupTitle"), popupInfo, resources.getString("continue"));
 
-        Battle.defArmies = map.getTerritory(Battle.to.Name).requestDefense(Battle);
+        Battle.defArmies = to.requestNumber(false);
 
         return Battle;
     }

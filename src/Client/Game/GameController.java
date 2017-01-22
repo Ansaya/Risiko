@@ -1,6 +1,7 @@
 package Client.Game;
 
 import Client.Game.Connection.Serializer.ObservableUserSerializer;
+import Client.Game.Connection.Serializer.SimpleObjectPropertySerializer;
 import Client.Main;
 import Client.UI.ChatBox.ChatBox;
 import Game.Connection.Mission;
@@ -14,8 +15,10 @@ import Game.Sounds.Sounds;
 import Game.StateType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -129,6 +132,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
         gsonBuilder.registerTypeAdapter(StringProperty.class, new StringPropertySerializer());
         gsonBuilder.registerTypeAdapter(ObservableUser.class, new ObservableUserSerializer());
+        gsonBuilder.registerTypeAdapter(new TypeToken<SimpleObjectProperty<ObservableUser>>(){}.getType(),
+                new SimpleObjectPropertySerializer(ObservableUser.class));
         gson = gsonBuilder.create();
 
         // Handler for incoming chat messages
@@ -214,7 +219,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
 
             final GameState<ObservableUser> gameState = gson.fromJson(message.Json, MessageType.GameState.getType());
 
-            user.Territories.set(0);
+            user.Territories.clear();
             user.Color = null;
 
             switch (gameState.state){
@@ -228,20 +233,19 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
                     }
                     else {
                         Main.showDialog(resources.getString("gameStateMessage"),
-                                resources.getString("lostMessage") + gameState.winner.Username.get(),
+                                String.format(resources.getString("lostMessage"), gameState.winner.Username.get()),
                                 resources.getString("close"));
                     }
                     break;
                 case Abandoned:
                     Main.toLobby();
                     Main.showDialog(resources.getString("gameStateMessage"),
-                            gameState.winner.Username.get() + resources.getString("abandonedMessage"),
+                            String.format(resources.getString("abandonedMessage"), gameState.winner.Username.get()),
                             resources.getString("close"));
                     break;
                 case Defeated:
                     Main.showDialog(resources.getString("gameStateMessage"),
                             resources.getString("defeatedMessage"),
-
                             resources.getString("close"));
 
                     // Return cards to server

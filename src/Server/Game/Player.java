@@ -21,7 +21,7 @@ public class Player extends SocketHandler implements Game.Player {
     /**
      * Player's unique id
      */
-    public final int id;
+    private final int id;
 
     @Override
     public int getId() {
@@ -29,10 +29,11 @@ public class Player extends SocketHandler implements Game.Player {
     }
 
     /**
-     * Username choose From
+     * Username choose from
      */
     private final String username;
 
+    @Override
     public String getUsername() { return username; }
 
     /**
@@ -54,6 +55,7 @@ public class Player extends SocketHandler implements Game.Player {
      */
     private volatile Color color;
 
+    @Override
     public Color getColor() { return color; }
 
     /**
