@@ -146,13 +146,13 @@ public class ObservableTerritory extends Territory<ObservableUser> {
         final int armies = getArmies();
         if(armies == 1) return 1;
 
-        Armies.set(1);
+        Platform.runLater(() -> Armies.set(1));
 
-        final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX,
+        final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX - 15.0,
                 getCenterY(svgTerritory) + ArmyY,
                 Math.min(armies, isAttack ? 3 : 2));
 
-        Armies.set(armies);
+        Platform.runLater(() -> Armies.set(armies));
 
         return selected;
     }

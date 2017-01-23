@@ -58,10 +58,11 @@ public class LobbyController implements Initializable {
         name.setPrefWidth(300.0);
 
         // New match map selector
-        final JFXComboBox<Maps> map = new JFXComboBox<>(FXCollections.observableArrayList(Maps.values()));
+        final JFXComboBox<Maps> map = new JFXComboBox<>();
         map.setCellFactory(lv -> getDefaultCell(resources.getLocale()));
         map.setButtonCell(getDefaultCell(resources.getLocale()));
-        map.getSelectionModel().select(0);
+        map.getItems().addAll(Maps.values());
+        map.setValue(map.getItems().get(0));
 
         // New match creation button
         final JFXButton createMatchBtn = new JFXButton(resources.getString("createMatchBtn"), new ImageView(LobbyController.class.getResource("match.png").toExternalForm()));
@@ -150,7 +151,7 @@ public class LobbyController implements Initializable {
             @Override
             public void updateItem(Maps item, boolean empty) {
                 super.updateItem(item, empty);
-                if(item != null && !empty)
+                if(item != null)
                     setText(Maps.getName(item, Locale));
             }
         };
