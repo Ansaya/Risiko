@@ -177,6 +177,10 @@ public class Main extends Application {
 
     public static Font globalFont = Font.font("Trebuchet MS", 12.0f);
 
+    public static String capitalize(String String) {
+        return String.toUpperCase().charAt(0) + String.substring(1);
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         window = primaryStage;

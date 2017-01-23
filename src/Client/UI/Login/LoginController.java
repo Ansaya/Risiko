@@ -5,6 +5,7 @@ import Client.Main;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
@@ -75,9 +76,10 @@ public class LoginController implements Initializable {
         languages.setButtonCell(getDefaultCell());
         languages.getItems().addAll(new Locale("en"), new Locale("it"));
         final String prefLang = prefs.get("language", "en");
-        languages.setValue(languages.getItems().filtered(l -> l.getLanguage().equals(prefLang)).get(0));
+        final FilteredList<Locale> items = languages.getItems().filtered(l -> l.toString().equals(prefLang));
+        languages.setValue(items.isEmpty() ? languages.getItems().get(0) : items.get(0));
         languages.valueProperty().addListener((ObservableValue<? extends Locale> ob, Locale oldV, Locale newV) -> {
-            prefs.put("language", newV.getLanguage());
+            prefs.put("language", newV.toString());
             gameController.setLocale(newV);
             Main.toLogin();
         });
@@ -120,7 +122,7 @@ public class LoginController implements Initializable {
             public void updateItem(Locale item, boolean empty) {
                 super.updateItem(item, empty);
                 if(item != null)
-                    setText(item.getDisplayName(item));
+                    setText(Main.capitalize(item.getDisplayName(item)));
             }
         };
     }
