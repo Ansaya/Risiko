@@ -13,7 +13,6 @@ import Game.StateType;
 import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -22,8 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Callback;
-
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Locale;
@@ -193,11 +192,31 @@ public class LobbyController implements Initializable {
             final TableColumn<Match, String> nameColumn = new TableColumn<>(resources.getString("match"));
             final TableColumn<Match, Maps> gameMapColumn = new TableColumn<>(resources.getString("gameMap"));
             final TableColumn<Match, String> playersColumn = new TableColumn<>(resources.getString("players"));
+            final TableColumn<Match, Boolean> startedColumn = new TableColumn<>(resources.getString("started"));
             idColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Id));
             nameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Name));
             gameMapColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().GameMap));
+            gameMapColumn.setCellFactory(lv -> new TableCell<Match, Maps>() {
+                @Override
+                protected void updateItem(Maps item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if(item != null)
+                        setText(Maps.getName(item, resources.getLocale()));
+                }
+            });
             playersColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Players.size() + "/6"));
-            getColumns().addAll(idColumn, nameColumn, gameMapColumn, playersColumn);
+            startedColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().IsStarted));
+            startedColumn.setCellFactory(lv -> new TableCell<Match, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if(item == null) return;
+
+                    setText("");
+                    setGraphic(new Circle(5.0, item ? Color.GREEN : Color.RED));
+                }
+            });
+            getColumns().addAll(idColumn, nameColumn, gameMapColumn, playersColumn, startedColumn);
 
             this.setRowFactory(tv -> {
                 final TableRow<Match> row = new TableRow<>();

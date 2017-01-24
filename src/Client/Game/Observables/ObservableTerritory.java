@@ -7,13 +7,10 @@ import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.beans.value.ObservableValueBase;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.InnerShadow;
-import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -29,6 +26,8 @@ public class ObservableTerritory extends Territory<ObservableUser> {
     private static ArmyList al;
 
     public static void setList(Pane MapContainer, Game.Map.Army.Color Army) {
+        if(Army == null) return;
+
         al = ArmyList.getArmyList(Army);
         al.getList().setVisible(false);
         Platform.runLater(() -> MapContainer.getChildren().add(al.getList()));
@@ -143,16 +142,44 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      * @return Selected armies
      */
     public int requestNumber(boolean isAttack) {
-        final int armies = getArmies();
+        final Integer armies = getArmies();
         if(armies == 1) return 1;
 
-        Platform.runLater(() -> Armies.set(1));
+        Platform.runLater(() -> {
+            Armies.set(1);
+
+            synchronized (armies) {
+                armies.notify();
+            }
+        });
+
+        synchronized (armies) {
+            try {
+                armies.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX - 15.0,
                 getCenterY(svgTerritory) + ArmyY,
-                Math.min(armies, isAttack ? 3 : 2));
+                isAttack ? Math.min(armies - 1, 3) : Math.min(armies, 2));
 
-        Platform.runLater(() -> Armies.set(armies));
+        Platform.runLater(() -> {
+            Armies.set(armies);
+
+            synchronized (armies) {
+                armies.notify();
+            }
+        });
+
+        synchronized (armies) {
+            try {
+                armies.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         return selected;
     }

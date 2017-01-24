@@ -74,13 +74,6 @@ public class Match extends MessageReceiver<MessageType> {
      * @param Remove True if player has exited, false if player is going to lobby
      */
     public void removePlayer(Player Player, boolean Remove) {
-        // If player is playing terminate match
-        if (Player.isPlaying()) {
-            sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, Player));
-            GameController.getInstance().endMatch(this);
-            return;
-        }
-
         players.remove(Player.getId());
 
         if(Remove)
@@ -88,8 +81,17 @@ public class Match extends MessageReceiver<MessageType> {
         else
             GameController.getInstance().returnPlayer(Player);
 
-        if(players.isEmpty())
+        // If player is playing terminate match
+        if (Player.isPlaying()) {
+            sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, Player));
             GameController.getInstance().endMatch(this);
+            return;
+        }
+
+        if(players.isEmpty()) {
+            GameController.getInstance().endMatch(this);
+            return;
+        }
 
         // If match hasn't already started notify other users
         if(!isStarted())
@@ -571,10 +573,11 @@ public class Match extends MessageReceiver<MessageType> {
             if(update == null) return false;
 
             // If no other move is performed complete battle
+            if(update.Updated.isEmpty()) return true;
+
             // else if armies have been moved update game map
-            if(!update.Updated.isEmpty())
-                if(battle.from.canRemoveArmies(battle.to.NewArmies))
-                    battle.to.addArmies(battle.to.NewArmies);
+            if(battle.from.canRemoveArmies(battle.to.NewArmies))
+                battle.to.addArmies(battle.to.NewArmies);
 
             // Send new placement to all players
             match.sendAll(MessageType.MapUpdate, update);

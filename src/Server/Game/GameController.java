@@ -1,9 +1,7 @@
 package Server.Game;
 
 import Game.Connection.MatchLobby;
-import Game.Map.Army.Color;
 import Game.Connection.Chat;
-import Game.Map.Maps;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import com.google.gson.*;
@@ -13,7 +11,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import java.lang.reflect.Type;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**

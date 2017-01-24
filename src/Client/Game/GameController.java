@@ -126,7 +126,7 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
     public GameController() {
         super("GameController");
 
-        setLocale(new Locale(Preferences.userNodeForPackage(Client.Main.class).get("language", "it")));
+        setLocale(new Locale(Preferences.userNodeForPackage(Client.Main.class).get("language", "en")));
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(IntegerProperty.class, new IntegerPropertySerializer());
@@ -177,9 +177,8 @@ public class GameController extends MessageReceiver<MessageType> implements Runn
         });
 
         // Handler for map updates
-        messageHandlers.put(MessageType.MapUpdate, (message) -> {
-            mapHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType()));
-        });
+        messageHandlers.put(MessageType.MapUpdate, (message) ->
+            mapHandler.updateMap(gson.fromJson(message.Json, MessageType.MapUpdate.getType())));
 
         // Handler for card messages
         messageHandlers.put(MessageType.Cards, (message) -> {

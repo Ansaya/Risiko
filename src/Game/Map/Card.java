@@ -51,7 +51,7 @@ public class Card {
             e.printStackTrace();
         }
 
-        Name = ResourceBundle.getBundle(mapId + ".Resources", Locale).getString(Id);
+        Name = ResourceBundle.getBundle("Game.Map." + mapId + ".Resources", Locale).getString(Id);
     }
 
     /**

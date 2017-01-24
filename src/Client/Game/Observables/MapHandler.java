@@ -8,7 +8,6 @@ import Game.Connection.MapUpdate;
 import Game.Connection.Match;
 import Game.Map.Map;
 import Game.Map.Mission;
-import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -24,6 +23,8 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
 import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
 
 /**
@@ -213,9 +214,10 @@ public class MapHandler {
             final Thread move;
 
             // If player is in attack phase has to perform special move
-            if(attackPhase.get())
+            if(attackPhase.get() && !MapUpdate.Updated.isEmpty()) {
                 move = new Thread(() -> specialMove(map.getTerritory(MapUpdate.Updated.get(0)), map.getTerritory(MapUpdate.Updated.get(1))));
-            else if(MapUpdate.Updated.isEmpty()) { // Else if update is empty has to perform end turn movement
+            }
+            else if(MapUpdate.Updated.isEmpty() && !attackPhase.get()) { // Else if update is empty has to perform end turn movement
                 move = new Thread(this::endTurnMove);
             }
             else // Else HasMove is for another player
@@ -223,7 +225,10 @@ public class MapHandler {
 
             move.setDaemon(true);
             move.start();
-        } else if(attackPhase.get()) { // Else if update has no move, notify attackPhase to go ahead if in attack phase
+            return;
+        }
+
+        if(attackPhase.get()) { // Else if update has no move, notify attackPhase to go ahead if in attack phase
             synchronized (attackPhase) {
                 attackPhase.notify();
             }
@@ -237,7 +242,7 @@ public class MapHandler {
      * @return At the end of positioning returns updated territory message to send back to the server
      */
     public MapUpdate<ObservableTerritory> positionArmies(int NewArmies) {
-
+        System.out.println("Map handler: Positioning Phase");
         final boolean isSetup = NewArmies == 1;
 
         Platform.runLater(() -> {
@@ -282,22 +287,15 @@ public class MapHandler {
             newArmies.set(0);
         });
 
-        // Check for updated territories
-        final MapUpdate<ObservableTerritory> update = new MapUpdate<>();
-        map.getTerritories().forEach(territory -> {
-            // Add territory to update only if modified
-            if(territory.NewArmies.get() != 0)
-                update.Updated.add(territory);
-        });
-
-        // Return update message to be sent back to the server
-        return update;
+        // Check for updated territories and return response message
+        return new MapUpdate<>(map.getTerritories().stream().filter(t -> t.NewArmies.isNotEqualTo(0).get()).collect(Collectors.toList()));
     }
 
     /**
      * Handle all events relative to attack phase and send end phase message back to server at the end
      */
     public void attackPhase(){
+        System.out.println("Map handler: Attack phase");
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
             endPhaseBtn.setText(resources.getString("endAttackPhase"));
@@ -401,6 +399,7 @@ public class MapHandler {
      * @param To Newly conquered territory
      */
     private void specialMove(ObservableTerritory From, ObservableTerritory To) {
+        System.out.println("Map handler: Special movement");
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
@@ -446,8 +445,10 @@ public class MapHandler {
             // If user has moved armies return new displacement
             if(To.NewArmies.get() != 0)
                 gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>(From, To));
-            else
+            else {
+                Platform.runLater(() -> From.Armies.set(From.getArmies()));
                 gameController.SendMessage(MessageType.MapUpdate, new MapUpdate<>());
+            }
         }
     }
 
@@ -455,6 +456,7 @@ public class MapHandler {
      * Enable positioning controls between two selected territories to perform final movement at the end of turn
      */
     private void endTurnMove() {
+        System.out.println("Map handler: End turn movement");
         // Enable end phase button
         Platform.runLater(() -> {
             endPhaseBtn.setDisable(false);
