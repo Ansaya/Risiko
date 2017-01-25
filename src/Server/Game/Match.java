@@ -240,6 +240,8 @@ public class Match extends MessageReceiver<MessageType> {
             currentTurn = null;
         }
 
+        players.forEach((id, player) -> player.exitMatch());
+
         return players;
     }
 
