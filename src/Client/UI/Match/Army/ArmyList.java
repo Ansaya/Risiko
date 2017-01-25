@@ -1,5 +1,6 @@
 package Client.UI.Match.Army;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -94,14 +95,16 @@ public class ArmyList implements Initializable {
      * @return Selected number of armies
      */
     public int getNumber(double LayoutX, double LayoutY, int Max) {
-        list.setLayoutX(LayoutX);
-        list.setLayoutY(LayoutY);
-        list.toFront();
+        Platform.runLater(() -> {
+            list.setLayoutX(LayoutX);
+            list.setLayoutY(LayoutY);
+            list.toFront();
 
-        army3.setVisible(Max == 3);
-        army3.setMouseTransparent(Max != 3);
+            army3.setVisible(Max == 3);
+            army3.setMouseTransparent(Max != 3);
 
-        list.setVisible(true);
+            list.setVisible(true);
+        });
 
         synchronized (selected) {
             try {
@@ -112,7 +115,21 @@ public class ArmyList implements Initializable {
             }
         }
 
-        list.setVisible(false);
+        Platform.runLater(() -> {
+            list.setVisible(false);
+
+            synchronized (selected) {
+                selected.notify();
+            }
+        });
+
+        synchronized (selected) {
+            try {
+                selected.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         return selected.get();
     }
