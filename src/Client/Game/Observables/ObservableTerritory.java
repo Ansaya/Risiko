@@ -115,8 +115,6 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             is.setColor(newOwner.Color.hexColor);
         });
 
-        ab.getImageProperty().set(Game.Map.Army.Color.BLUE.armyImg);
-
         Platform.runLater(() -> {
             name.setLayoutX(getCenterX(svgTerritory) + LabelX);
             name.setLayoutY(getCenterY(svgTerritory) + LabelY);
