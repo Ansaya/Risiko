@@ -2,7 +2,6 @@ package Client.UI.Match.Army;
 
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;

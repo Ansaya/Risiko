@@ -36,6 +36,8 @@ public class ArmyList implements Initializable {
     @FXML
     private AnchorPane army3;
 
+    private volatile boolean isInverted = false;
+
     private ArrayList<ImageView> armyImages = new ArrayList<>();
 
     private final AtomicInteger selected = new AtomicInteger(1);
@@ -94,10 +96,25 @@ public class ArmyList implements Initializable {
      * @param LayoutY Y offset inside map container
      * @return Selected number of armies
      */
-    public int getNumber(double LayoutX, double LayoutY, int Max) {
+    public int getNumber(double LayoutX, double LayoutY, int Max, boolean Invert) {
         Platform.runLater(() -> {
-            list.setLayoutX(LayoutX);
-            list.setLayoutY(LayoutY);
+            if(Invert ^ isInverted) {
+                list.getChildren().clear();
+                if (Invert) {
+                    list.getChildren().add(0, army3);
+                    list.getChildren().add(1, army2);
+                    list.getChildren().add(2, army1);
+                    isInverted = true;
+                } else {
+                    list.getChildren().add(0, army1);
+                    list.getChildren().add(1, army2);
+                    list.getChildren().add(2, army3);
+                    isInverted = false;
+                }
+            }
+
+            list.setLayoutX(LayoutX - 10.0);
+            list.setLayoutY(Invert ? LayoutY - 145 : LayoutY);
             list.toFront();
 
             army3.setVisible(Max == 3);
@@ -105,6 +122,7 @@ public class ArmyList implements Initializable {
 
             list.setVisible(true);
         });
+
 
         synchronized (selected) {
             try {

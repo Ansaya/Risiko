@@ -1,5 +1,6 @@
 package Client.Game.Observables;
 
+import Client.Main;
 import Client.UI.Match.Army.ArmyBadge;
 import Client.UI.Match.Army.ArmyList;
 import Game.Map.Territory;
@@ -10,6 +11,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -17,6 +19,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.TextAlignment;
 
 /**
  * Observable Territory class
@@ -80,9 +83,13 @@ public class ObservableTerritory extends Territory<ObservableUser> {
 
         // Name label
         final Label name = new Label(toString().toUpperCase().replaceAll(" ", "\n"));
+        name.setFont(Main.globalFont);
+        name.setStyle("-fx-font-size: 14px");
+        name.setTextFill(Color.WHITE);
+        name.setTextAlignment(TextAlignment.CENTER);
+        name.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 1.5, 1.0, 0, 0));
         name.setMouseTransparent(true);
         name.setRotate(LabelR);
-        name.getStyleClass().add("name");
 
         // Territory image
         svgTerritory.setContent(this.SvgPath);
@@ -107,6 +114,8 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             ab.getImageProperty().set(newOwner.Color.armyImg);
             is.setColor(newOwner.Color.hexColor);
         });
+
+        ab.getImageProperty().set(Game.Map.Army.Color.BLUE.armyImg);
 
         Platform.runLater(() -> {
             name.setLayoutX(getCenterX(svgTerritory) + LabelX);
@@ -161,9 +170,9 @@ public class ObservableTerritory extends Territory<ObservableUser> {
             }
         }
 
-        final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX - 15.0,
+        final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX,
                 getCenterY(svgTerritory) + ArmyY,
-                isAttack ? Math.min(armies - 1, 3) : Math.min(armies, 2));
+                isAttack ? Math.min(armies - 1, 3) : Math.min(armies, 2), (mapContainer.getHeight() - getCenterY(svgTerritory)) < 220.0 );
 
         Platform.runLater(() -> {
             Armies.set(armies);

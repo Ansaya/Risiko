@@ -57,6 +57,10 @@ public class MatchController implements Initializable {
 
     private double mapPrefHeight = 100.0;
 
+    private double mapPaddingWidth = 30.0;
+
+    private double mapPaddingHeight = 30.0;
+
     /* Players list */
     @FXML
     private JFXTreeTableView<ObservableUser> playersList;
@@ -135,14 +139,14 @@ public class MatchController implements Initializable {
 
     private void setMapWidth(ObservableValue<? extends Number> ob, Number oldV, Number newV){
         final double newValue = (double) newV;
-        final double containerRatio = newValue / parent.getHeight();
-        double offsetX = (newValue - (mapPrefWidth * actualScale)) / 2;
-        double offsetY = (stackPane.getHeight() - (mapPrefHeight * actualScale)) / 2;
+        final double containerRatio = (newValue - mapPaddingWidth) / parent.getHeight();
+        double offsetX = (newValue - (mapPrefWidth * actualScale) + mapPaddingWidth) / 2;
+        double offsetY = (stackPane.getHeight() - (mapPrefHeight * actualScale) + mapPaddingHeight) / 2;
         if(offsetX < 0) offsetX = 0;
         if(offsetY < 0) offsetY = 0;
 
         if(containerRatio < mapRatio)
-            updateMap((newValue - offsetX) / mapPrefWidth);
+            updateMap((newValue - mapPaddingWidth - offsetX) / mapPrefWidth);
 
         AnchorPane.setLeftAnchor(mapAP, offsetX);
         AnchorPane.setRightAnchor(mapAP, offsetX);
@@ -152,14 +156,14 @@ public class MatchController implements Initializable {
 
     private void setMapHeight(ObservableValue<? extends Number> ob, Number oldV, Number newV) {
         final double newValue = (double) newV;
-        final double containerRatio = parent.getWidth() / newValue;
-        double offsetX = (stackPane.getWidth() - (mapPrefWidth * actualScale)) / 2;
-        double offsetY = (newValue - (mapPrefHeight * actualScale)) / 2;
+        final double containerRatio = parent.getWidth() / (newValue - mapPaddingHeight);
+        double offsetX = (stackPane.getWidth() - (mapPrefWidth * actualScale) + mapPaddingWidth) / 2;
+        double offsetY = (newValue - (mapPrefHeight * actualScale) + mapPaddingHeight) / 2;
         if(offsetX < 0) offsetX = 0;
         if(offsetY < 0) offsetY = 0;
 
         if(containerRatio > mapRatio)
-            updateMap((newValue - offsetY) / mapPrefHeight);
+            updateMap((newValue - mapPaddingHeight - offsetY) / mapPrefHeight);
 
         AnchorPane.setTopAnchor(mapAP, offsetY);
         AnchorPane.setBottomAnchor(mapAP, offsetY);
@@ -175,6 +179,13 @@ public class MatchController implements Initializable {
         mapContainer.getTransforms().add(newScale);
     }
 
+    /**
+     * Initialize map handler and players list
+     *
+     * @param GC GameController instance
+     * @param Match Match message received from server
+     * @throws ClassNotFoundException If requested map is not present
+     */
     private void setMapHandler(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
         final ObservableUser current = gameController.getUser();
         final AtomicBoolean imPlaying = new AtomicBoolean(false);
@@ -206,11 +217,23 @@ public class MatchController implements Initializable {
             gameController.SendMessage(MessageType.Turn, "Update");
     }
 
+    /**
+     * Initializes cards handler
+     *
+     * @param GC GameController instance
+     */
     private void setCardsHandler(GameController GC) {
         cardsHandler = new CardsHandler(GC.getResources());
         cardsHandler.setCardsButton(cardsBtn);
     }
 
+    /**
+     * Initializes objects related to game event handling as map handler and cards handler
+     *
+     * @param GC GameController instance
+     * @param Match Match message received from server
+     * @throws ClassNotFoundException If map cannot be loaded
+     */
     public void setGameController(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
         this.gameController = GC;
         setMapHandler(GC, Match);
@@ -227,6 +250,11 @@ public class MatchController implements Initializable {
 
         private final Image[] dice = new Image[6];
 
+        /**
+         * Create new instance of dice display box with specified width. Height is (width - 20) / 2
+         *
+         * @param width Width of this box
+         */
         public DiceBox(double width) {
             setSpacing(10.0);
             setPadding(new Insets(5.0));

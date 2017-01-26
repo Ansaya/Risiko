@@ -13,9 +13,9 @@ public enum Color {
     BLACK("#2f2f2f"),
     PURPLE("#711b71");
 
-    public final javafx.scene.paint.Color hexColor;
+    public transient final javafx.scene.paint.Color hexColor;
 
-    public final Image armyImg;
+    public transient final Image armyImg;
 
     Color(String HexColor) {
         this.hexColor = javafx.scene.paint.Color.web(HexColor);
