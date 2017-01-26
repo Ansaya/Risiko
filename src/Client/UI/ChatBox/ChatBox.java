@@ -38,6 +38,8 @@ public class ChatBox extends TitledPane {
 
     private final int userId;
 
+    private volatile boolean scrollToEnd = false;
+
     public ChatBox(int UserId, Consumer<String> SendChat) {
         this.setText("Chat");
         this.setFont(Main.globalFont);
@@ -59,7 +61,7 @@ public class ChatBox extends TitledPane {
 
         this.userId = UserId;
 
-        EventHandler sendMessage = (evt) -> {
+        final EventHandler sendMessage = (evt) -> {
             if(!chatInput.getText().trim().equals(""))
                 SendChat.accept(chatInput.getText().trim());
             chatInput.clear();
@@ -68,12 +70,12 @@ public class ChatBox extends TitledPane {
         chatInput.setOnAction(sendMessage);
         chatSendBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, sendMessage);
 
-        chatContainer.getChildren().addListener(new ListChangeListener<Node>() {
-            @Override
-            public void onChanged(Change<? extends Node> c) {
-                chatView.setVvalue(1);
-                Sounds.Chat.play();
-            }
+        chatContainer.getChildren().addListener((ListChangeListener<Node>) c -> Sounds.Chat.play());
+        chatView.vvalueProperty().addListener((ob, oldV, newV) -> {
+            if(!scrollToEnd) return;
+
+            scrollToEnd = false;
+            chatView.setVvalue(1.0);
         });
     }
 
@@ -96,7 +98,9 @@ public class ChatBox extends TitledPane {
 
             lastSender = Message.sender.getId();
 
+            scrollToEnd = true;
             chatContainer.getChildren().add(message);
+            chatView.setVvalue(1.0);
             return;
         }
 
@@ -106,7 +110,9 @@ public class ChatBox extends TitledPane {
 
             lastSender = Message.sender.getId();
 
+            scrollToEnd = true;
             chatContainer.getChildren().add(message);
+            chatView.setVvalue(1.0);
         });
     }
 

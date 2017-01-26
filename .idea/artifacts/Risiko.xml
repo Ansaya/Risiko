@@ -3,7 +3,9 @@
     <output-path>$PROJECT_DIR$/out/artifacts/Risiko</output-path>
     <properties id="javafx-properties">
       <options>
+        <option name="alias" value="" />
         <option name="appClass" value="Client.Main" />
+        <option name="convertCss2Bin" value="true" />
         <option name="description" value="" />
         <option name="height" value="768" />
         <option name="htmlPlaceholderId" value="" />
@@ -14,10 +16,11 @@
             <option name="windowsIcon" value="$PROJECT_DIR$/src/Game/favicon.ico" />
           </JavaFxApplicationIcons>
         </option>
-        <option name="nativeBundle" value="exe" />
+        <option name="keystore" value="" />
+        <option name="nativeBundle" value="all" />
         <option name="title" value="Risiko" />
-        <option name="vendor" value="" />
-        <option name="version" value="" />
+        <option name="vendor" value="Flow3r Software" />
+        <option name="version" value="1.0" />
         <option name="width" value="1366" />
       </options>
     </properties>
