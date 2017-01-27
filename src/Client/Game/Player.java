@@ -1,8 +1,7 @@
-package Client.Game.Observables;
+package Client.Game;
 
+import Client.Game.Map.Territory;
 import Game.Map.Army.Color;
-import Game.Player;
-import Server.Game.Map.Territory;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -15,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Observable class of simplified user
  */
-public class ObservableUser extends RecursiveTreeObject<ObservableUser> implements Player {
+public class Player extends RecursiveTreeObject<Player> implements Game.Player {
     public final IntegerProperty Id = new SimpleIntegerProperty(-1);
 
     public int getId() {
@@ -32,9 +31,9 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> implemen
         return Color;
     }
 
-    public final transient ObservableList<ObservableTerritory> Territories = FXCollections.observableArrayList(new ArrayList<ObservableTerritory>());
+    public final transient ObservableList<Territory> Territories = FXCollections.observableArrayList(new ArrayList<Territory>());
 
-    public ObservableUser(int userId, String username, Color Color) {
+    public Player(int userId, String username, Color Color) {
         this.Id.set(userId);
         this.Username.set(username);
         if(Color != null)
@@ -43,6 +42,6 @@ public class ObservableUser extends RecursiveTreeObject<ObservableUser> implemen
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof  ObservableUser && this.Id.get() == ((ObservableUser)other).Id.get();
+        return other instanceof Player && this.Id.get() == ((Player)other).Id.get();
     }
 }

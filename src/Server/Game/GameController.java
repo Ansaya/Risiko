@@ -4,23 +4,19 @@ import Game.Connection.MatchLobby;
 import Game.Connection.Chat;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
+import Server.Game.Connection.Serializer.MatchSerializer;
 import com.google.gson.*;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import java.lang.reflect.Type;
-import java.net.Socket;
 import java.util.HashMap;
 
 /**
  * Main controller to manage matches and user lobby
  */
 public class GameController extends MessageReceiver<MessageType> {
-
-    private static GameController _instance = new GameController();
-
-    public static GameController getInstance() { return _instance; }
 
     private final Gson gson;
 
@@ -49,7 +45,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
     private volatile ObservableList<Player> players;
 
-    private GameController() {
+    public GameController() {
         super("GameController");
 
         gson = getGsonBuilder(null).create();
@@ -70,7 +66,7 @@ public class GameController extends MessageReceiver<MessageType> {
             // If match is null create it
             if(match == null) {
                 try {
-                    match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.GameMap);
+                    match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.GameMap, this);
                 } catch (ClassNotFoundException e){
                     System.err.println("Game Controller: Can not create new match");
                     return;
@@ -118,10 +114,6 @@ public class GameController extends MessageReceiver<MessageType> {
         System.out.println("Game controller: Message receiver up and running.");
     }
 
-    public void init() {
-        init(null, null);
-    }
-
     /**
      * Terminate all matches and join game controller thread
      */
@@ -140,9 +132,10 @@ public class GameController extends MessageReceiver<MessageType> {
             System.out.println("Game controller: Releasing player " + p.getUsername());
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
+            releasePlayer(p, true);
         });
 
-        System.out.println("Game controller: All users released. Ready To join.");
+        System.out.println("Game controller: All users released. Ready to join.");
     }
 
     private void sendAll(MessageType Type, Object Message) {
@@ -152,19 +145,16 @@ public class GameController extends MessageReceiver<MessageType> {
     /**
      * Add a new user to the lobby
      *
-     * @param Connection Connection relative to the user
+     * @param NewP New player connected
      */
-    public void addPlayer(int Id, String Username, Socket Connection) {
-
-        final Player newP = new Player(Id, Username, Connection);
-
-        lobby.put(Id, newP);
+    public void addPlayer(Player NewP) {
+        lobby.put(NewP.getId(), NewP);
 
         if(players != null)
-            players.add(newP);
+            players.add(NewP);
 
         // Send current matches list to new player
-        newP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
+        NewP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
 
         System.out.println("Game controller: New player in lobby.");
     }
@@ -175,7 +165,6 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param Player User to set back to lobby
      */
     void returnPlayer(Player Player) {
-
         System.out.println("Game controller: Player " + Player.getUsername() + " got back from match.");
 
         // Send update to all players
@@ -238,28 +227,6 @@ public class GameController extends MessageReceiver<MessageType> {
         @Override
         public Player deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return gc.lobby.get(json.getAsJsonObject().get("id").getAsInt());
-        }
-    }
-
-    public static class MatchSerializer implements JsonSerializer<Server.Game.Match> {
-        @Override
-        public JsonElement serialize(Match src, Type typeOfSrc, JsonSerializationContext context) {
-            final JsonObject jm = new JsonObject();
-
-            jm.addProperty("Id", src.Id);
-            jm.addProperty("Name", src.Name);
-            jm.addProperty("GameMap", src.GameMap.name());
-            jm.addProperty("IsStarted", src.isStarted());
-
-            final JsonArray pa = new JsonArray();
-            src.getPlayers().forEach((id, p) -> {
-                if(p.isPlaying() || !src.isStarted())
-                    pa.add(context.serialize(p, Player.class));
-            });
-
-            jm.add("Players", pa);
-
-            return jm;
         }
     }
 }

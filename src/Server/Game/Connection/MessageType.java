@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
 /**
  * Type of possible message objects
  */
-public enum MessageType {
+public enum MessageType implements TypeEnumerator {
     Chat(new TypeToken<Chat<Player>>(){}.getType()),
     Lobby(new TypeToken<Lobby<Player>>(){}.getType()),
     MatchLobby(new TypeToken<MatchLobby<Server.Game.Match>>(){}.getType()),
@@ -26,5 +26,6 @@ public enum MessageType {
 
     private Type c;
 
+    @Override
     public Type getType() { return this.c; }
 }

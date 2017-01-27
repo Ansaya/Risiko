@@ -30,6 +30,8 @@ public class Match extends MessageReceiver<MessageType> {
 
     public final Maps GameMap;
 
+    private final transient GameController GC;
+
     /**
      * Players' list for this match (contains witnesses too)
      */
@@ -46,7 +48,7 @@ public class Match extends MessageReceiver<MessageType> {
         if(!isStarted() && players.size() >= 6)
             return;
 
-        GameController.getInstance().releasePlayer(Player, false);
+        GC.releasePlayer(Player, false);
 
         if(!isStarted())
             sendAll(MessageType.Lobby, new Lobby<>(Player, null));
@@ -77,19 +79,19 @@ public class Match extends MessageReceiver<MessageType> {
         players.remove(Player.getId());
 
         if(Remove)
-            GameController.getInstance().releasePlayer(Player, true);
+            GC.releasePlayer(Player, true);
         else
-            GameController.getInstance().returnPlayer(Player);
+            GC.returnPlayer(Player);
 
         // If player is playing terminate match
         if (Player.isPlaying()) {
             sendAll(MessageType.GameState, new GameState<>(StateType.Abandoned, Player));
-            GameController.getInstance().endMatch(this);
+            GC.endMatch(this);
             return;
         }
 
         if(players.isEmpty()) {
-            GameController.getInstance().endMatch(this);
+            GC.endMatch(this);
             return;
         }
 
@@ -127,13 +129,14 @@ public class Match extends MessageReceiver<MessageType> {
      * @param MapName Name of the map to use
      * @throws ClassNotFoundException Cannot find requested map
      */
-    public Match(int Id, String Name, Maps MapName) throws ClassNotFoundException {
+    public Match(int Id, String Name, Maps MapName, GameController GC) throws ClassNotFoundException {
         super("Match-" + Id);
 
         // Set current match id
         this.Id = Id;
         this.Name = Name;
         this.GameMap = MapName;
+        this.GC = GC;
 
         try {
             map = new Map<>(MapName, Territory.class);
@@ -168,7 +171,7 @@ public class Match extends MessageReceiver<MessageType> {
                     break;
                 case Winner:    // Message received from turn instance
                     routeAll(message);
-                    GameController.getInstance().endMatch(this);
+                    GC.endMatch(this);
                     break;
             }
         });

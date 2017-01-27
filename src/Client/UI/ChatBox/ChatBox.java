@@ -1,6 +1,6 @@
 package Client.UI.ChatBox;
 
-import Client.Game.Observables.ObservableUser;
+import Client.Game.Player;
 import Client.Main;
 import Game.Connection.Chat;
 import Game.Sounds.Sounds;
@@ -79,7 +79,7 @@ public class ChatBox extends TitledPane {
         });
     }
 
-    public void addChat(Chat<ObservableUser> Message) {
+    public void addChat(Chat<Player> Message) {
         final Label sender = getChatEntry(Message.sender.Username.get()), message = getChatEntry(Message.message);
 
         if(Message.sender.getId() == userId){

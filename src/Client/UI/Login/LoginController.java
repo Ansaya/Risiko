@@ -138,7 +138,7 @@ public class LoginController implements Initializable {
         }
 
         try {
-            gameController.InitConnection(usernameField.getText());
+            gameController.initConnection(usernameField.getText());
         } catch (Exception e) {
             Main.showDialog(resources.getString("applicationErrorTitle"), e.getMessage(), resources.getString("close"));
             return;

@@ -1,7 +1,8 @@
-package Client.Game.Observables;
+package Client.Game.Map;
 
 import Client.Game.Connection.MessageType;
 import Client.Game.GameController;
+import Client.Game.Player;
 import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import static Client.Game.Observables.ObservableTerritory.SelectionType.*;
+import static Client.Game.Map.Territory.SelectionType.*;
 
 /**
  * Handler for UI events on game map
@@ -75,17 +76,17 @@ public class MapHandler {
 
     public void setShowDice(BiConsumer<Collection<Integer>, Collection<Integer>> ShowDice) { showDice = ShowDice; }
 
-    private final HashMap<Integer, ObservableUser> usersList = new HashMap<>();
+    private final HashMap<Integer, Player> usersList = new HashMap<>();
 
-    public final Map<ObservableTerritory> map;
+    public final Map<Territory> map;
 
-    private final ObservableUser nullUser = new ObservableUser(-100, "NullUser", null);
+    private final Player nullUser = new Player(-100, "NullUser", null);
 
     private final AtomicReference<SelectedTerritory> selected = new AtomicReference<>();
 
     private volatile boolean canSelect = false;
 
-    void selected(ObservableTerritory Selected, boolean IsRightClick) {
+    void selected(Territory Selected, boolean IsRightClick) {
         if(!canSelect)
             return;
 
@@ -105,7 +106,7 @@ public class MapHandler {
         return selected.get();
     }
 
-    private SelectedTerritory waitSelected(ObservableUser Owner, boolean Exclude) {
+    private SelectedTerritory waitSelected(Player Owner, boolean Exclude) {
         SelectedTerritory st;
         if(Owner == null)
             Owner = nullUser;
@@ -158,12 +159,12 @@ public class MapHandler {
         return 1;
     }
 
-    public MapHandler(GameController GC, Match<ObservableUser> Match, Pane MapContainer) throws ClassNotFoundException {
+    public MapHandler(GameController GC, Match<Player> Match, Pane MapContainer) throws ClassNotFoundException {
         this.gameController = GC;
         this.resources = GC.getResources();
 
         try {
-            map = new Map<>(Match.GameMap, ObservableTerritory.class);
+            map = new Map<>(Match.GameMap, Territory.class);
             map.loadGraphic(resources.getLocale());
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ClassNotFoundException(resources.getString("mapLoadError"));
@@ -177,7 +178,7 @@ public class MapHandler {
         Match.Players.forEach(u -> usersList.put(u.Id.get(), u));
 
         map.getTerritories().forEach(t -> t.loadGraphic(this, MapContainer));
-        ObservableTerritory.setList(MapContainer, GC.getUser().Color);
+        Territory.setList(MapContainer, GC.getUser().Color);
     }
 
     /**
@@ -185,7 +186,7 @@ public class MapHandler {
      *
      * @param MapUpdate MapUpdate message from server
      */
-    public void updateMap(MapUpdate<ObservableTerritory> MapUpdate) {
+    public void updateMap(MapUpdate<Territory> MapUpdate) {
         if(!Platform.isFxApplicationThread()){
             Platform.runLater(() -> updateMap(MapUpdate));
             return;
@@ -196,7 +197,7 @@ public class MapHandler {
 
         MapUpdate.Updated.forEach((u) -> {
             synchronized (map) {
-                ObservableTerritory t = map.getTerritory(u);
+                Territory t = map.getTerritory(u);
                 t.Armies.set(u.Armies.get());
                 t.NewArmies.set(0);
                 if (!t.getOwner().equals(u.getOwner()))
@@ -240,7 +241,7 @@ public class MapHandler {
      * @param NewArmies New armies quantity
      * @return At the end of positioning returns updated territory message to send back to the server
      */
-    public MapUpdate<ObservableTerritory> positionArmies(int NewArmies) {
+    public MapUpdate<Territory> positionArmies(int NewArmies) {
         System.out.println("Map handler: Positioning Phase");
         final boolean isSetup = NewArmies == 1;
 
@@ -258,7 +259,7 @@ public class MapHandler {
                 resources.getString("placeArmies"));
 
         // Display positioning controls only for territories owned from current user
-        final ObservableUser current = gameController.getUser();
+        final Player current = gameController.getUser();
 
         // Handle user interaction
         canSelect = true;
@@ -302,7 +303,7 @@ public class MapHandler {
 
         attackPhase.set(true);
 
-        final ObservableUser current = gameController.getUser();
+        final Player current = gameController.getUser();
 
         Main.showDialog(resources.getString("attackMessageTitle"),
                            resources.getString("attackMessage"),
@@ -313,7 +314,7 @@ public class MapHandler {
             // Get territory to attack
             SelectedTerritory st = waitSelected(current, true);
             if(st == null) break;
-            final ObservableTerritory defender = st.Selected;
+            final Territory defender = st.Selected;
             defender.select(Defense);
 
             // Get attacker territory
@@ -330,7 +331,7 @@ public class MapHandler {
             }
             // Disable selection to avoid errors
             canSelect = false;
-            final ObservableTerritory attacker = st.Selected;
+            final Territory attacker = st.Selected;
             attacker.select(Attack);
 
             // If territories are not adjacent show error
@@ -397,7 +398,7 @@ public class MapHandler {
      * @param From Attacker territory
      * @param To Newly conquered territory
      */
-    private void specialMove(ObservableTerritory From, ObservableTerritory To) {
+    private void specialMove(Territory From, Territory To) {
         System.out.println("Map handler: Special movement");
         // Enable end phase button
         Platform.runLater(() -> {
@@ -412,7 +413,7 @@ public class MapHandler {
                 From.Armies.set(1);
             }
         });
-        final ObservableUser current = gameController.getUser();
+        final Player current = gameController.getUser();
 
         canSelect = true;
         while (canSelect){
@@ -465,9 +466,9 @@ public class MapHandler {
                     resources.getString("continue"));
         });
 
-        final ObservableUser current = gameController.getUser();
+        final Player current = gameController.getUser();
 
-        ObservableTerritory to = null, from = null;
+        Territory to = null, from = null;
 
         canSelect = true;
         while (canSelect){
@@ -546,9 +547,9 @@ public class MapHandler {
      * @param Battle Battle message received from server
      * @return Updated battle message to send back to server
      */
-    public Battle<ObservableTerritory> requestDefense(Battle<ObservableTerritory> Battle) {
+    public Battle<Territory> requestDefense(Battle<Territory> Battle) {
 
-        final ObservableTerritory from = map.getTerritory(Battle.from), to = map.getTerritory(Battle.to);
+        final Territory from = map.getTerritory(Battle.from), to = map.getTerritory(Battle.to);
 
         // Message shown to the user
         final String popupInfo = String.format(resources.getString("defensePopup"),
@@ -570,7 +571,7 @@ public class MapHandler {
      * @param Territory Territory to update
      * @param IsMoving True if adding directly to Armies field, false to add to NewArmies field
      */
-    private void addArmyTo(ObservableTerritory Territory, boolean IsMoving) {
+    private void addArmyTo(Territory Territory, boolean IsMoving) {
         System.out.println("User want to add an army to " + Territory.toString());
 
         // If no armies can be moved return
@@ -632,7 +633,7 @@ public class MapHandler {
      * @param Territory Territory to update
      * @param IsMoving True if removing directly from Armies field, false to remove from NewArmies field
      */
-    private void removeArmyFrom(ObservableTerritory Territory, boolean IsMoving) {
+    private void removeArmyFrom(Territory Territory, boolean IsMoving) {
         System.out.println("User want to remove an army from " + Territory.toString());
 
         final Object wait = new Object();
@@ -709,9 +710,9 @@ public class MapHandler {
     private class SelectedTerritory {
         final boolean IsRightClick;
 
-        final ObservableTerritory Selected;
+        final Territory Selected;
 
-        SelectedTerritory(ObservableTerritory Selected, boolean IsRightClick){
+        SelectedTerritory(Territory Selected, boolean IsRightClick){
             this.IsRightClick = IsRightClick;
             this.Selected = Selected;
         }

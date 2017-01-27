@@ -1,14 +1,12 @@
 package Client;
 
 import Client.Game.GameController;
-import Client.Game.Observables.ObservableUser;
+import Client.Game.Player;
 import Client.UI.ChatBox.ChatBox;
 import Client.UI.Lobby.LobbyController;
 import Client.UI.Login.LoginController;
 import Client.UI.Match.MatchController;
 import Game.Connection.Match;
-import Game.Map.Army.Color;
-import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -27,10 +25,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.prefs.Preferences;
 
 public class Main extends Application {
 
@@ -44,7 +38,7 @@ public class Main extends Application {
 
     public static final Object dialogClosed = new Object();
 
-    public static void toMatch(Match<ObservableUser> Match) {
+    public static void toMatch(Match<Player> Match) {
         if(!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> toMatch(Match));
             return;
@@ -208,7 +202,7 @@ public class Main extends Application {
     @Override
     public void stop() throws Exception {
         if(gameController != null)
-            gameController.StopConnection(true);
+            gameController.stopConnection(true);
 
         super.stop();
     }

@@ -2,7 +2,7 @@ package Client.UI.Lobby;
 
 import Client.Game.GameController;
 import Client.Main;
-import Client.Game.Observables.ObservableUser;
+import Client.Game.Player;
 import Game.Connection.GameState;
 import Game.Connection.Lobby;
 import Game.Connection.Match;
@@ -170,7 +170,7 @@ public class LobbyController implements Initializable {
                 playersTable.setVisible(false);
             }
 
-            matchTable.updateTable((MatchLobby<Match<ObservableUser>>) Update);
+            matchTable.updateTable((MatchLobby<Match<Player>>) Update);
         }
 
         // If server sent room's players
@@ -181,7 +181,7 @@ public class LobbyController implements Initializable {
                 matchTable.setVisible(false);
             }
 
-            playersTable.updateTable((Lobby<ObservableUser>) Update);
+            playersTable.updateTable((Lobby<Player>) Update);
         }
     }
 
@@ -239,7 +239,7 @@ public class LobbyController implements Initializable {
          *
          * @param Update Server update message
          */
-        public void updateTable(MatchLobby<Match<ObservableUser>> Update) {
+        public void updateTable(MatchLobby<Match<Player>> Update) {
             if(!Platform.isFxApplicationThread()) {
                 Platform.runLater(() -> updateTable(Update));
                 return;
@@ -251,11 +251,11 @@ public class LobbyController implements Initializable {
         }
     }
 
-    public class PlayersTable extends TableView<ObservableUser> {
+    public class PlayersTable extends TableView<Player> {
 
-        private final TableColumn<ObservableUser, Integer> idColumn;
+        private final TableColumn<Player, Integer> idColumn;
 
-        private final TableColumn<ObservableUser, String> usernameColumn;
+        private final TableColumn<Player, String> usernameColumn;
 
         public PlayersTable(ResourceBundle resources) {
             idColumn = new TableColumn<>(resources.getString("id"));
@@ -267,11 +267,11 @@ public class LobbyController implements Initializable {
             getColumns().addAll(idColumn, usernameColumn);
         }
 
-        public void updateTable(Lobby<ObservableUser> Update) {
+        public void updateTable(Lobby<Player> Update) {
             updateTable(Update.toAdd, Update.toRemove);
         }
 
-        public void updateTable(Collection<ObservableUser> ToAdd, Collection<ObservableUser> ToRemove) {
+        public void updateTable(Collection<Player> ToAdd, Collection<Player> ToRemove) {
             if(!Platform.isFxApplicationThread()) {
                 Platform.runLater(() -> updateTable(ToAdd, ToRemove));
                 return;

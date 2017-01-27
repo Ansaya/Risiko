@@ -3,20 +3,25 @@ package Server.Game;
 import Game.Map.Army.Color;
 import Game.Map.Mission;
 import Game.Connection.GameState;
+import Game.SocketHandler;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
+import Server.Game.Connection.Serializer.MatchSerializer;
 import Server.Game.Map.Territory;
+import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Player relative To a match
+ * Player relative to a match
  */
-public class Player extends SocketHandler implements Game.Player {
+public class Player extends SocketHandler<MessageType> implements Game.Player {
 
     /**
      * Player's unique id
@@ -72,11 +77,18 @@ public class Player extends SocketHandler implements Game.Player {
 
     public Mission getMission() { return mission; }
 
-    public Player(int Id, String Username, Socket Connection) {
-        super(Connection, "Player" + Id);
+    private final transient GameController GC;
+
+    public Player(int Id, String Username, Socket Connection, BufferedReader Receive, PrintWriter Send, GameController GC) {
+        super(Connection,
+                Receive,
+                Send,
+                new GsonBuilder().registerTypeAdapter(Match.class, new MatchSerializer()).create(),
+                "Player-" + Id);
 
         this.id = Id;
         this.username = Username;
+        this.GC = GC;
     }
 
     /**
@@ -85,6 +97,7 @@ public class Player extends SocketHandler implements Game.Player {
     private Player(){
         id = -1;
         username = "Computer AI";
+        GC = null;
     }
 
     /**
@@ -99,9 +112,9 @@ public class Player extends SocketHandler implements Game.Player {
         String incoming;
 
         // Handle all incoming messages
-        while (listen) {
+        while (_listen) {
             try {
-                while ((incoming = receive.readLine()) != null) {
+                while ((incoming = _receive.readLine()) != null) {
 
                     // Connection closing requested From client
                     if(incoming.equals("End")){
@@ -109,20 +122,17 @@ public class Player extends SocketHandler implements Game.Player {
                         return;
                     }
 
-                    System.out.println("Player-" + id + ": Received <- " + incoming);
-
                     String[] info = incoming.split("[#]", 2);
 
                     if (matchId.get() == -1) {
-                        GameController.getInstance().setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        GC.setIncoming(id, MessageType.valueOf(info[0]), info[1]);
                     } else {
-                        GameController.getInstance().getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        GC.getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
                     }
                 }
             }catch (Exception e){
                 if(e instanceof IOException) {
-                    // Handle loss of connection
-                    System.err.println("Player-" + id + ": Connection lost");
+                    if(_listen) System.err.println("Player-" + id + ": Client connection lost.");
                     break;
                 }
 
@@ -131,7 +141,7 @@ public class Player extends SocketHandler implements Game.Player {
             }
         }
 
-        if(listen)
+        if(_listen)
             Platform.runLater(() -> closeConnection(false));
     }
 
@@ -139,16 +149,17 @@ public class Player extends SocketHandler implements Game.Player {
      * Gently close connection with the client
      */
     synchronized void closeConnection(boolean fromServer) {
-        send.println("End");
+        System.out.println("Player-" + id + ": Connection closed");
+        _send.println("End");
 
         if(!fromServer) {
-            final Match match = matchId.get() != -1 ? GameController.getInstance().getMatch(matchId.get()) : null;
+            final Match match = matchId.get() != -1 ? GC.getMatch(matchId.get()) : null;
 
             if(match != null)
                 match.setIncoming(id, MessageType.GameState,
-                        gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
+                        _gson.toJson(new GameState<Player>(StateType.Abandoned, null), MessageType.GameState.getType()));
             else
-                GameController.getInstance().releasePlayer(this, true);
+                GC.releasePlayer(this, true);
         }
 
         super.closeConnection();

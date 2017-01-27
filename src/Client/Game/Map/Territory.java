@@ -1,9 +1,9 @@
-package Client.Game.Observables;
+package Client.Game.Map;
 
+import Client.Game.Player;
 import Client.Main;
 import Client.UI.Match.Army.ArmyBadge;
 import Client.UI.Match.Army.ArmyList;
-import Game.Map.Territory;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -24,7 +24,7 @@ import javafx.scene.text.TextAlignment;
 /**
  * Observable Territory class
  */
-public class ObservableTerritory extends Territory<ObservableUser> {
+public class Territory extends Game.Map.Territory<Player> {
 
     private static ArmyList al;
 
@@ -53,7 +53,7 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      */
     public final IntegerProperty NewArmies = new SimpleIntegerProperty(0);
 
-    private final SimpleObjectProperty<ObservableUser> owner = new SimpleObjectProperty<>(new ObservableUser(-100, "NullUser", null));
+    private final SimpleObjectProperty<Player> owner = new SimpleObjectProperty<>(new Player(-100, "NullUser", null));
 
     /**
      * Updates current owner and territory color
@@ -61,14 +61,14 @@ public class ObservableTerritory extends Territory<ObservableUser> {
      * @param Owner New owner of this territory
      */
     @Override
-    public void setOwner(ObservableUser Owner) {
+    public void setOwner(Player Owner) {
         owner.get().Territories.remove(this);
         owner.set(Owner);
         owner.get().Territories.add(this);
     }
 
     @Override
-    public ObservableUser getOwner() { return owner.getValue(); }
+    public Player getOwner() { return owner.getValue(); }
 
     public int getArmies() { return Armies.add(NewArmies).getValue().intValue(); }
 

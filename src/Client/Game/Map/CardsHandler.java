@@ -1,4 +1,4 @@
-package Client.Game.Observables;
+package Client.Game.Map;
 
 import Client.Main;
 import Game.Connection.Cards;
@@ -7,8 +7,11 @@ import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.events.JFXDialogEvent;
 import javafx.application.Platform;
-import javafx.event.Event;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -65,13 +68,13 @@ public class CardsHandler {
         final JFXButton closeBtn = new JFXButton(resources.getString("close"));
         closeBtn.setButtonType(JFXButton.ButtonType.RAISED);
         closeBtn.setStyle("-fx-background-color: #44B449");
-        closeBtn.setOnMouseClicked(this::closeDialog);
+        closeBtn.setOnMouseClicked(event -> cardsDialog.close());
 
         /* Redeem cards button setup */
         redeemBtn = new JFXButton(resources.getString("redeem"));
         redeemBtn.setButtonType(JFXButton.ButtonType.RAISED);
         redeemBtn.setStyle("-fx-background-color: red");
-        redeemBtn.setOnMouseClicked(this::closeDialog);
+        redeemBtn.setOnMouseClicked(event -> cardsDialog.close());
         redeemBtn.setDisable(true);
 
         /* Layout setup */
@@ -81,14 +84,12 @@ public class CardsHandler {
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
         cardsDialog.setContent(dl);
-        cardsDialog.setOnDialogClosed(this::closeDialog);
-    }
-
-    private void closeDialog(Event Event) {
-        synchronized (selected){
-            selected.notify();
-        }
-        cardsDialog.close();
+        cardsDialog.addEventHandler(JFXDialogEvent.CLOSED, event -> {
+            System.out.println("Cards dialog: Dialog closed");
+            synchronized (selected) {
+                selected.notify();
+            }
+        });
     }
 
     /**
@@ -120,9 +121,9 @@ public class CardsHandler {
     }
 
     /**
-     * Ask the user To play a combination
+     * Ask the user to play a combination
      *
-     * @return Message containing combination played From the user
+     * @return Message containing combination played from the user
      */
     public Cards requestCombination() {
         // If cards needed for combination are not present return empty list
@@ -136,6 +137,7 @@ public class CardsHandler {
             Main.showDialog(cardsDialog);
         });
 
+        System.out.println("Cards handler: Waiting for user");
         synchronized (selected) {
             try {
                 selected.wait();
@@ -143,6 +145,7 @@ public class CardsHandler {
                 e.printStackTrace();
             }
         }
+        System.out.println("Cards handler: Checking selection");
 
         // If no cards are selected and less than five cards are present, return empty message
         if(selected.isEmpty() && container.getChildren().size() < 5)
@@ -160,15 +163,28 @@ public class CardsHandler {
                 resources.getString("cardsErrorMessage"),
                 resources.getString("continue"));
 
-        synchronized (Main.dialogClosed){
+        final ObjectProperty<Cards> result = new SimpleObjectProperty<>();
+
+        cardsDialog.addEventHandler(JFXDialogEvent.CLOSED, new EventHandler<JFXDialogEvent>() {
+            @Override
+            public void handle(JFXDialogEvent event) {
+                result.set(requestCombination());
+                cardsDialog.removeEventHandler(JFXDialogEvent.CLOSED, this);
+                synchronized (result) {
+                    result.notify();
+                }
+            }
+        });
+
+        synchronized (result){
             try {
-                Main.dialogClosed.wait();
+               result.wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        return requestCombination();
+        return result.get();
     }
 
     /**
@@ -177,6 +193,7 @@ public class CardsHandler {
      * @param Card Card to add
      */
     public void addCard(Card Card) {
+        System.out.println("Cards handler: Adding card " + Card.Id);
         if(!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> addCard(Card));
             return;

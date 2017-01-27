@@ -1,14 +1,15 @@
 package Server.UI;
 
 import Game.Map.Maps;
-import Server.Game.GameController;
 import Server.Game.Match;
 import Server.Game.Player;
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -17,6 +18,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 
 public class Controller implements Initializable {
 
@@ -43,6 +45,12 @@ public class Controller implements Initializable {
 
     @FXML
     private TableColumn<Match, Integer> matchPlayersColumn;
+
+    @FXML
+    private JFXButton startServerBtn;
+
+    @FXML
+    private JFXButton stopServerBtn;
 
     @FXML
     private TextArea consoleView;
@@ -74,8 +82,9 @@ public class Controller implements Initializable {
         });
     }
 
-    public void initGameController() {
-        GameController.getInstance().init(playersTable.getItems(), matchesTable.getItems());
+    public void initGameController(BiConsumer<ObservableList<Player>, ObservableList<Match>> Initializer, Runnable Terminator) {
+        startServerBtn.setOnMouseClicked(event -> Initializer.accept(playersTable.getItems(), matchesTable.getItems()));
+        stopServerBtn.setOnMouseClicked(event -> Terminator.run());
     }
 
     public void resetStdOut() {

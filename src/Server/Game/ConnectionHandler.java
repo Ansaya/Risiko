@@ -1,6 +1,5 @@
-package Server.Game.Connection;
+package Server.Game;
 
-import Server.Game.GameController;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,46 +14,53 @@ import java.util.function.Consumer;
  */
 public class ConnectionHandler implements Runnable {
 
-    private static ConnectionHandler _instance = new ConnectionHandler();
-
-    public static ConnectionHandler getInstance() { return _instance; }
-
     private volatile boolean listen = false;
 
     private ServerSocket server;
 
     private final AtomicInteger playerCounter = new AtomicInteger(0);
 
-    private final Consumer<Socket> welcomeAction = newConn -> {
-        String username;
-        int id;
-        try {
-            username = (new BufferedReader(new InputStreamReader(newConn.getInputStream()))).readLine();
+    private final Consumer<Socket> welcomeAction;
 
-            // If username is empty throw error and exit
-            if(username.equals("")){
-                System.err.println("Connection handler: Username can not be null.");
-                (new PrintWriter(newConn.getOutputStream(), true)).println("Username not valid");
+    private volatile Thread reception;
+
+    public ConnectionHandler(GameController GC) {
+        welcomeAction = newConn -> {
+            final String username;
+            final int id;
+            final BufferedReader receive;
+            final PrintWriter send;
+            try {
+                username = (receive = new BufferedReader(new InputStreamReader(newConn.getInputStream()))).readLine();
+
+                // If username is empty throw error and exit
+                if(username.equals("")){
+                    System.err.println("Connection handler: Username can not be null.");
+                    (new PrintWriter(newConn.getOutputStream(), true)).println("Username not valid");
+                    return;
+                }
+
+                // If username is valid confirm login To client and go ahead
+                id = playerCounter.getAndIncrement();
+                (send = new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
+            } catch (Exception e) {
+                System.err.println("Connection handler: Error during username request.");
+                e.printStackTrace();
                 return;
             }
 
-            // If username is valid confirm login To client and go ahead
-            id = playerCounter.getAndIncrement();
-            (new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
-        } catch (Exception e) {
-            System.err.println("Connection handler: Error during username request.");
-            e.printStackTrace();
-            return;
-        }
+            System.out.println("Connection handler: New user connected.");
+            GC.addPlayer(new Player(id, username, newConn, receive, send, GC));
+            System.out.println("Connection handler: User passed to game controller.");
+        };
+    }
 
-        System.out.println("Connection handler: New user connected.");
-        GameController.getInstance().addPlayer(id, username, newConn);
-        System.out.println("Connection handler: User passed to game controller.");
-    };
-
-    private final Thread reception= new Thread(this, "ConnectionHandler-Reception");
-
-    public void Listen(int port) {
+    /**
+     * Start listening for new users on specified port
+     *
+     * @param port Listening port
+     */
+    public void listen(int port) {
         if(listen)
             terminate();
 
@@ -66,11 +72,18 @@ public class ConnectionHandler implements Runnable {
             return;
         }
 
+        reception = new Thread(this, "ConnectionHandler-Reception");
+
         listen = true;
         reception.start();
     }
 
+    /**
+     * Stop listening
+     */
     public void terminate() {
+        if(!listen) return;
+
         listen = false;
 
         try {

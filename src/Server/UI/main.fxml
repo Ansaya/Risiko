@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
@@ -7,12 +8,13 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
 
 <StackPane alignment="center" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Server.UI.Controller">
    <children>
       <AnchorPane minHeight="600.0" minWidth="800.0" style="-fx-background-color: grey;">
          <children>
-            <TabPane layoutX="14.0" layoutY="14.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="240.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="25.0">
+            <TabPane tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="240.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="25.0">
               <tabs>
                 <Tab text="Players">
                   <content>
@@ -32,7 +34,7 @@
                   <content>
                     <AnchorPane>
                            <children>
-                              <TableView fx:id="matchesTable" layoutX="14.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="matchesTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                 <columns>
                                   <TableColumn fx:id="matchIdColumn" minWidth="75.0" prefWidth="75.0" resizable="false" text="ID" />
                                   <TableColumn fx:id="matchNameColumn" minWidth="150.0" prefWidth="75.0" text="Match name" />
@@ -46,7 +48,17 @@
                 </Tab>
               </tabs>
             </TabPane>
-            <TextArea fx:id="consoleView" layoutX="15.0" layoutY="386.0" style="-fx-background-color: black;" wrapText="true" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" />
+            <TextArea fx:id="consoleView" style="-fx-background-color: black;" wrapText="true" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" />
+            <JFXButton fx:id="startServerBtn" buttonType="RAISED" style="-fx-background-color: green;" text="Initialize" textAlignment="CENTER" AnchorPane.bottomAnchor="205.0" AnchorPane.leftAnchor="20.0">
+               <font>
+                  <Font name="Trebuchet MS" size="14.0" />
+               </font>
+            </JFXButton>
+            <JFXButton fx:id="stopServerBtn" buttonType="RAISED" style="-fx-background-color: darkred;" text="Terminate" textAlignment="CENTER" AnchorPane.bottomAnchor="205.0" AnchorPane.leftAnchor="110.0">
+               <font>
+                  <Font name="Trebuchet MS" size="14.0" />
+               </font>
+            </JFXButton>
          </children>
       </AnchorPane>
    </children>

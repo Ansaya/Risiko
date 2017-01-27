@@ -1,8 +1,10 @@
 package Client.UI.Match;
 
+import Client.Game.Map.CardsHandler;
 import Client.Game.Connection.MessageType;
 import Client.Game.GameController;
-import Client.Game.Observables.*;
+import Client.Game.Player;
+import Client.Game.Map.*;
 import Game.Connection.Match;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.*;
@@ -63,15 +65,15 @@ public class MatchController implements Initializable {
 
     /* Players list */
     @FXML
-    private JFXTreeTableView<ObservableUser> playersList;
+    private JFXTreeTableView<Player> playersList;
 
     @FXML
-    private TreeTableColumn<ObservableUser, String> usernameColumn;
+    private TreeTableColumn<Player, String> usernameColumn;
 
     @FXML
-    private TreeTableColumn<ObservableUser, Integer> territoriesColumn;
+    private TreeTableColumn<Player, Integer> territoriesColumn;
 
-    private final RecursiveTreeItem<ObservableUser> usersRoot = new RecursiveTreeItem<ObservableUser>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
+    private final RecursiveTreeItem<Player> usersRoot = new RecursiveTreeItem<Player>(FXCollections.observableArrayList(), RecursiveTreeObject::getChildren);
 
     /* Game */
     @FXML
@@ -186,8 +188,8 @@ public class MatchController implements Initializable {
      * @param Match Match message received from server
      * @throws ClassNotFoundException If requested map is not present
      */
-    private void setMapHandler(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
-        final ObservableUser current = gameController.getUser();
+    private void setMapHandler(GameController GC, Match<Player> Match) throws ClassNotFoundException {
+        final Player current = gameController.getUser();
         final AtomicBoolean imPlaying = new AtomicBoolean(false);
         Match.Players.forEach(u -> {
             if (u.equals(current)) {
@@ -234,7 +236,7 @@ public class MatchController implements Initializable {
      * @param Match Match message received from server
      * @throws ClassNotFoundException If map cannot be loaded
      */
-    public void setGameController(GameController GC, Match<ObservableUser> Match) throws ClassNotFoundException {
+    public void setGameController(GameController GC, Match<Player> Match) throws ClassNotFoundException {
         this.gameController = GC;
         setMapHandler(GC, Match);
         GC.setMapHandler(mapHandler);

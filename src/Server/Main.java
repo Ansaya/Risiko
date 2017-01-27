@@ -1,9 +1,12 @@
 package Server;
 
-import Server.Game.Connection.ConnectionHandler;
+import Server.Game.ConnectionHandler;
 import Server.Game.GameController;
+import Server.Game.Match;
+import Server.Game.Player;
 import Server.UI.Controller;
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -16,6 +19,10 @@ public class Main extends Application {
 
     private static final int listenPort = 5757;
 
+    private static final GameController GC = new GameController();
+
+    private static final ConnectionHandler CH = new ConnectionHandler(GC);
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.getIcons().add(new Image(Client.Main.class.getResource("icon.png").openStream()));
@@ -23,16 +30,13 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader();
         Parent root = loader.load(Main.class.getResource("UI/main.fxml").openStream());
         Controller c = loader.getController();
-        c.initGameController();
+        c.initGameController(Main::initialize, Main::terminate);
 
         primaryStage.setTitle("Risiko - Server");
         primaryStage.setMinWidth(800.0f);
         primaryStage.setMinHeight(600.0f);
         primaryStage.setScene(new Scene(root, 800.0f, 600.0f));
         primaryStage.show();
-
-        // Launch connection handler
-        ConnectionHandler.getInstance().Listen(listenPort);
     }
 
 
@@ -40,8 +44,7 @@ public class Main extends Application {
         final ArrayList<String> Args = new ArrayList<>(Arrays.asList(args));
 
         if(Args.contains("console")) {
-            GameController.getInstance().init();
-            ConnectionHandler.getInstance().Listen(listenPort);
+            initialize(null, null);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
@@ -59,11 +62,18 @@ public class Main extends Application {
         }
     }
 
+    private static void initialize(ObservableList<Player> Players, ObservableList<Match> Matches) {
+        System.out.println("Initializing...");
+        GC.init(Players, Matches);
+        CH.listen(listenPort);
+        System.out.println("Initialization completed.");
+    }
+
     private static void terminate() {
         System.out.println("Shouting down...");
-        ConnectionHandler.getInstance().terminate();
-        GameController.getInstance().terminate();
-        System.out.println("Shutdown completed");
+        CH.terminate();
+        GC.terminate();
+        System.out.println("Shutdown completed.");
     }
 
     @Override

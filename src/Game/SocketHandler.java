@@ -1,45 +1,43 @@
-package Server.Game;
+package Game;
 
-import Server.Game.Connection.MessageType;
+import Game.Connection.TypeEnumerator;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
  * Abstract handling for socket connection
  */
-public abstract class SocketHandler implements Runnable {
+public abstract class SocketHandler<T extends TypeEnumerator> implements Runnable {
 
     /**
      * Socket connection object
      */
-    protected final transient Socket connection;
+    public final transient Socket _connection;
 
     /**
      * Receiving buffer for socket messages
      */
-    final transient BufferedReader receive;
+    public final transient BufferedReader _receive;
 
     /**
      * Transmitting writer for socket messages
      */
-    final transient PrintWriter send;
+    public final transient PrintWriter _send;
 
     /**
      * Serializer/deserializer for socket messages
      */
-    final transient Gson gson;
+    public final transient Gson _gson;
 
     private final transient String name;
 
     /**
      * To be used in run() method
      */
-    transient volatile boolean listen = false;
+    public transient volatile boolean _listen = false;
 
     /**
      * Incoming messages handler
@@ -51,50 +49,44 @@ public abstract class SocketHandler implements Runnable {
      *
      * @param Connection Connected socket
      */
-    SocketHandler(Socket Connection, String Name) {
-        this.connection = Connection;
+    public SocketHandler(Socket Connection, BufferedReader Receive, PrintWriter Send, Gson Gson, String Name) {
+        this._connection = Connection;
         this.name = Name;
 
-        BufferedReader br = null;
-        PrintWriter pw = null;
+        this._receive = Receive;
+        this._send = Send;
 
-        try {
-            br = new BufferedReader(new InputStreamReader(this.connection.getInputStream()));
-            pw = new PrintWriter(this.connection.getOutputStream(), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if(Gson != null)
+            _gson = Gson;
+        else
+            _gson = new Gson();
 
-        this.receive = br;
-        this.send = pw;
-
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Match.class, new GameController.MatchSerializer());
-        gson = builder.create();
-
-        this.listen = true;
+        this._listen = true;
         _instance = new Thread(this);
         if(Name != null)
             _instance.setName(name);
         _instance.start();
     }
 
-    SocketHandler() {
-        connection = null;
+    public SocketHandler() {
+        _connection = null;
         name = null;
-        receive = null;
-        send = null;
-        gson = null;
+        _receive = null;
+        _send = null;
+        _gson = null;
         _instance = null;
     }
 
     /**
      * Stop listener thread and close connection
      */
-    protected void closeConnection() {
+    public void closeConnection() {
+        if(!_listen) return;
+
+        this._listen = false;
+
         try {
-            this.listen = false;
-            connection.close();
+            _connection.close();
             _instance.join();
         } catch (IOException | InterruptedException e) {
             System.err.println(name + ": Exception during socket handler join.");
@@ -111,12 +103,12 @@ public abstract class SocketHandler implements Runnable {
      * @param Type Type of message
      * @param MessageObj Object of specified type
      */
-    protected void SendMessage(MessageType Type, Object MessageObj) {
-        if(gson == null)
+    public void SendMessage(T Type, Object MessageObj) {
+        if(_gson == null)
             return;
 
         // Build packet string as MessageType#SerializedObject
-        RouteMessage(Type.toString() + "#" + gson.toJson(MessageObj, Type.getType()));
+        RouteMessage(Type.toString() + "#" + _gson.toJson(MessageObj, Type.getType()));
     }
 
     /**
@@ -124,14 +116,12 @@ public abstract class SocketHandler implements Runnable {
      *
      * @param packet String to send to the client
      */
-    protected void RouteMessage(String packet) {
-        if(send == null)
+    public void RouteMessage(String packet) {
+        if(_send == null)
             return;
 
-        synchronized (send) {
-            send.println(packet);
+        synchronized (_send) {
+            _send.println(packet);
         }
-
-        System.out.println(name + ": Sent -> " + packet);
     }
 }
