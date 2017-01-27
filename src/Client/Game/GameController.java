@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
@@ -35,6 +38,8 @@ import java.util.prefs.Preferences;
 public class GameController extends MessageReceiver<MessageType> {
 
     private final String serverAddress = "localhost";
+
+    private final short serverPort = 8080;
 
     private volatile ResourceBundle resources;
 
@@ -240,7 +245,7 @@ public class GameController extends MessageReceiver<MessageType> {
         final PrintWriter send;
 
         try {
-            connection = new Socket(serverAddress, 5757);
+            connection = new Socket(serverAddress, serverPort);
             receive = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             send = new PrintWriter(connection.getOutputStream(), true);
         } catch (IOException e) {
@@ -264,6 +269,13 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // If connection is successfully established initialize connection handler
         CH = new ConnectionHandler(this, connection, receive, send, "GameController-ConnectionHandler");
+
+        // If an error log is present, send it to the server
+        final Path errlog = Paths.get("./errlog.txt");
+        if(Files.exists(errlog)) {
+            CH.SendMessage(MessageType.LogFile, Files.readAllLines(errlog).stream().reduce("", (s1, s2) -> s1 + "\n" + s2));
+            Files.delete(errlog);
+        }
     }
 
     /**
@@ -303,7 +315,7 @@ public class GameController extends MessageReceiver<MessageType> {
         SendMessage(MessageType.GameState, new GameState<>(StateType.Abandoned, user));
     }
 
-    public void SendChat(String Text) {
+    private void SendChat(String Text) {
         SendMessage(MessageType.Chat, new Chat<>(user, Text));
     }
 

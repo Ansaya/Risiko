@@ -7,6 +7,7 @@ import Client.Main;
 import Game.Connection.Battle;
 import Game.Connection.MapUpdate;
 import Game.Connection.Match;
+import Game.Logger;
 import Game.Map.Map;
 import Game.Map.Mission;
 import javafx.application.Platform;
@@ -98,8 +99,9 @@ public class MapHandler {
 
     private SelectedTerritory waitSelected(){
         try {
-            waitOn(selected, "MapHandler: Interrupted exception");
+            selected.wait();
         } catch (InterruptedException e) {
+            Logger.err("MapHandler: Exception waiting for territory selection", e);
             return null;
         }
 
@@ -372,8 +374,7 @@ public class MapHandler {
                     try {
                         attackPhase.wait();
                     } catch (InterruptedException e) {
-                        System.out.println("Map handler: Interrupted exception in attack phase.");
-                        e.printStackTrace();
+                        Logger.err("Map handler: Interrupted exception in attack phase.", e);
                         return;
                     }
                 }
@@ -595,9 +596,9 @@ public class MapHandler {
 
             // Wait for FXThread to update values
             try {
-                waitOn(wait, "Map handler: Interrupted exception while adding army");
+                wait.wait();
             } catch (InterruptedException e) {
-                return;
+                Logger.err("Map handler: Interrupted exception while adding army", e);
             }
             return;
         }
@@ -615,8 +616,9 @@ public class MapHandler {
 
         // Wait for FXThread to update values
         try {
-            waitOn(wait, "Map handler: Interrupted exception while adding army");
+            wait.wait();
         } catch (InterruptedException e) {
+            Logger.err("Map handler: Interrupted exception while adding army", e);
             return;
         }
 
@@ -657,9 +659,9 @@ public class MapHandler {
 
             // Wait for FXThread to update values
             try {
-                waitOn(wait, "Map handler: Interrupted exception while removing army");
+                wait.wait();
             } catch (InterruptedException e) {
-                return;
+                Logger.err("Map handler: Interrupted exception while removing army", e);
             }
             return;
         }
@@ -681,26 +683,9 @@ public class MapHandler {
 
         // Wait for FXThread to update values
         try {
-            waitOn(wait, "Map handler: Interrupted exception while removing army");
-        } catch (InterruptedException e) {}
-    }
-
-    /**
-     * Wait for notification on given object. Print specified message to stderr in case of exception
-     *
-     * @param Obj Object to wait on
-     * @param ErrorMsg Error message to print in case of exception
-     */
-    private void waitOn(Object Obj, String ErrorMsg) throws InterruptedException {
-        synchronized (Obj){
-            try {
-                Obj.wait();
-            } catch (InterruptedException e) {
-                System.err.println(ErrorMsg);
-                e.printStackTrace();
-
-                throw e;
-            }
+            wait.wait();
+        } catch (InterruptedException e) {
+            Logger.err("Map handler: Interrupted exception while removing army", e);
         }
     }
 

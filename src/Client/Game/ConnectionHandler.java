@@ -5,6 +5,7 @@ import Client.Game.Connection.Serializer.ObservableUserSerializer;
 import Client.Game.Connection.Serializer.SimpleObjectPropertySerializer;
 import Game.Connection.Serializer.IntegerPropertySerializer;
 import Game.Connection.Serializer.StringPropertySerializer;
+import Game.Logger;
 import Game.SocketHandler;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -18,7 +19,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Created by fiore on 27/01/2017.
+ * Handler for tcp socket connection
  */
 public class ConnectionHandler extends SocketHandler<MessageType> {
 
@@ -60,12 +61,11 @@ public class ConnectionHandler extends SocketHandler<MessageType> {
 
             }catch (Exception e) {
                 if(e instanceof IOException) {
-                    if(_listen) System.err.println("GamerController: Server connection lost.");
+                    if(_listen) Logger.err("GamerController: Server connection lost.", e);
                     break;
                 }
 
-                System.err.println("GameController: Message not recognized.");
-                e.printStackTrace();
+                Logger.err("GameController: Message not recognized.", e);
             }
         }
 

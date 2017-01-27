@@ -2,6 +2,7 @@ package Client.Game.Map;
 
 import Client.Main;
 import Game.Connection.Cards;
+import Game.Logger;
 import Game.Map.Card;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
@@ -142,7 +143,7 @@ public class CardsHandler {
             try {
                 selected.wait();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.err("Cards handler: Error waiting for cards dialog", e);
             }
         }
         System.out.println("Cards handler: Checking selection");

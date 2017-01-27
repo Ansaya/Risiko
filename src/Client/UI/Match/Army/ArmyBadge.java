@@ -1,5 +1,6 @@
 package Client.UI.Match.Army;
 
+import Game.Logger;
 import javafx.beans.binding.NumberBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- * Created by fiore on 20/01/2017.
+ * Army badge to display color and armies number on a territory
  */
 public class ArmyBadge {
 
@@ -36,7 +37,7 @@ public class ArmyBadge {
             loader.load(ArmyBadge.class.getResource("ArmyBadge.fxml").openStream());
             ab = loader.getController();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.err("Error loading army badge", e);
             return null;
         }
 

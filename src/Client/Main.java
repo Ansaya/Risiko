@@ -7,6 +7,7 @@ import Client.UI.Lobby.LobbyController;
 import Client.UI.Login.LoginController;
 import Client.UI.Match.MatchController;
 import Game.Connection.Match;
+import Game.Logger;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -24,6 +25,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import sun.rmi.runtime.Log;
+
 import java.io.IOException;
 
 public class Main extends Application {
@@ -36,8 +39,6 @@ public class Main extends Application {
 
     public static void setGameController(GameController GC) { gameController = GC; }
 
-    public static final Object dialogClosed = new Object();
-
     public static void toMatch(Match<Player> Match) {
         if(!Platform.isFxApplicationThread()) {
             Platform.runLater(() -> toMatch(Match));
@@ -46,13 +47,14 @@ public class Main extends Application {
 
         FXMLLoader loader = new FXMLLoader();
         loader.setResources(gameController.getResources());
-        Parent root = null;
+        Parent root;
         try {
             root = loader.load(MatchController.class.getResource("match.fxml").openStream());
             root.getStylesheets().add(MatchController.class.getResource("match.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
-            e.printStackTrace();
+            Logger.err("Error loading match scene", e);
+            return;
         }
 
         MatchController mc = loader.getController();
@@ -84,13 +86,14 @@ public class Main extends Application {
 
         FXMLLoader loader = new FXMLLoader();
         loader.setResources(gameController.getResources());
-        Parent root = null;
+        Parent root;
         try {
             root = loader.load(LobbyController.class.getResource("lobby.fxml").openStream());
             root.getStylesheets().add(LobbyController.class.getResource("lobby.css").toExternalForm());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
-            e.printStackTrace();
+            Logger.err("Error loading lobby scene", e);
+            return;
         }
 
         LobbyController lc = loader.getController();
@@ -116,12 +119,13 @@ public class Main extends Application {
 
         FXMLLoader loader = new FXMLLoader();
         loader.setResources(gameController.getResources());
-        Parent root = null;
+        Parent root;
         try {
             root = loader.load(LoginController.class.getResource("login.fxml").openStream());
             root.getStylesheets().add(Main.class.getResource("UI/global.css").toExternalForm());
         }catch (IOException e) {
-            e.printStackTrace();
+            Logger.err("Error loading login scene", e);
+            return;
         }
 
         LoginController lc = loader.getController();
@@ -133,7 +137,7 @@ public class Main extends Application {
         window.show();
     }
 
-    public static JFXDialog getDialog(String Heading, String Body, String BtnText) {
+    private static JFXDialog getDialog(String Heading, String Body, String BtnText) {
         final JFXDialog dialog = new JFXDialog();
 
         final JFXDialogLayout layout = new JFXDialogLayout();
@@ -145,10 +149,6 @@ public class Main extends Application {
             btn.setStyle("-fx-background-color: #44B449");
             btn.addEventFilter(MouseEvent.MOUSE_CLICKED, (e) -> {
                 Sounds.Button.play();
-                synchronized (dialogClosed){
-                    dialogClosed.notify();
-                }
-
                 dialog.close();
             });
             layout.setActions(btn);
@@ -196,6 +196,8 @@ public class Main extends Application {
 
 
     public static void main(String[] args) {
+        Logger.setErrPath("errlog.txt");
+
         launch(args);
     }
 

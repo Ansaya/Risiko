@@ -8,13 +8,21 @@ import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Connection.Serializer.MatchSerializer;
 import Server.Game.Map.Territory;
-import Server.Logger;
+import Game.Logger;
+import Server.Main;
 import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,10 +133,20 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
 
                     String[] info = incoming.split("[#]", 2);
 
+                    MessageType mType = MessageType.valueOf(info[0]);
+
+                    // If log file is received store it in client log directory
+                    if(mType.equals(MessageType.LogFile)) {
+                        Path directory = Main.getClientLogPath();
+                        Path logFilePath = Paths.get(directory.toString() + File.separatorChar + Files.list(directory).count() + " " + username + ".txt");
+                        String logFile = _gson.fromJson(info[1], mType.getType());
+                        Files.write(logFilePath, logFile.getBytes(), StandardOpenOption.CREATE);
+                    }
+
                     if (matchId.get() == -1) {
-                        GC.setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        GC.setIncoming(id, mType, info[1]);
                     } else {
-                        GC.getMatch(matchId.get()).setIncoming(id, MessageType.valueOf(info[0]), info[1]);
+                        GC.getMatch(matchId.get()).setIncoming(id, mType, info[1]);
                     }
                 }
             }catch (Exception e){
@@ -137,8 +155,7 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
                     break;
                 }
 
-                Logger.err("Player-" + id + ": Message not recognized.");
-                e.printStackTrace();
+                Logger.err("Player-" + id + ": Message not recognized.", e);
             }
         }
 

@@ -1,5 +1,6 @@
 package Client.UI.Match.Army;
 
+import Game.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,7 +17,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by fiore on 20/01/2017.
+ * Selection list for armies number during attack or defense phase
  */
 public class ArmyList implements Initializable {
 
@@ -51,7 +52,7 @@ public class ArmyList implements Initializable {
             loader.load(ArmyList.class.getResource("ArmyList.fxml").openStream());
             al = loader.getController();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.err("Error loading army list", e);
             return null;
         }
 
@@ -128,7 +129,7 @@ public class ArmyList implements Initializable {
             try {
                 selected.wait();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.err("Error waiting for armies number selection from list", e);
                 return 1;
             }
         }

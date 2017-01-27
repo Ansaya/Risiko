@@ -1,7 +1,6 @@
 package Server.Game;
 
-import Server.Logger;
-
+import Game.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,8 +45,7 @@ public class ConnectionHandler implements Runnable {
                 id = playerCounter.getAndIncrement();
                 (send = new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
             } catch (Exception e) {
-                Logger.err("Connection handler: Error during username request.");
-                e.printStackTrace();
+                Logger.err("Connection handler: Error during username request.", e);
                 return;
             }
 
@@ -72,7 +70,7 @@ public class ConnectionHandler implements Runnable {
             this.server = new ServerSocket(port);
         }
         catch (IOException e){
-            Logger.err("Connection handler: Cannot connect");
+            Logger.err("Connection handler: Cannot connect", e);
             return;
         }
 
@@ -94,8 +92,7 @@ public class ConnectionHandler implements Runnable {
             server.close();
             reception.join();
         } catch (IOException | InterruptedException e) {
-            Logger.err("Connection handler: Exception during termination.");
-            e.printStackTrace();
+            Logger.err("Connection handler: Exception during termination.", e);
             return;
         }
 
@@ -117,8 +114,7 @@ public class ConnectionHandler implements Runnable {
                 if(!listen && e instanceof IOException)
                     break;
                 else {
-                    Logger.err("Connection handler: Bad connection handling");
-                    e.printStackTrace();
+                    Logger.err("Connection handler: Bad connection handling", e);
                 }
             }
         }

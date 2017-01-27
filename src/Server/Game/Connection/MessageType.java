@@ -20,7 +20,8 @@ public enum MessageType implements TypeEnumerator {
     Cards(Game.Connection.Cards.class),
     Positioning(Game.Connection.Positioning.class),
     MapUpdate(new TypeToken<MapUpdate<Territory>>(){}.getType()),
-    GameState(new TypeToken<GameState<Player>>(){}.getType());
+    GameState(new TypeToken<GameState<Player>>(){}.getType()),
+    LogFile(String.class);
 
     MessageType(Type Class) { this.c = Class; }
 

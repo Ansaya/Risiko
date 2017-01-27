@@ -1,5 +1,6 @@
 package Server;
 
+import Game.Logger;
 import Server.Game.ConnectionHandler;
 import Server.Game.GameController;
 import Server.Game.Match;
@@ -12,16 +13,37 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Main extends Application {
 
-    private static final int listenPort = 5757;
+    private static final int listenPort = 8080;
 
     private static final GameController GC = new GameController();
 
     private static final ConnectionHandler CH = new ConnectionHandler(GC);
+
+    public static Path getClientLogPath() {
+        final Path clientLogDir = Paths.get("./ClientLogs/" + LocalDate.now(ZoneId.of("Z")) + "/");
+
+        if(Files.notExists(clientLogDir)) {
+            try {
+                Files.createDirectories(clientLogDir);
+            } catch (IOException e) {
+                Logger.err("Cannot create client log directory.", e);
+            }
+        }
+
+        return clientLogDir;
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -42,6 +64,9 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         final ArrayList<String> Args = new ArrayList<>(Arrays.asList(args));
+
+        Logger.setOutPath(LocalDate.now(ZoneId.of("Z")) + " outlog.txt");
+        Logger.setErrPath(LocalDate.now(ZoneId.of("Z")) + " errlog.txt");
 
         if(Args.contains("console")) {
             initialize(null, null);

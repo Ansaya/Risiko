@@ -12,6 +12,7 @@ import Game.Sounds.Sounds;
 import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Map.Territory;
+import Game.Logger;
 import com.google.gson.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;

@@ -5,7 +5,7 @@ import Game.Connection.Chat;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import Server.Game.Connection.Serializer.MatchSerializer;
-import Server.Logger;
+import Game.Logger;
 import com.google.gson.*;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
@@ -52,9 +52,8 @@ public class GameController extends MessageReceiver<MessageType> {
         gson = getGsonBuilder(null).create();
 
         // Handler for incoming chat messages routing
-        messageHandlers.put(MessageType.Chat, (message) -> {
-            this.lobby.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json));
-        });
+        messageHandlers.put(MessageType.Chat, (message) ->
+            lobby.forEach((id, p) -> p.RouteMessage(message.Type + "#" + message.Json)));
 
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
