@@ -8,6 +8,7 @@ import Game.StateType;
 import Server.Game.Connection.MessageType;
 import Server.Game.Connection.Serializer.MatchSerializer;
 import Server.Game.Map.Territory;
+import Server.Logger;
 import com.google.gson.GsonBuilder;
 import javafx.application.Platform;
 import java.io.BufferedReader;
@@ -132,11 +133,11 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
                 }
             }catch (Exception e){
                 if(e instanceof IOException) {
-                    if(_listen) System.err.println("Player-" + id + ": Client connection lost.");
+                    if(_listen) Logger.err("Player-" + id + ": Client connection lost.");
                     break;
                 }
 
-                System.err.println("Player-" + id + ": Message not recognized.");
+                Logger.err("Player-" + id + ": Message not recognized.");
                 e.printStackTrace();
             }
         }
@@ -149,7 +150,7 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
      * Gently close connection with the client
      */
     synchronized void closeConnection(boolean fromServer) {
-        System.out.println("Player-" + id + ": Connection closed");
+        Logger.log("Player-" + id + ": Connection closed");
         _send.println("End");
 
         if(!fromServer) {

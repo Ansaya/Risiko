@@ -50,7 +50,7 @@ public class Main extends Application {
                 try {
                     terminate();
                 } catch (Exception e) {
-                    System.err.println("Shutdown error.");
+                    Logger.log("Shutdown error.");
                     e.printStackTrace();
                 }
             }));
@@ -63,17 +63,21 @@ public class Main extends Application {
     }
 
     private static void initialize(ObservableList<Player> Players, ObservableList<Match> Matches) {
-        System.out.println("Initializing...");
+        if(GC.isListening() && CH.isListening()) return;
+
+        Logger.log("Initializing...");
         GC.init(Players, Matches);
         CH.listen(listenPort);
-        System.out.println("Initialization completed.");
+        Logger.log("Initialization completed.");
     }
 
     private static void terminate() {
-        System.out.println("Shouting down...");
+        if(!GC.isListening() && !CH.isListening()) return;
+
+        Logger.log("Shouting down...");
         CH.terminate();
         GC.terminate();
-        System.out.println("Shutdown completed.");
+        Logger.log("Shutdown completed.");
     }
 
     @Override

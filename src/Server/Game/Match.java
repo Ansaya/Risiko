@@ -226,7 +226,7 @@ public class Match extends MessageReceiver<MessageType> {
         });
 
         // Start first setup turn
-        System.out.println("Match " + this.Id + ": Started game with " + players.size() + " players.");
+        Logger.log("Match " + this.Id + ": Started game with " + players.size() + " players.");
         this.currentTurn = new Turn(this, AI, true);
     }
 

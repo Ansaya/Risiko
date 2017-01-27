@@ -5,6 +5,7 @@ import Game.Connection.Chat;
 import Game.MessageReceiver;
 import Server.Game.Connection.MessageType;
 import Server.Game.Connection.Serializer.MatchSerializer;
+import Server.Logger;
 import com.google.gson.*;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
@@ -58,7 +59,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Handler for new match initialization request
         messageHandlers.put(MessageType.Match, (message) -> {
             final Game.Connection.Match<Player> requested = gson.fromJson(message.Json, MessageType.Match.getType());
-            System.out.println("Game controller: New match request from " + message.PlayerId);
+            Logger.log("Game controller: New match request from " + message.PlayerId);
 
             // Get requested match
             Match match = matches.get(requested.Id);
@@ -68,7 +69,7 @@ public class GameController extends MessageReceiver<MessageType> {
                 try {
                     match = new Match(Match.counter.getAndIncrement(), requested.Name, requested.GameMap, this);
                 } catch (ClassNotFoundException e){
-                    System.err.println("Game Controller: Can not create new match");
+                    Logger.err("Game Controller: Can not create new match");
                     return;
                 }
 
@@ -78,7 +79,7 @@ public class GameController extends MessageReceiver<MessageType> {
 
                 sendAll(MessageType.MatchLobby, new MatchLobby<>(match, null));
 
-                System.out.println("Game controller: New match created with id " + match.Id);
+                Logger.log("Game controller: New match created with id " + match.Id);
             }
             else {
                 match.addPlayer(requested.Players.get(0));
@@ -111,7 +112,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Start message receiver
         this.startExecutor();
 
-        System.out.println("Game controller: Message receiver up and running.");
+        Logger.log("Game controller: Message receiver up and running.");
     }
 
     /**
@@ -120,7 +121,7 @@ public class GameController extends MessageReceiver<MessageType> {
     public synchronized void terminate() {
         // Stop message receiver
         this.stopExecutor();
-        System.out.println("Game controller: Message receiver stopped.");
+        Logger.log("Game controller: Message receiver stopped.");
 
         final Chat<Player> end = new Chat<>(Player.getAI(), "Server is shutting down.");
 
@@ -129,13 +130,13 @@ public class GameController extends MessageReceiver<MessageType> {
 
         // Send end message and close connection of lobby Players
         lobby.forEach((id, p) -> {
-            System.out.println("Game controller: Releasing player " + p.getUsername());
+            Logger.log("Game controller: Releasing player " + p.getUsername());
             p.SendMessage(MessageType.Chat, end);
             p.closeConnection(true);
             releasePlayer(p, true);
         });
 
-        System.out.println("Game controller: All users released. Ready to join.");
+        Logger.log("Game controller: All users released. Ready to join.");
     }
 
     private void sendAll(MessageType Type, Object Message) {
@@ -156,7 +157,7 @@ public class GameController extends MessageReceiver<MessageType> {
         // Send current matches list to new player
         NewP.SendMessage(MessageType.MatchLobby, new MatchLobby<>(matches.values(), null));
 
-        System.out.println("Game controller: New player in lobby.");
+        Logger.log("Game controller: New player in lobby.");
     }
 
     /**
@@ -165,7 +166,7 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param Player User to set back to lobby
      */
     void returnPlayer(Player Player) {
-        System.out.println("Game controller: Player " + Player.getUsername() + " got back from match.");
+        Logger.log("Game controller: Player " + Player.getUsername() + " got back from match.");
 
         // Send update to all players
         final Match match = matches.get(Player.getMatchId());
@@ -200,7 +201,7 @@ public class GameController extends MessageReceiver<MessageType> {
      */
     void endMatch(Match Match) {
         lobby.putAll(Match.terminate());
-        System.out.println("Game controller: Match " + Match.Id + " terminated.");
+        Logger.log("Game controller: Match " + Match.Id + " terminated.");
         matches.remove(Match.Id);
 
         lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, new MatchLobby<>(null, Match)));

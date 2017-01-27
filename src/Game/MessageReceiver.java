@@ -25,20 +25,19 @@ public abstract class MessageReceiver<T> {
         this.name = Name;
     }
 
+    public boolean isListening() { return execute; }
+
     public void startExecutor(){
-        System.out.println(name + ": Executor start request.");
-        if(execute)
-            return;
+        if(execute) return;
 
         execute = true;
         _instance = new Thread(this::executor, name + "-Executor");
         _instance.start();
+        System.out.println(name + ": Executor started.");
     }
 
     public void stopExecutor() {
-        System.out.println(name + ": Executor stop request.");
-        if(!execute)
-            return;
+        if(!execute) return;
 
         execute = false;
         synchronized (queue){
@@ -51,6 +50,8 @@ public abstract class MessageReceiver<T> {
             System.err.println(name + ": Interrupted exception during executor join.");
             e.printStackTrace();
         }
+
+        System.out.println(name + ": Executor stopped.");
     }
 
     /**

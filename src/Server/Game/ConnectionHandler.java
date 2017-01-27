@@ -1,5 +1,7 @@
 package Server.Game;
 
+import Server.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,7 +37,7 @@ public class ConnectionHandler implements Runnable {
 
                 // If username is empty throw error and exit
                 if(username.equals("")){
-                    System.err.println("Connection handler: Username can not be null.");
+                    Logger.err("Connection handler: Username can not be null.");
                     (new PrintWriter(newConn.getOutputStream(), true)).println("Username not valid");
                     return;
                 }
@@ -44,16 +46,18 @@ public class ConnectionHandler implements Runnable {
                 id = playerCounter.getAndIncrement();
                 (send = new PrintWriter(newConn.getOutputStream(), true)).println("OK#" + id);
             } catch (Exception e) {
-                System.err.println("Connection handler: Error during username request.");
+                Logger.err("Connection handler: Error during username request.");
                 e.printStackTrace();
                 return;
             }
 
-            System.out.println("Connection handler: New user connected.");
+            Logger.log("Connection handler: New user connected.");
             GC.addPlayer(new Player(id, username, newConn, receive, send, GC));
-            System.out.println("Connection handler: User passed to game controller.");
+            Logger.log("Connection handler: User passed to game controller.");
         };
     }
+
+    public boolean isListening() { return listen; }
 
     /**
      * Start listening for new users on specified port
@@ -68,7 +72,7 @@ public class ConnectionHandler implements Runnable {
             this.server = new ServerSocket(port);
         }
         catch (IOException e){
-            System.err.println("Connection handler: Cannot connect");
+            Logger.err("Connection handler: Cannot connect");
             return;
         }
 
@@ -90,19 +94,19 @@ public class ConnectionHandler implements Runnable {
             server.close();
             reception.join();
         } catch (IOException | InterruptedException e) {
-            System.err.println("Connection handler: Exception during termination.");
+            Logger.err("Connection handler: Exception during termination.");
             e.printStackTrace();
             return;
         }
 
-        System.out.println("Connection handler: Terminated.");
+        Logger.log("Connection handler: Terminated.");
     }
 
     @Override
     public void run() {
         while (listen) {
             try {
-                System.out.println("Connection handler: Waiting for users...");
+                Logger.log("Connection handler: Waiting for users...");
                 final Socket newConn = server.accept();
 
                 Thread welcome = new Thread(() -> welcomeAction.accept(newConn), "ConnectionHandler-Welcomer");
@@ -113,7 +117,7 @@ public class ConnectionHandler implements Runnable {
                 if(!listen && e instanceof IOException)
                     break;
                 else {
-                    System.err.println("Connection handler: Bad connection handling");
+                    Logger.err("Connection handler: Bad connection handling");
                     e.printStackTrace();
                 }
             }
