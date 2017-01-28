@@ -8,6 +8,8 @@ import Client.UI.Login.LoginController;
 import Client.UI.Match.MatchController;
 import Game.Connection.Match;
 import Game.Logger;
+import Game.Map.Army.Color;
+import Game.Map.Maps;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -27,6 +29,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Main extends Application {
 
@@ -183,14 +186,14 @@ public class Main extends Application {
 
         gameController = new GameController();
 
-        toLogin();
+        //toLogin();
 
-        /*toMatch(new Match<>(0, "Test match", Maps.RealWorldMap, Arrays.asList(
-                new ObservableUser(1, "Giocatore1", Color.BLACK),
-                new ObservableUser(2, "Giocatore2", Color.RED),
-                new ObservableUser(3, "Giocatore3", Color.BLUE),
-                new ObservableUser(4, "Giocatore4", Color.GREEN),
-                new ObservableUser(5, "Giocatore5", Color.YELLOW))));*/
+        toMatch(new Match<>(0, "Test match", Maps.ClassicRisikoMap, Arrays.asList(
+                new Player(1, "Giocatore1", Color.BLACK),
+                new Player(2, "Giocatore2", Color.RED),
+                new Player(3, "Giocatore3", Color.BLUE),
+                new Player(4, "Giocatore4", Color.GREEN),
+                new Player(5, "Giocatore5", Color.YELLOW))));
     }
 
 

@@ -326,6 +326,7 @@ public class GameController extends MessageReceiver<MessageType> {
      * @param MessageObj Object of specified type
      */
     public void SendMessage(MessageType Type, Object MessageObj) {
-        CH.SendMessage(Type, MessageObj);
+        if(CH != null)
+            CH.SendMessage(Type, MessageObj);
     }
 }
