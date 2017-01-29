@@ -20,6 +20,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
@@ -99,14 +101,17 @@ public class CardsHandler {
      * @param Card Card to initialize
      * @return Initialized card
      */
-    private ImageView loadCard(Card Card) {
-        final ImageView card = new ImageView(Card.getImage(resources.getLocale()));
-        card.setPreserveRatio(true);
-        card.setSmooth(true);
-        card.setCache(true);
-        card.setX(137.0f);
-        card.setY(212.0f);
+    private StackPane loadCard(Card Card) {
+        final ImageView cardImage = new ImageView(Card.getImage(resources.getLocale()));
+        cardImage.setPreserveRatio(true);
+        cardImage.setSmooth(true);
+        cardImage.setCache(true);
+        cardImage.setX(137.0f);
+        cardImage.setY(212.0f);
 
+        final Label cardLabel = new Label(Card.Name);
+
+        final StackPane card = new StackPane(cardImage, cardLabel);
         card.setOnMouseClicked(evt -> {
             Node source = (Node) evt.getSource();
 
