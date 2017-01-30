@@ -1,5 +1,6 @@
 package Game.Map;
 
+import Game.Logger;
 import Game.Map.Army.Color;
 import Game.Player;
 import com.google.gson.*;
@@ -96,7 +97,7 @@ public class Map<T extends Territory> {
                 territory = TerritoryExtender.newInstance();
                 territoryId.set(territory, jt.get("Id").getAsString());
             } catch (IllegalAccessException | InstantiationException e) {
-                e.printStackTrace();
+                Logger.err("Error loading map", e);
                 return;
             }
             // If no svgPath, it is only a card
@@ -123,6 +124,14 @@ public class Map<T extends Territory> {
                 return;
             }
 
+            states.forEach(territory -> {
+                try {
+                    territoryArea.set(territory, area);
+                } catch (IllegalAccessException e) {
+                    Logger.err("Error loading map", e);
+                }
+            });
+
             areas.put(area.Id, area);
         });
 
@@ -139,9 +148,8 @@ public class Map<T extends Territory> {
 
             try {
                 territoryAdjacent.set(territory, adjacent);
-                territoryArea.set(territory, this.areas.get(jt.get("Area").getAsString()));
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                Logger.err("Error loading map", e);
             }
         });
     }
@@ -205,7 +213,7 @@ public class Map<T extends Territory> {
                 if(jt.has("LabelR"))
                     territoryLabelR.set(territory, jt.get("LabelR").getAsFloat());
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                Logger.err("Error loading map graphics", e);
             }
         });
 
@@ -213,7 +221,7 @@ public class Map<T extends Territory> {
             try {
                 areaName.set(area, resources.getString(area.Id));
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                Logger.err("Error loading map graphics", e);
             }
         });
     }
@@ -265,7 +273,7 @@ public class Map<T extends Territory> {
                         army,
                         Mission.MissionType.valueOf(jm.get("Type").getAsString()));
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
+                Logger.err("Error loading mission deck", e);
                 return;
             }
 
@@ -304,7 +312,7 @@ public class Map<T extends Territory> {
                 try {
                     cards.add(cardConstructor.newInstance(jt.get("Id").getAsString(), Figure.valueOf(jt.get("Card").getAsString()), this.Id));
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
+                    Logger.err("Error loading card deck", e);
                 }
         });
 
@@ -319,7 +327,7 @@ public class Map<T extends Territory> {
             loadCardDeck();
             loadMissionDeck();
         } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+            Logger.err("Error loading decks", e);
         }
     }
 

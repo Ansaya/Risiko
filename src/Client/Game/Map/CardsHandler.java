@@ -18,9 +18,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 
 import java.util.ArrayList;
 import java.util.ResourceBundle;
@@ -103,6 +107,7 @@ public class CardsHandler {
      */
     private StackPane loadCard(Card Card) {
         final ImageView cardImage = new ImageView(Card.getImage(resources.getLocale()));
+        cardImage.setMouseTransparent(true);
         cardImage.setPreserveRatio(true);
         cardImage.setSmooth(true);
         cardImage.setCache(true);
@@ -110,8 +115,15 @@ public class CardsHandler {
         cardImage.setY(212.0f);
 
         final Label cardLabel = new Label(Card.Name);
+        cardLabel.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 1.5, 1.0, 0, 0));
+        cardLabel.setTextAlignment(TextAlignment.CENTER);
+        cardLabel.setStyle("-fx-font-size: 18px");
+        cardLabel.setMouseTransparent(true);
+        cardLabel.setFont(Main.globalFont);
+        cardLabel.setTextFill(Color.WHITE);
 
         final StackPane card = new StackPane(cardImage, cardLabel);
+        card.setPrefSize(137.0f, 212.0f);
         card.setOnMouseClicked(evt -> {
             Node source = (Node) evt.getSource();
 

@@ -23,10 +23,10 @@ public enum MessageType implements TypeEnumerator {
     GameState(new TypeToken<GameState<Player>>(){}.getType()),
     LogFile(String.class);
 
-    MessageType(Type Class) { this.c = Class; }
+    MessageType(Type Class) { this.type = Class; }
 
-    private Type c;
+    private Type type;
 
     @Override
-    public Type getType() { return this.c; }
+    public Type getType() { return this.type; }
 }
