@@ -125,13 +125,13 @@ public class ArmyList implements Initializable {
         });
 
 
-        synchronized (selected) {
-            try {
+        try {
+            synchronized (selected) {
                 selected.wait();
-            } catch (InterruptedException e) {
-                Logger.err("Error waiting for armies number selection from list", e);
-                return 1;
             }
+        } catch (InterruptedException e) {
+            Logger.err("Error waiting for armies number selection from list", e);
+            return 1;
         }
 
         Platform.runLater(() -> {
@@ -142,12 +142,12 @@ public class ArmyList implements Initializable {
             }
         });
 
-        synchronized (selected) {
-            try {
+        try {
+            synchronized (selected) {
                 selected.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return selected.get();

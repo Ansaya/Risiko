@@ -160,12 +160,12 @@ public class Territory extends Game.Map.Territory<Player> {
             }
         });
 
-        synchronized (armies) {
-            try {
+        try {
+            synchronized (armies) {
                 armies.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         final int selected = al.getNumber(getCenterX(svgTerritory) + ArmyX,
@@ -180,12 +180,12 @@ public class Territory extends Game.Map.Territory<Player> {
             }
         });
 
-        synchronized (armies) {
-            try {
+        try {
+            synchronized (armies) {
                 armies.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return selected;

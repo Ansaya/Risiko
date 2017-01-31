@@ -113,7 +113,7 @@ public class Map<T extends Territory> {
             final ArrayList<Territory> states = new ArrayList<>();
             ja.getAsJsonArray("territories").forEach(t -> states.add(this.territories.get(t.getAsString())));
 
-            Area area;
+            final Area area;
             try {
                 area = areaConstructor.newInstance(ja.get("Id").getAsString(),
                         ja.get("Color").getAsString(),
@@ -128,7 +128,7 @@ public class Map<T extends Territory> {
                 try {
                     territoryArea.set(territory, area);
                 } catch (IllegalAccessException e) {
-                    Logger.err("Error loading map", e);
+                    Logger.err("Error loading map on " + territory.Id, e);
                 }
             });
 

@@ -168,7 +168,7 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
      */
     synchronized void closeConnection(boolean fromServer) {
         Logger.log("Player-" + id + ": Connection closed");
-        _send.println("End");
+        RouteMessage("End");
 
         if(!fromServer) {
             final Match match = matchId.get() != -1 ? GC.getMatch(matchId.get()) : null;
@@ -180,7 +180,7 @@ public class Player extends SocketHandler<MessageType> implements Game.Player {
                 GC.releasePlayer(this, true);
         }
 
-        super.closeConnection();
+        closeConnection();
     }
 
     /**

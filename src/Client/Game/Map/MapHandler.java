@@ -99,7 +99,9 @@ public class MapHandler {
 
     private SelectedTerritory waitSelected(){
         try {
-            selected.wait();
+            synchronized (selected) {
+                selected.wait();
+            }
         } catch (InterruptedException e) {
             Logger.err("MapHandler: Exception waiting for territory selection", e);
             return null;
@@ -370,13 +372,13 @@ public class MapHandler {
                 gameController.SendMessage(MessageType.Battle, new Battle<>(attacker, defender, atkArmies));
 
                 // Wait for map update and special move message, if present
-                synchronized (attackPhase) {
-                    try {
+                try {
+                    synchronized (attackPhase) {
                         attackPhase.wait();
-                    } catch (InterruptedException e) {
-                        Logger.err("Map handler: Interrupted exception in attack phase.", e);
-                        return;
                     }
+                } catch (InterruptedException e) {
+                    Logger.err("Map handler: Interrupted exception in attack phase.", e);
+                    return;
                 }
 
                 Platform.runLater(() -> endPhaseBtn.setDisable(false));
@@ -596,7 +598,9 @@ public class MapHandler {
 
             // Wait for FXThread to update values
             try {
-                wait.wait();
+                synchronized (wait) {
+                    wait.wait();
+                }
             } catch (InterruptedException e) {
                 Logger.err("Map handler: Interrupted exception while adding army", e);
             }
@@ -616,7 +620,9 @@ public class MapHandler {
 
         // Wait for FXThread to update values
         try {
-            wait.wait();
+            synchronized (wait) {
+                wait.wait();
+            }
         } catch (InterruptedException e) {
             Logger.err("Map handler: Interrupted exception while adding army", e);
             return;
@@ -659,7 +665,9 @@ public class MapHandler {
 
             // Wait for FXThread to update values
             try {
-                wait.wait();
+                synchronized (wait) {
+                    wait.wait();
+                }
             } catch (InterruptedException e) {
                 Logger.err("Map handler: Interrupted exception while removing army", e);
             }
@@ -683,7 +691,9 @@ public class MapHandler {
 
         // Wait for FXThread to update values
         try {
-            wait.wait();
+            synchronized (wait) {
+                wait.wait();
+            }
         } catch (InterruptedException e) {
             Logger.err("Map handler: Interrupted exception while removing army", e);
         }

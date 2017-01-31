@@ -117,6 +117,7 @@ public class CardsHandler {
         final Label cardLabel = new Label(Card.Name);
         cardLabel.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 1.5, 1.0, 0, 0));
         cardLabel.setTextAlignment(TextAlignment.CENTER);
+        cardLabel.setPrefWidth(212.0f);
         cardLabel.setStyle("-fx-font-size: 18px");
         cardLabel.setMouseTransparent(true);
         cardLabel.setFont(Main.globalFont);
@@ -156,12 +157,12 @@ public class CardsHandler {
         });
 
         System.out.println("Cards handler: Waiting for user");
-        synchronized (selected) {
-            try {
+        try {
+            synchronized (selected) {
                 selected.wait();
-            } catch (InterruptedException e) {
-                Logger.err("Cards handler: Error waiting for cards dialog", e);
             }
+        } catch (InterruptedException e) {
+            Logger.err("Cards handler: Error waiting for cards dialog", e);
         }
         System.out.println("Cards handler: Checking selection");
 
@@ -194,12 +195,12 @@ public class CardsHandler {
             }
         });
 
-        synchronized (result){
-            try {
-               result.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            synchronized (result) {
+                result.wait();
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return result.get();
