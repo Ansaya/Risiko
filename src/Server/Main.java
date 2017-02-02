@@ -47,7 +47,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        primaryStage.getIcons().add(new Image(Client.Main.class.getResource("icon.png").openStream()));
+        primaryStage.getIcons().add(new Image(Main.class.getResource("icon.png").openStream()));
 
         FXMLLoader loader = new FXMLLoader();
         Parent root = loader.load(Main.class.getResource("UI/main.fxml").openStream());
