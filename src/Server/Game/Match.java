@@ -121,7 +121,7 @@ public class Match extends MessageReceiver<MessageType> {
     /**
      * Global matches counter
      */
-    public static final AtomicInteger counter = new AtomicInteger(0);
+    public static final AtomicInteger counter = new AtomicInteger(1);
 
     /**
      * Initialize a new match using requested map

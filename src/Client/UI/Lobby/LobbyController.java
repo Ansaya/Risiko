@@ -57,7 +57,7 @@ public class LobbyController implements Initializable {
         name.setPrefWidth(300.0);
 
         // New match map selector
-        final JFXComboBox<Maps> map = new JFXComboBox<>();
+        final ComboBox<Maps> map = new ComboBox<>();
         map.setCellFactory(lv -> getDefaultCell(resources.getLocale()));
         map.setButtonCell(getDefaultCell(resources.getLocale()));
         map.getItems().addAll(Maps.values());
@@ -202,6 +202,8 @@ public class LobbyController implements Initializable {
                     super.updateItem(item, empty);
                     if(item != null)
                         setText(Maps.getName(item, resources.getLocale()));
+                    else
+                        setText("");
                 }
             });
             playersColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().Players.size() + "/6"));
@@ -210,10 +212,12 @@ public class LobbyController implements Initializable {
                 @Override
                 protected void updateItem(Boolean item, boolean empty) {
                     super.updateItem(item, empty);
-                    if(item == null) return;
-
-                    setText("");
-                    setGraphic(new Circle(5.0, item ? Color.GREEN : Color.RED));
+                    if(item == null)
+                        setGraphic(new Circle(5.0, Color.TRANSPARENT));
+                    else {
+                        setText("");
+                        setGraphic(new Circle(5.0, item ? Color.GREEN : Color.RED));
+                    }
                 }
             });
             getColumns().addAll(idColumn, nameColumn, gameMapColumn, playersColumn, startedColumn);

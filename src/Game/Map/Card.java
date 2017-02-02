@@ -46,7 +46,11 @@ public class Card {
      */
     public void loadGraphic(Locale Locale) {
         try {
-            this.image = new Image(Card.class.getResource(mapId.name() + "\\Cards\\" + Id + ".jpg").openStream());
+            this.image = new Image(Card.class.getResource(mapId.name() + "\\Cards\\" + Id + ".jpg").openStream(),
+                    137.0,
+                    212.0,
+                    true,
+                    true);
         } catch (IOException e) {
             e.printStackTrace();
         }

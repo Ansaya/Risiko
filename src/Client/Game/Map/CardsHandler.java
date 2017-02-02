@@ -4,15 +4,12 @@ import Client.Main;
 import Game.Connection.Cards;
 import Game.Logger;
 import Game.Map.Card;
+import Game.Map.Figure;
 import Game.Sounds.Sounds;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.events.JFXDialogEvent;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -24,10 +21,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
-
 import java.util.ArrayList;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handler for cards in UI
@@ -62,6 +58,8 @@ public class CardsHandler {
      */
     private final ArrayList<Card> selected = new ArrayList<>();
 
+    private final AtomicBoolean isWaiting = new AtomicBoolean(false);
+
     public CardsHandler(ResourceBundle Resources) {
         this.resources = Resources;
 
@@ -91,8 +89,9 @@ public class CardsHandler {
         dl.setActions(new HBox(15, redeemBtn, closeBtn));
 
         cardsDialog.setContent(dl);
-        cardsDialog.addEventHandler(JFXDialogEvent.CLOSED, event -> {
-            System.out.println("Cards dialog: Dialog closed");
+        cardsDialog.setOnDialogClosed(event -> {
+            if(!isWaiting.get()) return;
+
             synchronized (selected) {
                 selected.notify();
             }
@@ -108,23 +107,19 @@ public class CardsHandler {
     private StackPane loadCard(Card Card) {
         final ImageView cardImage = new ImageView(Card.getImage(resources.getLocale()));
         cardImage.setMouseTransparent(true);
-        cardImage.setPreserveRatio(true);
-        cardImage.setSmooth(true);
-        cardImage.setCache(true);
-        cardImage.setX(137.0f);
-        cardImage.setY(212.0f);
 
-        final Label cardLabel = new Label(Card.Name);
+        final Label cardLabel = new Label(Card.Figure != Figure.Jolly ? Card.Name : "");
         cardLabel.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 1.5, 1.0, 0, 0));
-        cardLabel.setTextAlignment(TextAlignment.CENTER);
-        cardLabel.setPrefWidth(212.0f);
-        cardLabel.setStyle("-fx-font-size: 18px");
+        cardLabel.setAlignment(Pos.CENTER);
+        cardLabel.setStyle("-fx-font-size: 18px;-fx-text-alignment: center center");
         cardLabel.setMouseTransparent(true);
         cardLabel.setFont(Main.globalFont);
         cardLabel.setTextFill(Color.WHITE);
+        cardLabel.setWrapText(true);
 
         final StackPane card = new StackPane(cardImage, cardLabel);
         card.setPrefSize(137.0f, 212.0f);
+        card.setAlignment(Pos.CENTER);
         card.setOnMouseClicked(evt -> {
             Node source = (Node) evt.getSource();
 
@@ -156,6 +151,7 @@ public class CardsHandler {
             Main.showDialog(cardsDialog);
         });
 
+        isWaiting.set(true);
         System.out.println("Cards handler: Waiting for user");
         try {
             synchronized (selected) {
@@ -164,6 +160,7 @@ public class CardsHandler {
         } catch (InterruptedException e) {
             Logger.err("Cards handler: Error waiting for cards dialog", e);
         }
+        isWaiting.set(false);
         System.out.println("Cards handler: Checking selection");
 
         // If no cards are selected and less than five cards are present, return empty message
@@ -182,28 +179,7 @@ public class CardsHandler {
                 resources.getString("cardsErrorMessage"),
                 resources.getString("continue"));
 
-        final ObjectProperty<Cards> result = new SimpleObjectProperty<>();
-
-        cardsDialog.addEventHandler(JFXDialogEvent.CLOSED, new EventHandler<JFXDialogEvent>() {
-            @Override
-            public void handle(JFXDialogEvent event) {
-                result.set(requestCombination());
-                cardsDialog.removeEventHandler(JFXDialogEvent.CLOSED, this);
-                synchronized (result) {
-                    result.notify();
-                }
-            }
-        });
-
-        try {
-            synchronized (result) {
-                result.wait();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return result.get();
+        return requestCombination();
     }
 
     /**

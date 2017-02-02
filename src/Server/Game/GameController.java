@@ -46,6 +46,8 @@ public class GameController extends MessageReceiver<MessageType> {
 
     private volatile ObservableList<Player> players;
 
+    private volatile ObservableList<Match> obMatches;
+
     public GameController() {
         super("GameController");
 
@@ -74,6 +76,9 @@ public class GameController extends MessageReceiver<MessageType> {
 
                 matches.put(match.Id, match);
 
+                if(obMatches != null)
+                    obMatches.add(match);
+
                 match.addPlayer(requested.Players.get(0));
 
                 sendAll(MessageType.MatchLobby, new MatchLobby<>(match, null));
@@ -100,13 +105,7 @@ public class GameController extends MessageReceiver<MessageType> {
             players = Players;
 
         if(Matches != null)
-            matches.addListener((MapChangeListener.Change<? extends Integer, ? extends Match> change) -> {
-               if(change.wasAdded())
-                   Matches.add(change.getValueAdded());
-
-               if(change.wasRemoved())
-                   Matches.remove(change.getValueRemoved());
-            });
+            obMatches = Matches;
 
         // Start message receiver
         this.startExecutor();
@@ -202,6 +201,9 @@ public class GameController extends MessageReceiver<MessageType> {
         lobby.putAll(Match.terminate());
         Logger.log("Game controller: Match " + Match.Id + " terminated.");
         matches.remove(Match.Id);
+
+        if(obMatches != null)
+            obMatches.remove(Match);
 
         lobby.forEach((id, p) -> p.SendMessage(MessageType.MatchLobby, new MatchLobby<>(null, Match)));
     }
